@@ -1,95 +1,96 @@
 ```mermaid
 erDiagram
-    users ||--o{ reservations : "makes"
-    users ||--|{ balances : "has one"
-    users ||--o{ balance_histories : "has many"
-    
-    concerts ||--o{ concert_schedules : "has many"
+    USER ||--o{ BALANCE : has
+    USER ||--o{ BALANCE_HISTORY : has
+    USER ||--o{ RESERVATION : makes
+    USER ||--o{ PAYMENT : pays
+    USER ||--o{ RESERVATION_QUEUE : in
 
-    concert_schedules ||--o{ seats : "has many"
-    concert_schedules ||--o{ reservations : "are for"
-    
-    seats ||--|| reservations : "is for (1 seat per confirmed reservation)"
-    
-    reservations ||--|| payments : "has one"
+    CONCERT ||--o{ CONCERT_SCHEDULE : has
+    CONCERT_SCHEDULE ||--o{ SEAT : has
+    CONCERT_SCHEDULE ||--o{ RESERVATION : for
+    SEAT ||--o{ RESERVATION : reserved_in
+    RESERVATION ||--o{ PAYMENT : has
 
-    balances ||--o{ balance_histories : "logs changes in"
-    payments ||--o{ balance_histories : "can be related to"
+    BALANCE ||--o{ BALANCE_HISTORY : records
 
-    users {
-        BIGINT id PK "사용자 ID"
-        VARCHAR_255 email UK "이메일"
-        VARCHAR_255 password "비밀번호"
-        VARCHAR_100 name "이름"
-        DATETIME_6 created_at "가입일"
+    USER {
+        bigint id PK "사용자 고유 ID"
+        timestamp created_at "사용자 정보 생성 일시"
+        timestamp updated_at "사용자 정보 마지막 수정 일시"
+        %% 추가 가능 컬럼: email, password, name 등
     }
-
-    balances {
-        BIGINT id PK "잔액 ID"
-        BIGINT user_id UK "사용자 ID"
-        BIGINT balance "현재 잔액"
-        DATETIME_6 created_at "생성일"
-        DATETIME_6 updated_at "수정일"
-        BIGINT version "옵티미스틱 락 버전"
+    BALANCE {
+        bigint id PK "잔액 고유 ID"
+        bigint user_id FK "잔액 소유 사용자 ID (USER 테이블 참조)"
+        bigint balance "현재 잔액"
+        timestamp created_at "잔액 정보 생성 일시"
+        timestamp updated_at "잔액 정보 마지막 수정 일시"
+        %% 추가 가능 컬럼: version (옵티미스틱 락)
     }
-
-    balance_histories {
-        BIGINT id PK "이력 ID"
-        BIGINT balance_id FK "잔액 ID"
-        BIGINT user_id FK "사용자 ID"
-        ENUM_BalanceHistoryType type "변경 타입 (CHARGE, USE, REFUND 등)"
-        BIGINT amount "변경 금액"
-        BIGINT balance_after "변경 후 잔액"
-        VARCHAR_255 reason "변경 사유 (Nullable)"
-        BIGINT payment_id FK "관련 결제 ID (Nullable)"
-        DATETIME_6 created_at "변경 발생 시간"
+    BALANCE_HISTORY {
+        bigint id PK "잔액 변경 이력 고유 ID"
+        bigint user_id FK "잔액 변경 사용자 ID (USER 테이블 참조)"
+        enum type "변경 유형 (예: CHARGE, USE, REFUND)"
+        bigint amount "변경 금액"
+        bigint balance_after "변경 후 최종 잔액"
+        timestamp created_at "이력 생성(변경 발생) 일시"
+        timestamp updated_at "이력 정보 마지막 수정 일시"
+        %% 추가 가능 컬럼: balance_id (BALANCE 테이블 참조), reason, payment_id
     }
-
-    concerts {
-        BIGINT id PK "공연 ID"
-        VARCHAR_255 title "공연 이름"
-        DATETIME_6 created_at "등록일"
+    RESERVATION_QUEUE {
+        bigint id PK "대기열 항목 고유 ID"
+        bigint user_id FK "대기열 사용자 ID (USER 테이블 참조)"
+        varchar token "대기열 접근/식별 토큰 (UUID 등, UNIQUE)"
+        bigint queue_no "대기 순번 (또는 진입 시간 기반 정렬용 값)"
+        timestamp created_at "대기열 등록 일시"
+        timestamp updated_at "대기열 정보 마지막 수정 일시"
+        timestamp expires_at "대기열 토큰 또는 활성 상태 만료 예정 일시"
+        enum status "대기 상태 (예: WAITING, ACTIVE, EXPIRED, PROCESSED)"
+        %% 추가 가능 컬럼: concert_schedule_id (어떤 공연 회차의 대기열인지)
     }
-
-    concert_schedules {
-        BIGINT id PK "공연 회차 ID"
-        BIGINT concert_id FK "공연 ID"
-        DATETIME_6 schedule_date_time "공연 일시"
-        INT available_seats_count "잔여 좌석 수"
-        BIGINT version "옵티미스틱 락 버전"
-        DATETIME_6 created_at "등록일"
+    CONCERT {
+        bigint id PK "공연 고유 ID"
+        varchar title "공연 제목"
+        timestamp created_at "공연 정보 생성 일시"
+        timestamp updated_at "공연 정보 마지막 수정 일시"
+        %% 추가 가능 컬럼: description, artist, poster_image_url 등
     }
-
-    seats {
-        BIGINT id PK "좌석 ID"
-        BIGINT concert_schedule_id FK "공연 회차 ID"
-        VARCHAR_20 seat_number "좌석 번호"
-        BIGINT price "좌석 가격"
-        BOOLEAN is_reserved_db "DB상 최종 예약 여부"
-        DATETIME_6 created_at "등록일"
+    CONCERT_SCHEDULE {
+        bigint id PK "공연 회차 고유 ID"
+        bigint concert_id FK "공연 ID (CONCERT 테이블 참조)"
+        timestamp start_at "공연 시작 일시"
+        timestamp created_at "공연 회차 정보 생성 일시"
+        timestamp updated_at "공연 회차 정보 마지막 수정 일시"
+        %% 추가 가능 컬럼: available_seats_count, version (옵티미스틱 락)
     }
-
-    reservations {
-        BIGINT id PK "예약 ID"
-        BIGINT user_id FK "예약자 ID"
-        BIGINT concert_schedule_id FK "공연 회차 ID"
-        BIGINT seat_id UK "예약된 좌석 ID"
-        ENUM_ReservationStatus status "예약 상태 (PENDING, CONFIRMED, CANCELLED)"
-        BIGINT total_amount "총 결제 금액"
-        DATETIME_6 created_at "예약 생성 시간"
-        DATETIME_6 confirmed_at "예약 확정 시간 (Nullable)"
-        BIGINT version "옵티미스틱 락 버전"
+    SEAT {
+        bigint id PK "좌석 고유 ID"
+        bigint concert_schedule_id FK "공연 회차 ID (CONCERT_SCHEDULE 테이블 참조)"
+        int seat_no "좌석 번호 (해당 회차 내)"
+        bigint price "좌석 가격"
+        timestamp created_at "좌석 정보 생성 일시"
+        timestamp updated_at "좌석 정보 마지막 수정 일시"
+        %% 추가 가능 컬럼: section, row_name, col_number, is_reserved_db (DB 최종 예약 상태), version
+        %% UNIQUE 제약 조건: (concert_schedule_id, seat_no)
     }
-
-    payments {
-        BIGINT id PK "결제 ID"
-        BIGINT reservation_id UK "예약 ID"
-        BIGINT user_id FK "결제 사용자 ID"
-        BIGINT amount "결제 금액"
-        ENUM_PaymentMethod method "결제 수단 (CARD, BALANCE 등)"
-        ENUM_PaymentStatus status "결제 상태 (PENDING, SUCCESS, FAILED)"
-        DATETIME_6 paid_at "결제 완료 시간 (Nullable)"
-        DATETIME_6 created_at "결제 시도 시간"
-        BIGINT version "옵티미스틱 락 버전"
+    RESERVATION {
+        bigint id PK "예약 고유 ID"
+        bigint user_id FK "예약 사용자 ID (USER 테이블 참조)"
+        bigint concert_schedule_id FK "예약 공연 회차 ID (CONCERT_SCHEDULE 테이블 참조)"
+        bigint seat_id FK "예약 좌석 ID (SEAT 테이블 참조, UNIQUE)"
+        enum status "예약 상태 (예: PENDING, CONFIRMED, CANCELED)"
+        timestamp created_at "예약 생성(임시 예약) 일시"
+        timestamp updated_at "예약 정보 마지막 수정 일시"
+        %% 추가 가능 컬럼: total_amount, confirmed_at, version (옵티미스틱 락)
+    }
+    PAYMENT {
+        bigint id PK "결제 고유 ID"
+        bigint user_id FK "결제 사용자 ID (USER 테이블 참조)"
+        bigint reservation_id FK "관련 예약 ID (RESERVATION 테이블 참조, UNIQUE)"
+        bigint price "결제 금액"
+        timestamp created_at "결제 시도/생성 일시"
+        timestamp updated_at "결제 정보 마지막 수정 일시"
+        %% 추가 가능 컬럼: method (결제 수단), status (결제 상태), paid_at, version
     }
 ```
