@@ -1,7 +1,9 @@
 // src/main/java/kr/hhplus/be/server/domain/Payment.java
-package kr.hhplus.be.server.domain;
+package kr.hhplus.be.server.domain.payment;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.domain.reservation.Reservation;
+import kr.hhplus.be.server.domain.user.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -29,7 +31,7 @@ public class Payment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reservation_id", nullable = false)
-    private kr.hhplus.be.server.domain.Reservation reservation; // 예약 ID (Reservation 엔티티 참조)
+    private Reservation reservation; // 예약 ID (Reservation 엔티티 참조)
 
     @Column(name = "amount", nullable = false, precision = 10, scale = 0)
     private BigDecimal amount; // 결제 금액
@@ -50,7 +52,7 @@ public class Payment {
     private LocalDateTime updatedAt;
 
     // 편의를 위한 생성자
-    public Payment(String id, User user, kr.hhplus.be.server.domain.Reservation reservation, BigDecimal amount, PaymentStatus status, String failureReason) {
+    public Payment(String id, User user, Reservation reservation, BigDecimal amount, PaymentStatus status, String failureReason) {
         this.id = id;
         this.user = user;
         this.reservation = reservation;
