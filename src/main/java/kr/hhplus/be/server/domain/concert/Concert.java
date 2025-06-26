@@ -1,7 +1,8 @@
 // src/main/java/kr/hhplus/be/server/domain/Concert.java
-package kr.hhplus.be.server.domain;
+package kr.hhplus.be.server.domain.concert;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.domain.concertDate.ConcertDate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -39,7 +40,7 @@ public class Concert {
 
     // 양방향 관계 설정
     @OneToMany(mappedBy = "concert", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<kr.hhplus.be.server.domain.ConcertDate> concertDates = new ArrayList<>();
+    private List<ConcertDate> concertDates = new ArrayList<>();
 
     // 편의를 위한 생성자
     public Concert(String id, String title, String artist) {

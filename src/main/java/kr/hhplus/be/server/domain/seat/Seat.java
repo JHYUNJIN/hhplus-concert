@@ -1,7 +1,9 @@
 // src/main/java/kr/hhplus/be/server/domain/Seat.java
-package kr.hhplus.be.server.domain;
+package kr.hhplus.be.server.domain.seat;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.domain.concertDate.ConcertDate;
+import kr.hhplus.be.server.domain.reservation.Reservation;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
