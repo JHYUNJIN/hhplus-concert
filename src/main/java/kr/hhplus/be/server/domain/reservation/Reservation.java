@@ -3,7 +3,7 @@ package kr.hhplus.be.server.domain.reservation;
 
 import jakarta.persistence.*;
 import kr.hhplus.be.server.domain.payment.Payment;
-import kr.hhplus.be.server.domain.seat.Seat;
+import kr.hhplus.be.server.domain.concert.Seat;
 import kr.hhplus.be.server.domain.user.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -2,7 +2,6 @@
 package kr.hhplus.be.server.domain.concert;
 
 import jakarta.persistence.*;
-import kr.hhplus.be.server.domain.concertDate.ConcertDate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
