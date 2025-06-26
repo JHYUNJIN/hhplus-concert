@@ -47,10 +47,30 @@ public class PaymentController {
      */
     @GetMapping("/{paymentId}")
     public ResponseEntity<PaymentResponse> getPayment(@PathVariable String paymentId) {
-        return paymentService.getPayment(paymentId)
-                .map(PaymentResponse::from)
-                .map(response -> new ResponseEntity<>(response, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+//        return paymentService.getPayment(paymentId)
+//                .map(PaymentResponse::from)
+//                .map(response -> new ResponseEntity<>(response, HttpStatus.OK))
+//                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+
+        // 1. PaymentService에서 Payment 객체를 직접 가져옵니다.
+        Payment payment = paymentService.getPayment(paymentId);
+        // 2. 가져온 Payment 객체를 PaymentResponse DTO로 변환합니다.
+        PaymentResponse response = PaymentResponse.from(payment);
+        // 3. 변환된 DTO를 OK 상태 코드와 함께 반환합니다.
+        return new ResponseEntity<>(response, HttpStatus.OK);
+
+        /*
+        * 변경된 이유와 장점
+        책임 분리: 서비스는 비즈니스 로직(조회, 예외 처리)에 집중, 컨트롤러는 응답 생성에 집중합니다.
+        명확성: Optional을 컨트롤러까지 노출하지 않고, 서비스에서 예외로 처리해 일관된 흐름을 유지합니다.
+        확장성: 예외 발생 시 글로벌 예외 핸들러에서 일관된 에러 응답을 관리할 수 있습니다.
+        *
+        기존에는 Optional을 사용하여 결제 정보를 조회했지만, 이제는 서비스에서 직접 Payment 객체를 반환합니다. Optional은 불필요한 복잡성을 초래할 수 있습니다.
+        명확한 책임 분리:
+        서비스 계층: 비즈니스 로직(데이터 조회 및 예외 발생)에만 집중하고, Optional을 통한 "값이 없을 수도 있음" 처리는 이제 서비스 내부에서 orElseThrow()를 통해 예외로 명확히 처리합니다.
+        컨트롤러 계층: 서비스가 던진 예외는 GlobalExceptionHandler가 알아서 처리하므로, 컨트롤러는 오직 정상적인 경우에만 데이터 변환 및 응답에 집중할 수 있습니다. 코드가 훨씬 간결하고 읽기 쉬워져요.
+        일관된 오류 응답: 리소스(Payment)를 찾지 못했을 때 GlobalExceptionHandler에서 정의한 ErrorResponse 형식으로 HttpStatus.NOT_FOUND를 반환하게 되므로, 클라이언트는 어떤 종류의 오류든 일관된 응답을 받게 됩니다.
+        */
     }
 
     /**

@@ -1,6 +1,11 @@
 package kr.hhplus.be.server.biz.reservation.service;
 
+import kr.hhplus.be.server.common.exception.ConcertException;
+import kr.hhplus.be.server.common.exception.domain.ReservationException;
+import kr.hhplus.be.server.common.exception.domain.UserException;
+import kr.hhplus.be.server.common.exception.enums.ErrorCode;
 import kr.hhplus.be.server.domain.concert.ConcertRepository;
+import kr.hhplus.be.server.domain.concertDate.ConcertDate;
 import kr.hhplus.be.server.domain.enums.ReservationStatus;
 import kr.hhplus.be.server.domain.enums.SeatStatus;
 import kr.hhplus.be.server.domain.reservation.Reservation;
@@ -12,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,27 +45,40 @@ public class ReservationService {
      * @param userId 사용자 ID
      * @param seatId 임시 배정할 좌석 ID
      * @return 생성된 Reservation 객체
-     * @throws IllegalArgumentException 사용자, 좌석을 찾을 수 없거나 좌석이 AVAILABLE이 아닐 때
+     * @throws UserException 사용자를 찾을 수 없을 때
+     * @throws ConcertException 좌석을 찾을 수 없거나 좌석이 AVAILABLE이 아닐 때
+     * @throws ReservationException 예약 마감 기한이 지났을 때
      */
     @Transactional(isolation = Isolation.READ_COMMITTED) // 비관적 락 + 읽기 커밋된 데이터
     public Reservation reserveSeatTemporarily(String userId, String seatId) {
         // 1. 사용자 확인
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+                .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND, userId));
 
         // 2. 좌석 상태 확인 및 락 (비관적 락)
         Seat seat = concertRepository.findSeatByIdForUpdate(seatId) // 좌석에 락을 걸고 조회
-                .orElseThrow(() -> new IllegalArgumentException("좌석을 찾을 수 없습니다: " + seatId));
+                .orElseThrow(() -> new ConcertException(ErrorCode.SEAT_NOT_FOUND, "좌석을 찾을 수 없습니다: " + seatId));
 
-        if (seat.getStatus() != SeatStatus.AVAILABLE) {
-            throw new IllegalArgumentException("선택하신 좌석은 현재 예약 가능 상태가 아닙니다.");
+        // 3. 콘서트 날짜 확인 및 마감 기한 검사
+        ConcertDate concertDate = concertRepository.findConcertDateById(seat.getConcertDate().getId())
+                .orElseThrow(() -> new ConcertException(ErrorCode.CONCERT_DATE_NOT_FOUND, "연관된 콘서트 날짜를 찾을 수 없습니다."));
+
+        if (concertDate.getDeadline() != null && concertDate.getDeadline().isBefore(LocalDateTime.now())) {
+            throw new ReservationException(ErrorCode.DEADLINE_PASSED, "해당 콘서트 날짜는 예약 마감 기한이 지났습니다.");
         }
 
-        // 3. 좌석 상태 변경 (AVAILABLE -> RESERVED)
+        if (seat.getStatus() != SeatStatus.AVAILABLE) {
+            if(seat.getStatus() == SeatStatus.RESERVED) {
+                throw new ConcertException(ErrorCode.SEAT_ALREADY_RESERVED);
+            }
+            throw new ConcertException(ErrorCode.SEAT_NOT_AVAILABLE);
+        }
+
+        // 4. 좌석 상태 변경 (AVAILABLE -> RESERVED)
         seat.setStatus(SeatStatus.RESERVED);
         concertRepository.saveSeat(seat); // 변경된 좌석 상태 저장
 
-        // 4. 예약 레코드 생성 (상태: PENDING)
+        // 5. 예약 레코드 생성 (상태: PENDING)
         String reservationId = UUID.randomUUID().toString();
         Reservation reservation = new Reservation(reservationId, user, seat, ReservationStatus.PENDING);
         return reservationRepository.save(reservation);
@@ -73,18 +92,18 @@ public class ReservationService {
      * 사용자의 잔액을 차감하고, 결제 상태를 기록합니다.
      * @param reservationId 확정할 예약 ID
      * @return 확정된 Reservation 객체
-     * @throws IllegalArgumentException 예약을 찾을 수 없거나 이미 확정된 경우, 또는 결제 실패 시
+     * @throws ReservationException 예약을 찾을 수 없거나 이미 확정된 경우, 또는 유효하지 않은 상태일 때
      */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Reservation confirmReservation(String reservationId) {
         Reservation reservation = reservationRepository.findByIdForUpdate(reservationId) // 예약에 락을 걸고 조회
-                .orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다: " + reservationId));
+                .orElseThrow(() -> new ReservationException(ErrorCode.RESERVATION_NOT_FOUND, reservationId));
 
         if (reservation.getStatus() == ReservationStatus.SUCCESS) {
-            throw new IllegalArgumentException("이미 확정된 예약입니다.");
+            throw new ReservationException(ErrorCode.RESERVATION_ALREADY_CONFIRMED);
         }
         if (reservation.getStatus() == ReservationStatus.CANCELLED || reservation.getStatus() == ReservationStatus.FAILED) {
-            throw new IllegalArgumentException("취소되거나 실패한 예약은 확정할 수 없습니다.");
+            throw new ReservationException(ErrorCode.RESERVATION_INVALID_STATUS, "취소되거나 실패한 예약은 확정할 수 없습니다.");
         }
 
         // TODO: 실제 결제 서비스 호출 및 결제 처리 로직 추가 (UserService.useBalance 호출)
@@ -113,15 +132,15 @@ public class ReservationService {
      * 예약을 취소하고 좌석 상태를 AVAILABLE로 되돌립니다.
      * @param reservationId 취소할 예약 ID
      * @return 취소된 Reservation 객체
-     * @throws IllegalArgumentException 예약을 찾을 수 없거나 이미 취소된 경우
+     * @throws ReservationException 예약을 찾을 수 없거나 이미 취소된 경우
      */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public Reservation cancelReservation(String reservationId) {
         Reservation reservation = reservationRepository.findByIdForUpdate(reservationId) // 예약에 락을 걸고 조회
-                .orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다: " + reservationId));
+                .orElseThrow(() -> new ReservationException(ErrorCode.RESERVATION_NOT_FOUND, "예약을 찾을 수 없습니다: " + reservationId));
 
         if (reservation.getStatus() == ReservationStatus.CANCELLED) {
-            throw new IllegalArgumentException("이미 취소된 예약입니다.");
+            throw new ReservationException(ErrorCode.RESERVATION_INVALID_STATUS, "이미 취소된 예약입니다.");
         }
 
         // 예약 상태를 CANCELLED로 변경
@@ -149,8 +168,13 @@ public class ReservationService {
      * 특정 사용자 ID의 예약 목록을 조회합니다.
      * @param userId 사용자 ID
      * @return 예약 목록
+     * @throws UserException 사용자를 찾을 수 없을 때 (선택 사항: 예외 대신 빈 리스트 반환도 고려)
      */
     public List<Reservation> getReservationsByUserId(String userId) {
+        // 사용자 존재 여부 확인 (필수 아님, 사용자 없는 경우 빈 리스트 반환도 가능)
+        userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND, userId));
+
         return reservationRepository.findByUserId(userId);
     }
 }

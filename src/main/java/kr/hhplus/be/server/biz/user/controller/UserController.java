@@ -40,14 +40,18 @@ public class UserController {
      * 특정 ID의 사용자 정보를 조회합니다.
      * GET /api/users/{userId}
      * @param userId 조회할 사용자의 ID
-     * @return 조회된 사용자 정보
+     * @return 조회된 사용자 정보 (UserResponse DTO)
      */
     @GetMapping("/{userId}")
     public ResponseEntity<UserResponse> getUser(@PathVariable String userId) {
-        return userService.getUser(userId)
-                .map(UserResponse::from)
-                .map(response -> new ResponseEntity<>(response, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        // 서비스 계층에서 User 객체를 직접 가져옵니다.
+        // User를 찾지 못하면 UserService에서 UserException(NOT_FOUND)을 던지고,
+        // GlobalExceptionHandler가 이를 처리하여 404 NOT_FOUND 응답을 반환할 것입니다.
+        User user = userService.getUser(userId);
+        // 가져온 User 객체를 UserResponse DTO로 변환합니다.
+        UserResponse response = UserResponse.from(user);
+        // 변환된 DTO를 OK 상태 코드와 함께 반환합니다.
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     /**

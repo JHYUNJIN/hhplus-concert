@@ -1,5 +1,7 @@
 package kr.hhplus.be.server.biz.user.service;
 
+import kr.hhplus.be.server.common.exception.domain.UserException;
+import kr.hhplus.be.server.common.exception.enums.ErrorCode;
 import kr.hhplus.be.server.domain.user.User;
 import kr.hhplus.be.server.domain.user.UserRepository;
 import org.springframework.stereotype.Service;
@@ -41,10 +43,12 @@ public class UserService {
     /**
      * 특정 ID의 사용자를 조회합니다.
      * @param userId 조회할 사용자의 ID
-     * @return 조회된 User 객체 (Optional)
+     * @return 조회된 User 객체
+     * @throws UserException 사용자를 찾을 수 없을 때 (ErrorCode.USER_NOT_FOUND)
      */
-    public Optional<User> getUser(String userId) {
-        return userRepository.findById(userId);
+    public User getUser(String userId) { // 반환 타입을 Optional<User>에서 User로 변경
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND, userId));
     }
 
     /**
@@ -55,26 +59,28 @@ public class UserService {
         return userRepository.findAll();
     }
 
+
+
     /**
      * 사용자의 잔액을 충전합니다. (비관적 락 사용)
      * @param userId 충전할 사용자의 ID
      * @param amount 충전할 금액
      * @return 업데이트된 User 객체
-     * @throws IllegalArgumentException 사용자를 찾을 수 없거나 금액이 유효하지 않을 때
+     * @throws UserException 사용자를 찾을 수 없거나 금액이 유효하지 않을 때
      */
     @Transactional(isolation = Isolation.READ_COMMITTED) // 동시성 제어를 위해 READ_COMMITTED 이상 사용 고려
+    // 비관적 락을 걸어 해당 사용자 레코드에 대한 동시 접근을 제어 (FOR UPDATE)
+    // 참고) 비관적 락이란 데이터베이스에서 특정 레코드에 대해 다른 트랜잭션이 접근하지 못하도록 잠그는 방식입니다.
     public User chargeBalance(String userId, BigDecimal amount) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("충전 금액은 0보다 커야 합니다.");
+            throw new UserException(ErrorCode.INVALID_CHARGE_AMOUNT);
         }
 
-        // 비관적 락을 걸어 해당 사용자 레코드에 대한 동시 접근을 제어 (FOR UPDATE)
-        // 참고) 비관적 락이란 데이터베이스에서 특정 레코드에 대해 다른 트랜잭션이 접근하지 못하도록 잠그는 방식입니다.
         User user = userRepository.findByIdForUpdate(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+                .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND,  userId));
 
-        user.setAmount(user.getAmount().add(amount)); // 금액 충전
-        return userRepository.save(user); // 변경된 금액 저장
+        user.setAmount(user.getAmount().add(amount));
+        return userRepository.save(user);
     }
 
     /**
@@ -82,23 +88,22 @@ public class UserService {
      * @param userId 금액을 사용할 사용자의 ID
      * @param amount 사용할 금액
      * @return 업데이트된 User 객체
-     * @throws IllegalArgumentException 사용자를 찾을 수 없거나 금액이 부족할 때
+     * @throws UserException 사용자를 찾을 수 없거나 잔액이 부족할 때
      */
-    @Transactional(isolation = Isolation.READ_COMMITTED) // 동시성 제어를 위해 READ_COMMITTED 이상 사용 고려
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public User useBalance(String userId, BigDecimal amount) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("사용 금액은 0보다 커야 합니다.");
+            throw new UserException(ErrorCode.INVALID_USE_AMOUNT);
         }
 
-        // 비관적 락을 걸어 해당 사용자 레코드에 대한 동시 접근을 제어 (FOR UPDATE)
         User user = userRepository.findByIdForUpdate(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+                .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND, userId));
 
         if (user.getAmount().compareTo(amount) < 0) {
-            throw new IllegalArgumentException("잔액이 부족합니다. 현재 잔액: " + user.getAmount() + ", 요청 금액: " + amount);
+            throw new UserException(ErrorCode.INSUFFICIENT_BALANCE);
         }
 
-        user.setAmount(user.getAmount().subtract(amount)); // 금액 사용
-        return userRepository.save(user); // 변경된 금액 저장
+        user.setAmount(user.getAmount().subtract(amount));
+        return userRepository.save(user);
     }
 }
