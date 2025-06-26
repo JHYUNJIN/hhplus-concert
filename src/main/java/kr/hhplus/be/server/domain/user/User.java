@@ -1,9 +1,9 @@
 // src/main/java/kr/hhplus/be/server/domain/User.java
-package kr.hhplus.be.server.domain;
+package kr.hhplus.be.server.domain.user;
 
 import jakarta.persistence.*;
-import kr.hhplus.be.server.domain.Payment;
-import kr.hhplus.be.server.domain.Reservation;
+import kr.hhplus.be.server.domain.payment.Payment;
+import kr.hhplus.be.server.domain.reservation.Reservation;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
