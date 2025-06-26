@@ -1,7 +1,10 @@
 // src/main/java/kr/hhplus/be/server/domain/Reservation.java
-package kr.hhplus.be.server.domain;
+package kr.hhplus.be.server.domain.reservation;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.domain.payment.Payment;
+import kr.hhplus.be.server.domain.seat.Seat;
+import kr.hhplus.be.server.domain.user.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,7 +33,7 @@ public class Reservation {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seat_id", nullable = false)
-    private kr.hhplus.be.server.domain.Seat seat; // 좌석 ID (Seat 엔티티 참조)
+    private Seat seat; // 좌석 ID (Seat 엔티티 참조)
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -49,7 +52,7 @@ public class Reservation {
     private List<Payment> payments = new ArrayList<>();
 
     // 편의를 위한 생성자
-    public Reservation(String id, User user, kr.hhplus.be.server.domain.Seat seat, kr.hhplus.be.server.domain.enums.ReservationStatus status) {
+    public Reservation(String id, User user, Seat seat, kr.hhplus.be.server.domain.enums.ReservationStatus status) {
         this.id = id;
         this.user = user;
         this.seat = seat;
