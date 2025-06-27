@@ -28,4 +28,23 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/hhplus?characterEncoding=UTF-8&serverTimezone=UTC
     username: application
-    password: application
+    password: applicationlogging:
+
+logging:
+  level:
+    root: INFO
+    kr.hhplus.be: DEBUG         # 개발 중 DEBUG, 운영 땐 INFO로 관리
+    org.springframework: WARN
+    org.hibernate.SQL: OFF      # SQL은 로그로 남기지 않음 (보안 + 성능)
+    org.hibernate.orm.jdbc.bind: OFF
+    org.flywaydb: INFO
+    com.zaxxer.hikari: INFO
+
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level : %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level : %msg%n"
+
+#  file:
+#    name: ./logs/application.log
+#    max-size: 50MB              # 용량 기준 롤링
+#    max-history: 14             # 최근 2주 로그 보관
