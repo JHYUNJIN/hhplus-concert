@@ -1,5 +1,8 @@
 package kr.hhplus.be.server.application.user;
 
+import kr.hhplus.be.server.application.user.dto.RegisterUserCommand;
+import kr.hhplus.be.server.application.user.dto.UserCommand;
+import kr.hhplus.be.server.application.user.dto.UserQueryResult;
 import kr.hhplus.be.server.common.exception.domain.UserException;
 import kr.hhplus.be.server.common.exception.enums.ErrorCode;
 import kr.hhplus.be.server.domain.user.User;
@@ -24,38 +27,56 @@ public class UserService {
 
     /**
      * 새로운 사용자를 등록하고 초기 금액을 설정합니다.
-     * @param initialAmount 초기 보유 금액
-     * @return 생성된 User 객체
+     * 사용자 ID는 커맨드에서 제공되며, 초기 금액도 설정됩니다.
+     * @param command 사용자 등록 커맨드 (userId, initialAmount 포함)
+     * @return 생성된 UserQueryResult 객체
+     * @throws UserException 사용자 ID가 이미 존재할 경우 (ErrorCode.BAD_REQUEST)
      */
     @Transactional
-    public User registerUser(BigDecimal initialAmount) {
-        String userId = UUID.randomUUID().toString();
-        // ID 중복 여부 확인은 UUID의 특성상 거의 불필요하지만, 로직상으로는 존재할 수 있음
+    public UserQueryResult registerUser(RegisterUserCommand command) { // 파라미터 이름을 'command'로 변경
+        // 1. 커맨드로부터 받은 userId 사용 (UUID.randomUUID() 생성 로직 제거)
+        String userId = command.getUserId();
+
+        // 2. 사용자 ID 중복 여부 확인
         if (userRepository.existsById(userId)) {
-            // 적절한 예외 처리: 예를 들어, UUID 생성 충돌 시 재시도 로직
-            throw new IllegalStateException("Failed to generate unique user ID.");
+            throw new UserException(ErrorCode.BAD_REQUEST, "이미 존재하는 사용자 ID입니다: " + userId);
         }
-        User newUser = new User(userId, initialAmount);
-        return userRepository.save(newUser);
+
+        // 3. 새로운 User 엔티티 생성 (command에서 받은 userId와 initialAmount 사용)
+        User newUser = new User(userId, command.getInitialAmount());
+
+        // 4. User 엔티티 저장
+        User savedUser = userRepository.save(newUser);
+
+        // 5. UserQueryResult로 변환하여 반환
+        return UserQueryResult.from(savedUser);
     }
+
 
     /**
      * 특정 ID의 사용자를 조회합니다.
-     * @param userId 조회할 사용자의 ID
+//     * @param userId 조회할 사용자의 ID
      * @return 조회된 User 객체
      * @throws UserException 사용자를 찾을 수 없을 때 (ErrorCode.USER_NOT_FOUND)
      */
-    public User getUser(String userId) { // 반환 타입을 Optional<User>에서 User로 변경
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND, userId));
+    public UserQueryResult getUser(UserCommand userCommand) {
+        // userRepository.findById는 Optional<User>를 반환합니다.
+        // Optional이 비어있으면 UserException을 발생시킵니다.
+        User user = userRepository.findById(userCommand.getUserId())
+                .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다: " + userCommand.getUserId()));
+
+        // 조회된 User 엔티티를 UserQueryResult DTO로 변환하여 반환합니다.
+        return UserQueryResult.from(user);
     }
 
     /**
      * 모든 사용자를 조회합니다.
      * @return 모든 User 객체 리스트
      */
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserQueryResult> getAllUsers() {
+         return userRepository.findAll().stream()
+                .map(UserQueryResult::from) // User 엔티티를 UserQueryResult DTO로 변환
+                .toList(); // List<UserQueryResult>로 변환하여 반환
     }
 
 
@@ -70,7 +91,7 @@ public class UserService {
     @Transactional(isolation = Isolation.READ_COMMITTED) // 동시성 제어를 위해 READ_COMMITTED 이상 사용 고려
     // 비관적 락을 걸어 해당 사용자 레코드에 대한 동시 접근을 제어 (FOR UPDATE)
     // 참고) 비관적 락이란 데이터베이스에서 특정 레코드에 대해 다른 트랜잭션이 접근하지 못하도록 잠그는 방식입니다.
-    public User chargeBalance(String userId, BigDecimal amount) {
+    public UserQueryResult chargeBalance(String userId, BigDecimal amount) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new UserException(ErrorCode.INVALID_CHARGE_AMOUNT);
         }
@@ -79,7 +100,8 @@ public class UserService {
                 .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND,  userId));
 
         user.setAmount(user.getAmount().add(amount));
-        return userRepository.save(user);
+        userRepository.save(user);
+        return UserQueryResult.from(user);
     }
 
     /**
