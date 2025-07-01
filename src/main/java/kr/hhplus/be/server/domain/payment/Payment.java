@@ -1,63 +1,46 @@
-// src/main/java/kr/hhplus/be/server/domain/Payment.java
 package kr.hhplus.be.server.domain.payment;
-
-import jakarta.persistence.*;
-import kr.hhplus.be.server.domain.reservation.Reservation;
-import kr.hhplus.be.server.domain.user.User;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import kr.hhplus.be.server.domain.enums.PaymentStatus;
+import java.util.UUID;
 
-@Entity
-@Table(name = "PAYMENT")
-@Getter
-@Setter
-@NoArgsConstructor
-public class Payment {
+import lombok.Builder;
 
-    @Id
-    @Column(name = "id", length = 36, nullable = false)
-    private String id; // 결제 UUID
+@Builder
+public record Payment(
+        UUID id,
+        UUID userId,
+        UUID reservationId,
+        BigDecimal amount,
+        PaymentStatus status,
+        String failureReason,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
+) {
+    public static Payment of(UUID userId, UUID reservationId, BigDecimal amount) {
+        return Payment.builder()
+                .userId(userId)
+                .reservationId(reservationId)
+                .amount(amount)
+                .status(PaymentStatus.PENDING)
+                .build();
+    }
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false) // user_id 컬럼이 User 엔티티의 id를 참조
-    private User user; // 사용자 ID (User 엔티티 참조)
+    public Payment success() {
+        return Payment.builder()
+                .id(id)
+                .userId(userId)
+                .reservationId(reservationId)
+                .amount(amount)
+                .status(PaymentStatus.SUCCESS)
+                .build();
+    }
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reservation_id", nullable = false)
-    private Reservation reservation; // 예약 ID (Reservation 엔티티 참조)
+    public boolean isPaid() {
+        return status.equals(PaymentStatus.SUCCESS);
+    }
 
-    @Column(name = "amount", nullable = false, precision = 10, scale = 0)
-    private BigDecimal amount; // 결제 금액
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private PaymentStatus status; // 결제 상태
-
-    @Column(name = "failure_reason", columnDefinition = "TEXT") // TEXT 타입 매핑
-    private String failureReason; // 결제 실패 사유
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
-    // 편의를 위한 생성자
-    public Payment(String id, User user, Reservation reservation, BigDecimal amount, PaymentStatus status, String failureReason) {
-        this.id = id;
-        this.user = user;
-        this.reservation = reservation;
-        this.amount = amount;
-        this.status = status;
-        this.failureReason = failureReason;
+    public boolean checkAmount() {
+        return amount().compareTo(BigDecimal.ZERO) > 0;
     }
 }

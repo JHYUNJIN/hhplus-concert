@@ -38,11 +38,11 @@ public class User {
     private LocalDateTime updatedAt; // 수정일시
 
     // 양방향 관계 설정 (선택 사항)
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Reservation> reservations = new ArrayList<>();
+//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<Reservation> reservations = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Payment> payments = new ArrayList<>();
+//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<Payment> payments = new ArrayList<>();
 
     // 편의를 위한 생성자
     public User(String id, BigDecimal amount) {

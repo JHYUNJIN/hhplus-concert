@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.infrastructure.web.user;
+package kr.hhplus.be.server.infrastructure.api.user;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,9 +11,9 @@ import kr.hhplus.be.server.application.user.UserService;
 import kr.hhplus.be.server.application.user.dto.RegisterUserCommand;
 import kr.hhplus.be.server.application.user.dto.UserCommand;
 import kr.hhplus.be.server.application.user.dto.UserQueryResult;
-import kr.hhplus.be.server.infrastructure.web.user.dto.request.UserChargeWebRequest;
-import kr.hhplus.be.server.infrastructure.web.user.dto.request.UserRegisterWebRequest;
-import kr.hhplus.be.server.infrastructure.web.user.dto.response.UserWebResponse;
+import kr.hhplus.be.server.infrastructure.api.user.dto.request.UserChargeWebRequest;
+import kr.hhplus.be.server.infrastructure.api.user.dto.request.UserRegisterWebRequest;
+import kr.hhplus.be.server.infrastructure.api.user.dto.response.UserWebResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 @Tag(name = "User API", description = "유저 관련 API")
 public class UserController {
@@ -33,11 +33,11 @@ public class UserController {
     /**
      * 새로운 사용자를 등록합니다.
      * 클라이언트로부터 사용자 ID를 받습니다. 초기 금액은 0으로 설정됩니다.
-     * POST /api/users
+     * POST /api/v1/users
      * @param request 사용자 등록 요청 정보 (userId 포함)
      * @return 생성된 사용자 정보
      */
-    @PostMapping // 이 메서드가 POST /api/users 요청을 처리합니다.
+    @PostMapping // 이 메서드가 POST /api/v1/users 요청을 처리합니다.
     @Operation(summary = "사용자 등록", description = "새로운 사용자를 등록합니다. 클라이언트에서 사용자 ID를 받습니다. 초기 금액은 0으로 설정됩니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "사용자 등록 성공",
@@ -60,7 +60,7 @@ public class UserController {
 
     /**
      * 특정 ID의 사용자 정보를 조회합니다.
-     * GET /api/users/{userId}
+     * GET /api/v1/users/{userId}
      * @param userId 조회할 사용자의 ID
      * @return 조회된 사용자 정보 (UserResponse DTO)
      */
@@ -87,7 +87,7 @@ public class UserController {
     public ResponseEntity<UserWebResponse> getUser(@PathVariable String userId) {
         // 가져온 User 객체를 UserResponse DTO로 변환합니다.
         UserCommand userCommand = new UserCommand(userId);
-        UserQueryResult userQueryResult = userService.getUser(userCommand);
+        UserQueryResult userQueryResult = userService.getUser(userCommand.getUserId());
         UserWebResponse response = UserWebResponse.from(userQueryResult);
         // 변환된 DTO를 OK 상태 코드와 함께 반환합니다.
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -95,7 +95,7 @@ public class UserController {
 
     /**
      * 모든 사용자 정보를 조회합니다.
-     * GET /api/users
+     * GET /api/v1/users
      * @return 모든 사용자 정보 리스트 (UserWebResponse DTO)
      */
     @GetMapping
@@ -129,7 +129,7 @@ public class UserController {
 
     /**
      * 사용자의 잔액을 충전합니다.
-     * POST /api/users/charge
+     * POST /api/v1/users/charge
      * @param request 충전 요청 정보 (userId, amount)
      * @return 업데이트된 사용자 정보
      */

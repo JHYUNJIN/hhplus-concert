@@ -1,10 +1,10 @@
 package kr.hhplus.be.server.infrastructure.persistence.user; // 해당 기능 모듈의 repository 폴더
 
-import kr.hhplus.be.server.domain.user.User; // User 엔티티 임포트
+import jakarta.persistence.LockModeType;
+import kr.hhplus.be.server.domain.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
-import jakarta.persistence.LockModeType;
 
 import java.util.Optional;
 

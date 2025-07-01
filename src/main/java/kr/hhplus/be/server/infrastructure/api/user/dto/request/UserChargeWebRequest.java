@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.infrastructure.web.user.dto.request;
+package kr.hhplus.be.server.infrastructure.api.user.dto.request;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;

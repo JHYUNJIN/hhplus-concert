@@ -1,5 +1,5 @@
 // src/main/java/kr/hhplus/be/infrastructure/web/user/dto/request/UserRegisterWebRequest.java
-package kr.hhplus.be.server.infrastructure.web.user.dto.request;
+package kr.hhplus.be.server.infrastructure.api.user.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
