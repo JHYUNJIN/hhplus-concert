@@ -1,92 +1,171 @@
 package kr.hhplus.be.server.application.concert;
 
-import kr.hhplus.be.server.common.exception.ConcertException;
+import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.enums.ErrorCode;
 import kr.hhplus.be.server.domain.concert.Concert;
 import kr.hhplus.be.server.domain.concert.ConcertRepository;
-import kr.hhplus.be.server.domain.concert.ConcertDate;
-import kr.hhplus.be.server.domain.enums.SeatStatus;
-import kr.hhplus.be.server.domain.concert.Seat;
+import kr.hhplus.be.server.domain.concertDate.ConcertDate;
+import kr.hhplus.be.server.domain.concertDate.ConcertDateRepository;
+import kr.hhplus.be.server.domain.seat.*;
+import kr.hhplus.be.server.infrastructure.persistence.concert.ConcertEntity;
+import kr.hhplus.be.server.infrastructure.persistence.concertDate.ConcertDateEntity;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Service
-@Transactional(readOnly = true)
+@RequiredArgsConstructor
+@Transactional(readOnly = false)
+@Slf4j
 public class ConcertService {
 
     private final ConcertRepository concertRepository;
+    private final ConcertDateRepository concertDateRepository;
+    private final SeatRepository seatRepository;
 
-    public ConcertService(ConcertRepository concertRepository) {
-        this.concertRepository = concertRepository;
+    // 콘서트 생성
+    public Concert createConcert(String title, String artist) {
+        Concert concert = Concert.builder()
+                .title(title)
+                .artist(artist)
+                .createdAt(LocalDateTime.now())
+                .build();
+        Concert savedConcert = concertRepository.save(concert);
+        ConcertEntity concertEntity = ConcertEntity.from(savedConcert);
+        if (concertEntity == null) {
+            log.error("ConcertEntity 변환 실패: savedConcert = {}", savedConcert);
+            throw new CustomException(ErrorCode.CONCERT_CREATION_FAILED);
+        }
+        return concertEntity.toDomain();
     }
 
-    /**
-     * 모든 콘서트 목록을 조회합니다.
-     * @return 콘서트 목록
-     */
-    public List<Concert> getAllConcerts() {
-        return concertRepository.findAll();
+    @Transactional
+    public ConcertDate createConcertDateWithSeat(UUID concertId, LocalDateTime date, LocalDateTime deadline) {
+        // 1. 콘서트 존재 여부 확인
+        existsConcert(concertId);
+
+        ConcertDate concertDate = ConcertDate.builder()
+                .concertId(concertId)
+                .date(date)
+                .deadline(deadline)
+                .build();
+
+        // 2. 콘서트 날짜 생성
+        ConcertDate savedConcertDate = concertDateRepository.save(concertDate);
+        if (savedConcertDate == null || savedConcertDate.id() == null) {
+            log.error("콘서트 날짜 생성 실패: savedConcertDate = {}", savedConcertDate);
+            throw new CustomException(ErrorCode.CONCERT_DATE_CREATION_FAILED);
+        }
+
+        // 3. 콘서트 날짜에 대한 좌석 생성
+        createSeatsForConcertDate(savedConcertDate.id());
+
+        ConcertDateEntity concertDateEntity = ConcertDateEntity.from(savedConcertDate);
+        if (concertDateEntity == null) {
+            log.error("ConcertDateEntity 변환 실패: savedConcertDate = {}", savedConcertDate);
+            throw new CustomException(ErrorCode.CONCERT_DATE_CREATION_FAILED);
+        }
+
+        return concertDateEntity.toDomain();
     }
 
-    /**
-     * 특정 콘서트의 모든 공연 가능한 날짜를 조회합니다.
-     * 예약 마감 기한(deadline)이 지나지 않은 날짜만 반환합니다.
-     * @param concertId 콘서트 ID
-     * @return 해당 콘서트의 공연 가능한 날짜 목록
-     * @throws ConcertException 콘서트를 찾을 수 없을 때
-     */
-    public List<ConcertDate> getAvailableConcertDates(String concertId) {
-        // 먼저 콘서트 존재 여부 확인 (옵션: 하지만 ID로 날짜를 찾기 전에 확인하는 것이 좋음)
-        concertRepository.findById(concertId)
-                .orElseThrow(() -> new ConcertException(ErrorCode.CONCERT_NOT_FOUND, "콘서트를 찾을 수 없습니다: " + concertId));
-
-        List<ConcertDate> concertDates = concertRepository.findConcertDatesByConcertId(concertId);
-        LocalDateTime now = LocalDateTime.now();
-        return concertDates.stream()
-                .filter(cd -> cd.getDate().isAfter(now) && (cd.getDeadline() == null || cd.getDeadline().isAfter(now)))
-                .collect(Collectors.toList());
+    // 콘서트 목록 조회
+    public List<Concert> getConcerts() {
+        List<Concert> concerts = concertRepository.findAll();
+        if (concerts.isEmpty()) {
+            log.debug("콘서트 목록 조회 - 없음");
+            return Collections.emptyList();
+        }
+        log.debug("콘서트 목록 조회: {}", concerts);
+        return concerts;
     }
 
-    /**
-     * 특정 콘서트 날짜의 이용 가능한 좌석 목록을 조회합니다.
-     * @param concertDateId 콘서트 날짜 ID
-     * @return 이용 가능한 좌석 목록 (SeatStatus.AVAILABLE)
-     * @throws ConcertException 콘서트 날짜를 찾을 수 없을 때
-     */
-    public List<Seat> getAvailableSeats(String concertDateId) {
-        // 콘서트 날짜 존재 여부 확인
-        concertRepository.findConcertDateById(concertDateId)
-                .orElseThrow(() -> new ConcertException(ErrorCode.CONCERT_DATE_NOT_FOUND, "콘서트 날짜를 찾을 수 없습니다: " + concertDateId));
-
-        List<Seat> seats = concertRepository.findSeatsByConcertDateId(concertDateId);
-        return seats.stream()
-                .filter(seat -> seat.getStatus() == SeatStatus.AVAILABLE)
-                .collect(Collectors.toList());
+    // 콘서트 예약 가능한 날짜 조회
+    public List<ConcertDate> getAvailableConcertDates(UUID concertId) throws CustomException {
+        existsConcert(concertId);
+        log.debug("예약 가능한 콘서트 날짜 조회: CONCERT_ID - {}", concertId);
+        return concertDateRepository.findAvailableDatesWithAvailableSeatCount(concertId);
     }
 
-    /**
-     * 특정 ID의 콘서트를 조회합니다.
-     * @param concertId 조회할 콘서트 ID
-     * @return 조회된 Concert 객체
-     * @throws ConcertException 콘서트를 찾을 수 없을 때
-     */
-    public Concert getConcertById(String concertId) { // Optional 대신 Concert를 직접 반환
-        return concertRepository.findById(concertId)
-                .orElseThrow(() -> new ConcertException(ErrorCode.CONCERT_NOT_FOUND, "콘서트를 찾을 수 없습니다: " + concertId));
+    // 콘서트 예약 가능한 좌석 조회
+    public List<Seat> getAvailableSeats(UUID concertId, UUID concertDateId) throws CustomException {
+        existsConcert(concertId);
+
+        List<Seat> availableSeats = seatRepository.findAvailableSeats(concertId, concertDateId);
+
+        if (availableSeats.isEmpty()) {
+            existsConcertDate(concertDateId);
+
+            log.debug("콘서트 예약 가능 좌석 조회 - 없음: CONCERT_DATE_ID - {}", concertDateId);
+            return Collections.emptyList();
+        }
+
+        return availableSeats;
     }
 
-    /**
-     * 특정 ID의 콘서트 날짜를 조회합니다.
-     * @param concertDateId 조회할 콘서트 날짜 ID
-     * @return 조회된 ConcertDate 객체
-     * @throws ConcertException 콘서트 날짜를 찾을 수 없을 때
-     */
-    public ConcertDate getConcertDateById(String concertDateId) { // Optional 대신 ConcertDate를 직접 반환
-        return concertRepository.findConcertDateById(concertDateId)
-                .orElseThrow(() -> new ConcertException(ErrorCode.CONCERT_DATE_NOT_FOUND, "콘서트 날짜를 찾을 수 없습니다: " + concertDateId));
+    // 콘서트 조회
+    private void existsConcert(UUID concertId) throws CustomException {
+        if (!concertRepository.existsById(concertId)) {
+            log.warn("콘서트 조회 실패: CONCERT_ID - {}", concertId);
+            throw new CustomException(ErrorCode.CONCERT_NOT_FOUND);
+        }
+
+        log.debug("콘서트 조회: CONCERT_ID - {}", concertId);
+    }
+
+    // 콘서트 날짜 조회
+    private void existsConcertDate(UUID concertDateId) throws CustomException {
+        if (!concertDateRepository.existsById(concertDateId)) {
+            log.warn("콘서트 예약 가능 좌석 조회 실패: CONCERT_DATE_ID - {}", concertDateId);
+            throw new CustomException(ErrorCode.CANNOT_RESERVATION_DATE);
+        }
+    }
+
+
+    // 콘서트 날짜에 대한 좌석 생성
+    public void createSeatsForConcertDate(UUID concertDateId) {
+        ConcertDate concertDate = concertDateRepository.findById(concertDateId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CANNOT_RESERVATION_DATE));
+
+        // 좌석 생성 로직 (예: 50개의 좌석 생성) 1~10:vip 11~30:premium 31~50:normal
+        // 좌석별 가격 설정 (예: vip 170000, premium 130000, normal 90000)
+        SeatStatus seatStatus = SeatStatus.AVAILABLE;
+        System.out.println("🚀[로그:정현진] 01");
+        for (int i = 1; i <= 50; i++) {
+            System.out.println("🚀[로그:정현진] " + i + "번째 반복");
+            SeatGrade seatGrade;
+            BigDecimal price;
+            if (i <= 10) {
+                seatGrade = SeatGrade.VIP;
+            } else if (i <= 30) {
+                seatGrade = SeatGrade.PREMIUM;
+            } else {
+                seatGrade = SeatGrade.NORMAL;
+            }
+            price = SeatPrice.getPriceByGrade(seatGrade);
+
+
+        System.out.println("🚀[로그:정현진] 02");
+            Seat seat = Seat.builder()
+                    .concertDateId(concertDateId)
+                    .seatNo(i)
+                    .seatGrade(seatGrade)
+                    .price(price)
+                    .status(seatStatus)
+                    .build();
+
+        System.out.println("🚀[로그:정현진] 03");
+            log.debug("좌석 저장 시도: concertDateId={}, seatNo={}, seatId={}", concertDateId, i, seat.id());
+            seatRepository.save(seat);
+        }
+
+        log.info("콘서트 날짜에 대한 좌석 생성 완료: CONCERT_DATE_ID - {}", concertDateId);
     }
 }
