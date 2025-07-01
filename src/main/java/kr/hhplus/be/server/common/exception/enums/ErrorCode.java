@@ -28,6 +28,10 @@ public enum ErrorCode {
 
     // Concert Service Errors (콘서트 관련 오류)
     CONCERT_NOT_FOUND(HttpStatus.NOT_FOUND, "CT001", "콘서트를 찾을 수 없습니다."),
+    CANNOT_RESERVATION_DATE(HttpStatus.CONFLICT, "C002", "해당 날짜는 예약이 불가능 합니다."),
+    CONCERT_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CT003", "콘서트 생성에 실패했습니다."), // 콘서트 생성 실패
+    CONCERT_DATE_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CT004", "콘서트 날짜 생성에 실패했습니다."), // 콘서트 날짜 생성 실패
+    CONCERT_DATE_ALREADY_EXISTS(HttpStatus.CONFLICT, "CT005", "해당 콘서트 날짜는 이미 존재합니다."), // 콘서트 날짜 중복
     CONCERT_DATE_NOT_FOUND(HttpStatus.NOT_FOUND, "CT002", "콘서트 날짜를 찾을 수 없습니다."),
     SEAT_NOT_FOUND(HttpStatus.NOT_FOUND, "CT003", "좌석을 찾을 수 없습니다."),
     SEAT_NOT_AVAILABLE(HttpStatus.CONFLICT, "CT004", "해당 좌석은 현재 예약할 수 없습니다."), // CONFLICT로 변경
