@@ -11,12 +11,15 @@ spring:
       connection-timeout: 10000
       max-lifetime: 60000
     driver-class-name: com.mysql.cj.jdbc.Driver
+    # flyway 사용하려면 enabled: true로 변경 후 ddl-auto: none로 설정
+  flyway:
+    enabled: false
   jpa:
     open-in-view: false
     generate-ddl: false
     show-sql: false
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     properties:
       hibernate.timezone.default_storage: NORMALIZE_UTC
       hibernate.jdbc.time_zone: UTC
