@@ -1,52 +1,40 @@
-// src/main/java/kr/hhplus/be/server/domain/User.java
 package kr.hhplus.be.server.domain.user;
-
-import jakarta.persistence.*;
-import kr.hhplus.be.server.domain.payment.Payment;
-import kr.hhplus.be.server.domain.reservation.Reservation;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.UUID;
 
-@Entity
-@Table(name = "USER")
-@Getter
-@Setter
-@NoArgsConstructor
-public class User {
+import lombok.Builder;
 
-    @Id
-    @Column(name = "id", length = 36, nullable = false)
-    private String id; // 사용자 UUID
+@Builder
+public record User (
+        UUID id,
+        BigDecimal amount,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
+) {
 
-    @Column(name = "amount", nullable = false, precision = 10, scale = 0)
-    private BigDecimal amount; // 보유 금액
+   public User(BigDecimal amount, LocalDateTime createdAt, LocalDateTime updatedAt) {
+           this(null, amount, createdAt, updatedAt);
+       }
 
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt; // 생성일시
+    public User charge(BigDecimal point) {
+        return User.builder()
+                .id(id)
+                .amount(amount.add(point))
+                .updatedAt(updatedAt)
+                .build();
+    }
 
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt; // 수정일시
+    public User payment(BigDecimal balance) {
+        return User.builder()
+                .id(id)
+                .amount(amount.subtract(balance))
+                .updatedAt(updatedAt)
+                .build();
+    }
 
-    // 양방향 관계 설정 (선택 사항)
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Reservation> reservations = new ArrayList<>();
-
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Payment> payments = new ArrayList<>();
-
-    // 편의를 위한 생성자
-    public User(String id, BigDecimal amount) {
-        this.id = id;
-        this.amount = amount;
+    public boolean checkEnoughAmount(BigDecimal balance) {
+        return amount.compareTo(balance) >= 0;
     }
 }
