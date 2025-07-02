@@ -26,14 +26,4 @@ public class PaymentJpaGateway implements PaymentRepository {
                 .map(PaymentEntity::toDomain);
     }
 
-    @Override
-    public Optional<Payment> findByReservationIdForUpdate(UUID reservationId) {
-        return jpaPaymentRepository.findByReservationIdForUpdate(reservationId.toString())
-                .map(PaymentEntity::toDomain);
-    }
-
-    @Override
-    public void deleteAll() {
-        jpaPaymentRepository.deleteAll();
-    }
 }
