@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.infrastructure.api.concert.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import kr.hhplus.be.server.domain.concert.Concert;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -17,7 +18,7 @@ public record ConcertResponse(
     @Schema(description = "콘서트 생성일") LocalDateTime createdAt,
     @Schema(description = "콘서트 수정일") LocalDateTime updatedAt) {
 
-    public static ConcertResponse from(kr.hhplus.be.server.domain.concert.Concert concert) {
+    public static ConcertResponse from(Concert concert) {
         return ConcertResponse.builder()
                 .concertId(concert.id())
                 .title(concert.title())
