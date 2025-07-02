@@ -25,6 +25,8 @@ public enum ErrorCode {
     INSUFFICIENT_BALANCE(HttpStatus.BAD_REQUEST, "U002", "잔액이 부족합니다."),
     INVALID_CHARGE_AMOUNT(HttpStatus.BAD_REQUEST, "U003", "유효하지 않은 충전 금액입니다."),
     INVALID_USE_AMOUNT(HttpStatus.BAD_REQUEST, "U004", "유효하지 않은 사용 금액입니다."),
+    NOT_ENOUGH_MIN_CHARGE_POINT(HttpStatus.BAD_REQUEST, "U005", "최소 충전 금액은 1000원 이상이어야 합니다."), // 최소 충전 금액 오류
+    INVALID_USER_DATA(HttpStatus.BAD_REQUEST, "U006", "유효하지 않은 사용자 데이터입니다."), // 유저 데이터가 유효하지 않을 때
 
     // Concert Service Errors (콘서트 관련 오류)
     CONCERT_NOT_FOUND(HttpStatus.NOT_FOUND, "CT001", "콘서트를 찾을 수 없습니다."),
@@ -36,6 +38,10 @@ public enum ErrorCode {
     SEAT_NOT_FOUND(HttpStatus.NOT_FOUND, "CT003", "좌석을 찾을 수 없습니다."),
     SEAT_NOT_AVAILABLE(HttpStatus.CONFLICT, "CT004", "해당 좌석은 현재 예약할 수 없습니다."), // CONFLICT로 변경
     SEAT_ALREADY_RESERVED(HttpStatus.CONFLICT, "CT005", "해당 좌석은 이미 예약되었습니다."), // 추가
+    SEAT_LOCK_CONFLICT(HttpStatus.CONFLICT, "C007", "이미 다른 사용자가 예약중입니다."),
+    ALREADY_RESERVED_SEAT(HttpStatus.CONFLICT, "C006", "해당 좌석은 이미 예약되었습니다."),
+    OVER_DEADLINE(HttpStatus.BAD_REQUEST, "C004", "해당 날짜의 마감시간이 지났습니다."),
+    SEAT_NOT_HOLD(HttpStatus.CONFLICT, "C008", "해당 좌석은 임시 배정되어있지 않습니다."),
 
     // Reservation Service Errors (예약 관련 오류)
     RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "예약을 찾을 수 없습니다."),
@@ -48,7 +54,12 @@ public enum ErrorCode {
     PAYMENT_FAILED(HttpStatus.BAD_REQUEST, "P001", "결제에 실패했습니다."),
     PAYMENT_INVALID_AMOUNT(HttpStatus.BAD_REQUEST, "P002", "결제 금액이 일치하지 않습니다."),
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "P003", "결제 내역을 찾을 수 없습니다."),
-    PAYMENT_ALREADY_PROCESSED(HttpStatus.CONFLICT, "P004", "이미 처리된 결제입니다.");
+    PAYMENT_ALREADY_PROCESSED(HttpStatus.CONFLICT, "P004", "이미 처리된 결제입니다."),
+    INVALID_PAYMENT_AMOUNT(HttpStatus.BAD_REQUEST, "P003", "결제 금액이 잘못되었습니다."),
+    ALREADY_PAID(HttpStatus.BAD_REQUEST, "P002", "이미 결제되었습니다."),
+    // Queue Service Errors (대기열 관련 오류)
+    INVALID_QUEUE_TOKEN(HttpStatus.BAD_REQUEST, "Q001", "대기열 토큰이 유효하지 않습니다.");
+
 
 
     private final HttpStatus httpStatus;
