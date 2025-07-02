@@ -6,7 +6,6 @@ import kr.hhplus.be.server.domain.reservation.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -28,15 +27,5 @@ public class ReservationJpaGateway implements ReservationRepository {
                 .map(ReservationEntity::toDomain);
     }
 
-    @Override
-    public List<Reservation> findAll() {
-        return jpaReservationRepository.findAll().stream()
-                .map(ReservationEntity::toDomain)
-                .toList();
-    }
 
-    @Override
-    public void deleteAll() {
-        jpaReservationRepository.deleteAll();
-    }
 }

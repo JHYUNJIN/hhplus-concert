@@ -22,14 +22,14 @@ public class SeatJpaGateway implements SeatRepository {
     }
 
     @Override
-    public int updateStatusReserved(UUID seatId) {
-        return jpaSeatRepository.updateStatusReserved(seatId.toString());
-    }
-
-    @Override
     public Optional<Seat> findBySeatIdAndConcertDateId(UUID seatId, UUID concertDateId) {
         return jpaSeatRepository.findBySeatIdAndConcertDateId(seatId.toString(), concertDateId.toString())
                 .map(SeatEntity::toDomain);
+    }
+
+    @Override
+    public Integer countRemainingSeat(UUID concertDateId) {
+        return jpaSeatRepository.countRemainingSeat(concertDateId.toString());
     }
 
     @Override
@@ -43,11 +43,6 @@ public class SeatJpaGateway implements SeatRepository {
     public Optional<Seat> findById(UUID seatId) {
         return jpaSeatRepository.findById(seatId.toString())
                 .map(SeatEntity::toDomain);
-    }
-
-    @Override
-    public void deleteAll() {
-        jpaSeatRepository.deleteAll();
     }
 }
 

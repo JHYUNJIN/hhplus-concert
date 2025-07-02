@@ -1,7 +1,6 @@
 package kr.hhplus.be.server.infrastructure.persistence.seat;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
@@ -9,7 +8,7 @@ import java.util.Optional;
 
 public interface JpaSeatRepository extends JpaRepository<SeatEntity, String> {
 
-    @Query("""
+	@Query("""
 		select s
 		from SeatEntity s
 		     	inner join ConcertDateEntity cd ON cd.id = s.concertDateId
@@ -19,22 +18,21 @@ public interface JpaSeatRepository extends JpaRepository<SeatEntity, String> {
 			and s.status = 'AVAILABLE'
 		order by s.seatNo
 	""")
-    List<SeatEntity> findAvailableSeats(String concertId, String concertDateId);
+	List<SeatEntity> findAvailableSeats(String concertId, String concertDateId);
 
-    @Query("""
-		update SeatEntity
-			set status = 'RESERVED'
-		where id = :seatId
-			and status = 'AVAILABLE'
+	@Query("""
+		select count(s)
+		from SeatEntity s
+		where s.concertDateId = :concertDateId
+			and s.status = "AVAILABLE"
 	""")
-    @Modifying
-    int updateStatusReserved(String seatId);
+	Integer countRemainingSeat(String concertDateId);
 
-    @Query("""
+	@Query("""
 		select s
 		from SeatEntity s
 		where s.id = :seatId
 			and s.concertDateId = :concertDateId
 	""")
-    Optional<SeatEntity>  findBySeatIdAndConcertDateId(String seatId, String concertDateId);
+	Optional<SeatEntity> findBySeatIdAndConcertDateId(String seatId, String concertDateId);
 }
