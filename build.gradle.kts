@@ -37,6 +37,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-aop")
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
+//	implementation("org.springframework.boot:spring-boot-starter-security")
+
 
 
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
@@ -52,6 +54,9 @@ dependencies {
 	// DB
 	runtimeOnly("com.mysql:mysql-connector-j")
 	implementation("org.flywaydb:flyway-mysql")
+
+	// 더미 데이터 생성 라이브러리
+	implementation("net.datafaker:datafaker:2.4.2")
 
 	// Test
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
