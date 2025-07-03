@@ -1,6 +1,5 @@
 package kr.hhplus.be.server.domain.payment;
 
-import kr.hhplus.be.server.application.user.UserService;
 import org.springframework.stereotype.Service;
 
 import kr.hhplus.be.server.domain.reservation.Reservation;

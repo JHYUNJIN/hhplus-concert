@@ -23,7 +23,7 @@ public class ConcertEntity extends BaseTimeEntity {
 	@Column(name = "id", length = 36)
 	private String id;
 
-	@Column(name = "title", length = 100, nullable = false, unique = true)
+	@Column(name = "title", length = 100, nullable = false)
 	private String title;
 
 	@Column(name = "artist", length = 50, nullable = false)

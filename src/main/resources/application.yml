@@ -19,7 +19,7 @@ spring:
     generate-ddl: false
     show-sql: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: update # 서버 실행 시 테이블 초기화(create, update, validate, none)
     properties:
       hibernate.timezone.default_storage: NORMALIZE_UTC
       hibernate.jdbc.time_zone: UTC

@@ -11,11 +11,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "CONCERT_DATE",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "UK_CONCERT_DATE_CONCERT_ID_DATE", columnNames = {"concert_id", "date"})
-        }
-)
+@Table(name = "CONCERT_DATE")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
