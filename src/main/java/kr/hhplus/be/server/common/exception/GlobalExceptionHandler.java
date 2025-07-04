@@ -2,6 +2,7 @@
 package kr.hhplus.be.server.common.exception;
 
 import kr.hhplus.be.server.common.exception.enums.ErrorCode;
+import org.slf4j.event.Level;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -40,9 +41,25 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ApiException.class)
     protected ResponseEntity<ErrorResponse> handleApiException(ApiException e) {
-        log.error("handleApiException", e);
-        final ErrorResponse response = ErrorResponse.of(e.getErrorCode(), e.getMessage()); // 상세 메시지 전달
-        return new ResponseEntity<>(response, e.getErrorCode().getHttpStatus());
+        ErrorCode errorCode = e.getErrorCode();
+        Level logLevel = errorCode.getLogLevel();
+
+        String logMessage = String.format("handleApiException - ErrorCode: %s, Message: %s",
+                errorCode.getCode(), e.getMessage());
+
+        if (logLevel == Level.ERROR) {
+            log.error(logMessage, e); // ERROR 레벨일 경우 스택 트레이스 포함
+        } else if (logLevel == Level.WARN) {
+            log.warn(logMessage); // WARN 레벨일 경우 메시지만
+        } else if (logLevel == Level.INFO) {
+            log.info(logMessage); // INFO 레벨일 경우 메시지만
+        } else {
+            // 그 외의 레벨 (DEBUG, TRACE 등)은 기본 로거 설정에 따르거나, 필요 시 추가 로직 구현
+            log.debug(logMessage);
+        }
+
+        final ErrorResponse response = ErrorResponse.of(errorCode, e.getMessage());
+        return new ResponseEntity<>(response, errorCode.getHttpStatus());
     }
 
     /**
