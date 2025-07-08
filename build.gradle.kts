@@ -30,16 +30,37 @@ dependencyManagement {
 }
 
 dependencies {
-    // Spring
+	// Spring
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-validation")
+	implementation("org.springframework.boot:spring-boot-starter-aop")
+	implementation("org.springframework.boot:spring-boot-starter-data-redis")
+	implementation("org.redisson:redisson-spring-boot-starter:3.24.3") // 분산락 제어를 위해 사용
+//	implementation("org.springframework.boot:spring-boot-starter-security")
 
-    // DB
+
+
+	developmentOnly("org.springframework.boot:spring-boot-devtools")
+
+
+	// swagger
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
+
+	// lombok
+	implementation("org.projectlombok:lombok")
+	annotationProcessor ("org.projectlombok:lombok")
+
+	// DB
 	runtimeOnly("com.mysql:mysql-connector-j")
+	implementation("org.flywaydb:flyway-mysql")
 
-    // Test
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
+	// 더미 데이터 생성 라이브러리
+	implementation("net.datafaker:datafaker:2.4.2")
+
+	// Test
+	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-testcontainers")
 	testImplementation("org.testcontainers:junit-jupiter")
 	testImplementation("org.testcontainers:mysql")
