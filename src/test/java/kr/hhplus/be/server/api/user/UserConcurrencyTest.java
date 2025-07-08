@@ -110,12 +110,17 @@ public class UserConcurrencyTest {
         startLatch.countDown(); // 해당 함수가 실행될때 await을 해제하여 모든 스레드가 동시에 시작하도록 함
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(10, TimeUnit.SECONDS); // 모든 스레드가 완료될 때까지 대기
 
+        assertThat(successfulCharges.get()).isEqualTo(THREAD_SIZE);
+        User chargedUser = userRepository.findById(userId).orElseThrow();
+
         // 최종적으로 모든 요청이 성공했는지 확인
         System.out.println("🚀[로그:정현진] successfulCharges.get() : " + successfulCharges.get());
         System.out.println("🚀[로그:정현진]THREAD_SIZE : "+ THREAD_SIZE);
-        assertThat(successfulCharges.get()).isEqualTo(THREAD_SIZE);
+        System.out.println("🚀[로그:정현진] Point 조회");
+        System.out.println("🚀[로그:정현진] chargedUser.amount() : " + chargedUser.amount());
+        System.out.println("🚀[로그:정현진] initPoint : " + initPoint);
+        System.out.println("🚀[로그:정현진] chargePoint.multiply(BigDecimal.valueOf(THREAD_SIZE)) : " + chargePoint.multiply(BigDecimal.valueOf(THREAD_SIZE)));
 
-        User chargedUser = userRepository.findById(userId).orElseThrow();
         assertThat(chargedUser.amount())
                 .isEqualTo(initPoint.add(chargePoint.multiply(BigDecimal.valueOf(THREAD_SIZE))));
     }

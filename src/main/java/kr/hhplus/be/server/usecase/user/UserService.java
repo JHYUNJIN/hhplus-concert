@@ -42,18 +42,20 @@ public class UserService {
 
     @Transactional
     public User chargePoint(UUID userId, BigDecimal point) throws CustomException {
+        // 1. 사전 검증 (락 없이)
         if (point.compareTo(MIN_CHARGE_POINT) < 0) {
-            log.warn("유저 포인트 충전 실패 - 최소 충전 금액 미만: USER_ID - {}, CHARGE_POINT - {}", userId, point);
             throw new CustomException(ErrorCode.NOT_ENOUGH_MIN_CHARGE_POINT);
         }
 
-        User user = findUser(userId);
+        // 2. 업데이트 (락 시간 최소화)
+        int updatedRows = userRepository.chargePoint(userId, point);
 
-        User charged = user.charge(point);
-        User saved = userRepository.save(charged);
+        if (updatedRows == 0) {
+            throw new CustomException(ErrorCode.CHARGE_FAILED);
+        }
 
-        log.info("유저 포인트 충전: USER_ID - {}, CHARGE_POINT - {}, AFTER_POINT - {}", userId, point, user.amount());
-        return saved;
+        // 3. 결과 반환
+        return userRepository.findById(userId).orElseThrow();
     }
 
     private User findUser(UUID userId) throws CustomException {

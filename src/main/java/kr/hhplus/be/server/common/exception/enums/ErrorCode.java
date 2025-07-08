@@ -29,6 +29,7 @@ public enum ErrorCode {
     INVALID_USER_DATA(HttpStatus.BAD_REQUEST, "U006", "유효하지 않은 사용자 데이터입니다.", Level.WARN),
     USER_ALREADY_EXISTS(HttpStatus.CONFLICT, "U007", "이미 존재하는 사용자입니다.", Level.WARN), // 비즈니스 예외
     USER_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "U008", "사용자 생성에 실패했습니다.", Level.ERROR), // 내부 오류, ERROR
+    CHARGE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "U009", "충전에 실패했습니다.", Level.ERROR),
 
     // Concert Service Errors (콘서트 관련 오류) - 대부분 WARN 레벨
     CONCERT_NOT_FOUND(HttpStatus.NOT_FOUND, "CT001", "콘서트를 찾을 수 없습니다.", Level.WARN), // 예상 가능한 비즈니스 예외

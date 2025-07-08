@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.infrastructure.persistence.user;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -31,4 +32,11 @@ public class UserJpaGateway implements UserRepository {
     public boolean existsById(UUID userId) {
         return jpaUserRepository.existsById(userId.toString());
     }
+
+    @Override
+    public int chargePoint(UUID userId, BigDecimal amount) {
+        return jpaUserRepository.chargePoint(userId.toString(), amount);
+    }
+
+
 }
