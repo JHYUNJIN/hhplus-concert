@@ -33,7 +33,7 @@ public enum ErrorCode {
 
     // Concert Service Errors (콘서트 관련 오류) - 대부분 WARN 레벨
     CONCERT_NOT_FOUND(HttpStatus.NOT_FOUND, "CT001", "콘서트를 찾을 수 없습니다.", Level.WARN), // 예상 가능한 비즈니스 예외
-    CANNOT_RESERVATION_DATE(HttpStatus.CONFLICT, "C002", "해당 날짜는 예약이 불가능 합니다.", Level.WARN),
+    CANNOT_RESERVATION_DATE(HttpStatus.BAD_REQUEST, "C002", "해당 날짜는 예약이 불가능 합니다.", Level.WARN),
     CONCERT_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CT003", "콘서트 생성에 실패했습니다.", Level.ERROR), // 내부 오류, ERROR
     CONCERT_DATE_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CT004", "콘서트 날짜 생성에 실패했습니다.", Level.ERROR), // 내부 오류, ERROR
     CONCERT_DATE_ALREADY_EXISTS(HttpStatus.CONFLICT, "CT005", "해당 콘서트 날짜는 이미 존재합니다.", Level.WARN), // 비즈니스 예외
