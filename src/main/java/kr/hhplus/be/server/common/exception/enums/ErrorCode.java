@@ -27,6 +27,8 @@ public enum ErrorCode {
     INVALID_USE_AMOUNT(HttpStatus.BAD_REQUEST, "U004", "유효하지 않은 사용 금액입니다.", Level.WARN),
     NOT_ENOUGH_MIN_CHARGE_POINT(HttpStatus.BAD_REQUEST, "U005", "최소 충전 금액은 1000원 이상이어야 합니다.", Level.WARN),
     INVALID_USER_DATA(HttpStatus.BAD_REQUEST, "U006", "유효하지 않은 사용자 데이터입니다.", Level.WARN),
+    USER_ALREADY_EXISTS(HttpStatus.CONFLICT, "U007", "이미 존재하는 사용자입니다.", Level.WARN), // 비즈니스 예외
+    USER_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "U008", "사용자 생성에 실패했습니다.", Level.ERROR), // 내부 오류, ERROR
 
     // Concert Service Errors (콘서트 관련 오류) - 대부분 WARN 레벨
     CONCERT_NOT_FOUND(HttpStatus.NOT_FOUND, "CT001", "콘서트를 찾을 수 없습니다.", Level.WARN), // 예상 가능한 비즈니스 예외
@@ -59,7 +61,11 @@ public enum ErrorCode {
     ALREADY_PAID(HttpStatus.BAD_REQUEST, "P004", "이미 결제되었습니다.", Level.WARN), // PAYMENT_ALREADY_PROCESSED와 유사 (코드 중복 의심)
 
     // Queue Service Errors (대기열 관련 오류) - 대부분 WARN 레벨
-    INVALID_QUEUE_TOKEN(HttpStatus.BAD_REQUEST, "Q001", "대기열 토큰이 유효하지 않습니다.", Level.WARN);
+    INVALID_QUEUE_TOKEN(HttpStatus.BAD_REQUEST, "Q001", "대기열 토큰이 유효하지 않습니다.", Level.WARN),
+
+    // Lock Service Errors (락 관련 오류) - 대부분 WARN 레벨
+    LOCK_CONFLICT(HttpStatus.CONFLICT, "L001", "락 충돌이 발생했습니다.", Level.WARN),
+    INVALID_SEAT_COUNT(HttpStatus.BAD_REQUEST, "L002", "좌석 수가 유효하지 않습니다.", Level.WARN); // 락 처리 중 예상 가능한 경합
 
 
     private final HttpStatus httpStatus;
