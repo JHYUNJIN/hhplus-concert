@@ -2,11 +2,9 @@ package kr.hhplus.be.server.infrastructure.persistence.concertDate;
 
 import kr.hhplus.be.server.domain.concertDate.ConcertDate;
 import kr.hhplus.be.server.domain.concertDate.ConcertDateRepository;
-import kr.hhplus.be.server.infrastructure.persistence.concertDate.dto.ConcertDateWithSeatCountDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,12 +29,8 @@ public class ConcertDateJpaGateway implements ConcertDateRepository {
 
     @Override
     public List<ConcertDate> findAvailableDatesWithAvailableSeatCount(UUID concertId) {
-        List<ConcertDateWithSeatCountDto> results = jpaConcertDateRepository
+        return jpaConcertDateRepository
                 .findAvailableDatesWithAvailableSeatCount(concertId.toString());
-
-        return results.stream()
-                .map(ConcertDateWithSeatCountDto::toDomainConcertDate) // DTO 내부의 팩토리 메서드 활용
-                .toList();
     }
 
     @Override
