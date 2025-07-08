@@ -12,8 +12,8 @@ public record Payment(
         UUID userId,
         UUID reservationId,
         BigDecimal amount,
-        PaymentStatus status,
-        String failureReason,
+        PaymentStatus status, // 대기, 성공, 실패, 취소
+        String failureReason, // 결제 실패 사유
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

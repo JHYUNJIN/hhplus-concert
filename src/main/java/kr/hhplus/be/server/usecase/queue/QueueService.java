@@ -75,9 +75,9 @@ public class QueueService {
         UUID tokenId = UUID.randomUUID();
 
         if (activeTokens < MAX_ACTIVE_TOKEN_SIZE)
-            return QueueToken.activeTokenOf(tokenId, userId, concertId, QUEUE_EXPIRES_TIME);
+            return QueueToken.activeTokenOf(tokenId, userId, concertId, QUEUE_EXPIRES_TIME); // 활성 토큰 발급
 
         Integer waitingTokens = queueTokenRepository.countWaitingTokens(concertId);
-        return QueueToken.waitingTokenOf(tokenId, userId, concertId, waitingTokens);
+        return QueueToken.waitingTokenOf(tokenId, userId, concertId, waitingTokens); // 대기 토큰 발급
     }
 }

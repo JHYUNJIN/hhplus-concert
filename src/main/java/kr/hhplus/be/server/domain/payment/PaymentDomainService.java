@@ -17,10 +17,11 @@ public class PaymentDomainService {
         validatePayment(payment);
         validateUserBalance(payment, user);
 
-        User paidUser 				= user.payment(payment.amount());
+        // 각 도메인 객체가 외부에 의존하지 않고 자신의 상태를 직접 변경하는 방식으로 결제 처리
+        User paidUser = user.payment(payment.amount());
         Reservation paidReservation = reservation.payment();
-        Payment paidPayment 		= payment.success();
-        Seat paidSeat 				= seat.payment();
+        Payment paidPayment = payment.success();
+        Seat paidSeat = seat.payment();
 
         return new PaymentDomainResult(paidUser, paidReservation, paidPayment, paidSeat);
     }

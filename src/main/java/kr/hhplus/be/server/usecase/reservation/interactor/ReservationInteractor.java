@@ -89,11 +89,10 @@ public class ReservationInteractor implements ReservationInput {
             log.error("좌석 예약중 예외 발생 - {}", ErrorCode.INTERNAL_SERVER_ERROR, e);
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         } finally {
-            if (lock)
-                seatLockRepository.releaseLock(command.seatId());
+            if (lock) seatLockRepository.releaseLock(command.seatId());
         }
 
-        }
+    }
         
     private QueueToken getQueueTokenAndValid(ReserveSeatCommand command) throws CustomException {
         QueueToken queueToken = queueTokenRepository.findQueueTokenByTokenId(command.queueTokenId());

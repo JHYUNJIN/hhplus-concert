@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
-public class RedisQueueTokenRepository implements QueueTokenRepository {
+public class RedisQueueTokenRepository implements QueueTokenRepository { // Redis 기반 대기열 토큰 저장소 구현체
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final RedisTemplate<String, Object> queueTokenRedisTemplate;
@@ -26,8 +26,14 @@ public class RedisQueueTokenRepository implements QueueTokenRepository {
         String tokenInfoKey = QueueTokenUtil.formattingTokenInfoKey(queueToken.tokenId());
         String tokenIdKey = QueueTokenUtil.formattingTokenIdKey(queueToken.userId(), queueToken.concertId());
 
-        queueTokenRedisTemplate.opsForValue().set(tokenInfoKey, queueToken);
-        redisTemplate.opsForValue().set(tokenIdKey, queueToken.tokenId().toString());
+        redisTemplate.opsForValue().set(tokenIdKey, queueToken.tokenId().toString()); // 유저 ID와 콘서트 ID로 토큰 ID를 저장하여 유저ID와 콘서트ID로 토큰ID를 조회 가능
+        queueTokenRedisTemplate.opsForValue().set(tokenInfoKey, queueToken); // 토큰 ID로 토큰 정보 조회 가능
+        /* redis에 저장된 토큰 정보 예시
+        127.0.0.1:6379> keys *
+        1) "queue:active:0064f93c-956b-4763-a22b-2eee4b0d7196" // 콘서트 아이디, 콘서트별 활성화된 토큰 수 조회 가능
+        2) "token:info:cc93b32f-aaa6-4821-94cc-c88e4030c327"
+        3) "token:id:47ead46e-5cc4-44e2-9eda-a7aebecff179:0064f93c-956b-4763-a22b-2eee4b0d7196" // 유저 ID와 콘서트 ID로 토큰 ID 저장
+         */
 
         if (queueToken.status().equals(QueueStatus.ACTIVE))
             saveActiveToken(queueToken, tokenInfoKey, tokenIdKey);
