@@ -35,25 +35,7 @@ public class ConcertDateJpaGateway implements ConcertDateRepository {
                 .findAvailableDatesWithAvailableSeatCount(concertId.toString());
 
         return results.stream()
-                .map(result -> {
-                    String id = result.id();
-                    String concertIdStr = result.concertId();
-                    LocalDateTime date = result.date();
-                    LocalDateTime deadline = result.deadline();
-                    LocalDateTime createdAt = result.createdAt();
-                    LocalDateTime updatedAt = result.updatedAt();
-                    Long seatCount = result.remainingSeatCount();
-
-                    return ConcertDate.builder()
-                            .id(UUID.fromString(id))
-                            .concertId(UUID.fromString(concertIdStr))
-                            .date(date)
-                            .deadline(deadline)
-                            .remainingSeatCount(seatCount.intValue())
-                            .createdAt(createdAt)
-                            .updatedAt(updatedAt)
-                            .build();
-                })
+                .map(ConcertDateWithSeatCountDto::toDomainConcertDate) // DTO 내부의 팩토리 메서드 활용
                 .toList();
     }
 

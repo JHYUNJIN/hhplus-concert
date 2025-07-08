@@ -1,24 +1,34 @@
-package kr.hhplus.be.server.infrastructure.persistence.concertDate.dto; // 적절한 패키지 경로
+package kr.hhplus.be.server.infrastructure.persistence.concertDate.dto;
 
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.enums.ErrorCode;
+import kr.hhplus.be.server.domain.concertDate.ConcertDate;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
+import java.util.UUID;
 
 public record ConcertDateWithSeatCountDto(
-        String id,
-        String concertId,
-        LocalDateTime date,
-        LocalDateTime deadline,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt,
-        Long remainingSeatCount // 'count'는 Long 타입이 적절한 이유 : 좌석 수는 음수일 수 없고, 최대값이 Integer.MAX_VALUE를 초과할 수 있기 때문
+        String id, // DB로부터 받는 원시 String 타입
+        String concertId, // DB로부터 받는 원시 String 타입
+        Timestamp date,
+        Timestamp deadline,
+        Timestamp createdAt,
+        Timestamp updatedAt,
+        Long remainingSeatCount
 ) {
-
-
-     public ConcertDateWithSeatCountDto {
-         if (remainingSeatCount < 0) {
-             throw new CustomException(ErrorCode.INVALID_SEAT_COUNT, "예약가능 좌석 수는 음수일 수 없습니다.");
-         }
-     }
+    // ConcertDate 객체로 변환하는 메서드
+    public ConcertDate toDomainConcertDate() {
+        if (this.remainingSeatCount == null || this.remainingSeatCount < 0) {
+            throw new CustomException(ErrorCode.INVALID_SEAT_COUNT, "예약가능 좌석 수는 0 이상이어야 합니다.");
+        }
+        return ConcertDate.builder()
+                .id(UUID.fromString(this.id))
+                .concertId(UUID.fromString(this.concertId))
+                .date(this.date != null ? this.date.toLocalDateTime() : null)
+                .deadline(this.deadline != null ? this.deadline.toLocalDateTime() : null)
+                .createdAt(this.createdAt != null ? this.createdAt.toLocalDateTime() : null)
+                .updatedAt(this.updatedAt != null ? this.updatedAt.toLocalDateTime() : null)
+                .remainingSeatCount(this.remainingSeatCount.intValue())
+                .build();
+    }
 }
