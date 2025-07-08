@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import kr.hhplus.be.server.api.TestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,16 +45,13 @@ class UserIntegrationTest {
     private ObjectMapper objectMapper; // JSON 변환을 위한 ObjectMapper
 
     private UUID userId;
-    private User user;
-    private BigDecimal initPoint = BigDecimal.valueOf(10000);
+    private BigDecimal initPoint;
 
     @BeforeEach // 테스트 실행마다 새로운 사용자 생성
     void setUp() {
-        user = User.builder()
-                .amount(initPoint)
-                .build();
-        User savedUser = userRepository.save(user);
+        User savedUser = userRepository.save(TestDataFactory.createUser());
         userId = savedUser.id();
+        initPoint = savedUser.amount();
     }
 
     @Test

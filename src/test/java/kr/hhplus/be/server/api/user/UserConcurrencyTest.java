@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.api.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kr.hhplus.be.server.api.TestDataFactory;
 import kr.hhplus.be.server.api.user.dto.request.ChargePointRequest;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.enums.ErrorCode;
@@ -49,16 +50,13 @@ public class UserConcurrencyTest {
     private static final int THREAD_SIZE = 5; // 동시 충전 테스트를 위한 스레드 수
 
     private UUID userId;
-    private User user;
-    private BigDecimal initPoint = BigDecimal.valueOf(10000);
+    private BigDecimal initPoint;
 
     @BeforeEach
     void setUp() {
-        user = User.builder()
-                .amount(initPoint)
-                .build();
-        User save = userRepository.save(user);
-        userId = save.id();
+        User savedUser = userRepository.save(TestDataFactory.createUser());
+        userId = savedUser.id();
+        initPoint = savedUser.amount();
     }
 
 
