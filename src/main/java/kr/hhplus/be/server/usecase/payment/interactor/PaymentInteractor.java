@@ -2,6 +2,7 @@ package kr.hhplus.be.server.usecase.payment.interactor;
 
 import java.util.UUID;
 
+import kr.hhplus.be.server.common.aop.lock.DistributedLock;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,20 +50,29 @@ public class PaymentInteractor implements PaymentInput {
     private final EventPublisher eventPublisher;
 
     @Override
-    @Transactional
+    @DistributedLock(key = "'payment:reservation:' + #command.reservationId()", waitTime = 3L, leaseTime = 10L)
+    @Transactional // 이 트랜잭션은 분산락이 획득된 후에 시작됩니다.
     public void payment(PaymentCommand command) throws CustomException {
         try {
+            System.out.println("🚀[로그:정현진] command : " + command);
             // 토큰 검증
             QueueToken queueToken = getQueueTokenAndValid(command);
-            System.out.println("🚀[로그:정현진] queueToken : " + queueToken);
+            System.out.println("🚀[로그:정현진] 토큰검증 queueToken : " + queueToken);
 
             // 예약, 결제, 좌석, 사용자 정보 조회
             Reservation reservation = getReservation(command);
+            System.out.println("🚀[로그:정현진] 예약 정보 : " + reservation);
             Payment payment = getPayment(reservation);
+            System.out.println("🚀[로그:정현진] 결제 정보 : " + payment);
             Seat seat = getSeat(reservation);
+            System.out.println("🚀[로그:정현진] 좌석 정보 : " + seat);
             User user = getUser(queueToken.userId());
+            System.out.println("🚀[로그:정현진] 사용자 정보 : " + user);
 
             // 좌석 예약 상태 확인
+            // 테스트 시나리오에 따라 이 검증을 제거하거나, Redis 홀드 로직을 분산락으로 대체했다면 해당 검증이 필요 없을까 ?)
+            // 예약 로직 안에 좌석 잠금 로직이 있음
+            // 튜터님께 : 예약 로직을 루아 스크립트로 구현하여 동시성을 제어했는데 레디스 좌석 잠금 로직에 분산락이 추가로 필요한지 피드백이 필요함
             validateSeatHold(seat.id(), user.id());
 
             System.out.println("🚀[로그:정현진] @01");
