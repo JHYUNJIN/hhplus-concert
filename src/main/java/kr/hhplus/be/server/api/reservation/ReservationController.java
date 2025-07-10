@@ -78,8 +78,8 @@ public class ReservationController implements ReservationOutput {
             @RequestBody ReservationRequest request,
             @RequestHeader(value = "Authorization") String queueToken
     ) throws CustomException {
-        String parsedQueueToken = queueToken.substring("Bearer ".length());
-        reservationInput.reserveSeat(ReserveSeatCommand.of(request, seatId, parsedQueueToken));
+        queueToken = queueToken.startsWith("Bearer ") ? queueToken.substring("Bearer ".length()) : queueToken;
+        reservationInput.reserveSeat(ReserveSeatCommand.of(request, seatId, queueToken));
         return ResponseEntity.ok(reservationResponse);
     }
 
