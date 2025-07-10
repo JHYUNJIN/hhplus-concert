@@ -44,5 +44,10 @@ public class SeatJpaGateway implements SeatRepository {
         return jpaSeatRepository.findById(seatId.toString())
                 .map(SeatEntity::toDomain);
     }
+
+    @Override
+    public void deleteAll() {
+        jpaSeatRepository.deleteAll();
+    }
 }
 

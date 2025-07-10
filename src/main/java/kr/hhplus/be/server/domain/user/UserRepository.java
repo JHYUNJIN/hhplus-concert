@@ -11,4 +11,5 @@ public interface UserRepository {
     boolean existsById(UUID userId);
     int chargePoint(UUID userId, BigDecimal amount);
 
+    void deleteAll();
 }

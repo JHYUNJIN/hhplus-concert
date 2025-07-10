@@ -38,5 +38,10 @@ public class UserJpaGateway implements UserRepository {
         return jpaUserRepository.chargePoint(userId.toString(), amount);
     }
 
+    @Override
+    public void deleteAll() {
+        jpaUserRepository.deleteAll();
+    }
+
 
 }
