@@ -53,27 +53,39 @@ public class ReservationInteractor implements ReservationInput {
     @Override
     @Transactional
     public void reserveSeat(ReserveSeatCommand command) throws CustomException {
+        System.out.println("🚀[로그:정현진] reserveSeat들어옴");
+        System.out.println("🚀[로그:정현진] command : " + command);
 
-        boolean lock = false;
+        boolean lockAcquired = false;
 
         try{
             // 토큰 조회
             QueueToken queueToken = getQueueTokenAndValid(command);
+            System.out.println("🚀[로그:정현진] queueToken : " + queueToken);
             // 콘서트 존재 여부 확인
             checkExistsConcert(command.concertId());
             // 콘스터 날짜 조회
             ConcertDate concertDate = getConcertDate(command.concertDateId());
             // 좌석 조회
             Seat seat = getSeat(command.seatId(), command.concertDateId());
+            System.out.println("🚀[로그:정현진] seat : " + seat);
             // 예약 가능한 좌석인지 확인
-            lock = acquisitionSeatLock(command.seatId());
+            lockAcquired = acquisitionSeatLock(command.seatId());
+            System.out.println("🚀[로그:정현진] lockAcquired : " + lockAcquired);
             // 좌석 예약 처리
             ReservationDomainResult result = reservationDomainService.processReservation(concertDate, seat, queueToken.userId());
+            System.out.println("🚀[로그:정현진] result : " + result);
+            System.out.println("🚀[로그:정현진] result.seat() : " + result.seat());
 
-            // 예약 성공 시, 좌석, 예약 정보, 결제 정보 저장, 토큰 만료 처리
+            // DB 저장 (DB 트랜잭션 범위)
             Seat savedSeat = seatRepository.save(result.seat());
+            System.out.println("🚀[로그:정현진] savedSeat : " + savedSeat);
             Reservation savedReservation = reservationRepository.save(result.reservation());
+            System.out.println("🚀[로그:정현진] savedReservation : " + savedReservation);
             Payment savedPayment = paymentRepository.save(Payment.of(savedSeat.id(), savedReservation.id(), savedSeat.price()));
+            System.out.println("🚀[로그:정현진] savedPayment : " + savedPayment);
+
+            // Redis 좌석 홀드 (DB 트랜잭션과 무관하게 즉시 실행될 수 있음. 이 또한 이벤트로 옮기는 것을 고려)
             seatHoldRepository.hold(seat.id(), queueToken.userId());
             // 예약 생성 이벤트 발행
             eventPublisher.publish(
@@ -89,7 +101,7 @@ public class ReservationInteractor implements ReservationInput {
             log.error("좌석 예약중 예외 발생 - {}", ErrorCode.INTERNAL_SERVER_ERROR, e);
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         } finally {
-            if (lock) seatLockRepository.releaseLock(command.seatId());
+            if (lockAcquired) seatLockRepository.releaseLock(command.seatId());
         }
 
     }

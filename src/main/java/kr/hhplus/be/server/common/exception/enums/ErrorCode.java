@@ -40,9 +40,9 @@ public enum ErrorCode {
     CONCERT_DATE_NOT_FOUND(HttpStatus.NOT_FOUND, "CT002", "콘서트 날짜를 찾을 수 없습니다.", Level.WARN), // 예상 가능한 비즈니스 예외
     SEAT_NOT_FOUND(HttpStatus.NOT_FOUND, "CT003", "좌석을 찾을 수 없습니다.", Level.WARN), // 예상 가능한 비즈니스 예외
     SEAT_NOT_AVAILABLE(HttpStatus.CONFLICT, "CT004", "해당 좌석은 현재 예약할 수 없습니다.", Level.WARN), // 예상 가능한 비즈니스 예외
-    SEAT_ALREADY_RESERVED(HttpStatus.CONFLICT, "CT005", "해당 좌석은 이미 예약되었습니다.", Level.WARN), // 예상 가능한 비즈니스 예외
+    SEAT_ALREADY_RESERVED(HttpStatus.BAD_REQUEST, "CT005", "해당 좌석은 이미 예약되었습니다.", Level.WARN), // 예상 가능한 비즈니스 예외
+    ALREADY_RESERVED_SEAT(HttpStatus.BAD_REQUEST, "C006", "해당 좌석은 이미 예약되었습니다.", Level.WARN), // SEAT_ALREADY_RESERVED와 유사 (코드 중복 의심)
     SEAT_LOCK_CONFLICT(HttpStatus.CONFLICT, "C007", "이미 다른 사용자가 예약중입니다.", Level.WARN), // 동시성 처리 중 예상 가능한 경합
-    ALREADY_RESERVED_SEAT(HttpStatus.CONFLICT, "C006", "해당 좌석은 이미 예약되었습니다.", Level.WARN), // SEAT_ALREADY_RESERVED와 유사 (코드 중복 의심)
     OVER_DEADLINE(HttpStatus.BAD_REQUEST, "C004", "해당 날짜의 마감시간이 지났습니다.", Level.WARN), // 비즈니스 로직에 따른 마감
     SEAT_NOT_HOLD(HttpStatus.CONFLICT, "C008", "해당 좌석은 임시 배정되어있지 않습니다.", Level.WARN),
 

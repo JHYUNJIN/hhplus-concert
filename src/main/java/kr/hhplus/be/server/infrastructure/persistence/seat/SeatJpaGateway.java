@@ -17,8 +17,17 @@ public class SeatJpaGateway implements SeatRepository {
 
     @Override
     public Seat save(Seat seat) {
-        SeatEntity seatEntity = jpaSeatRepository.save(SeatEntity.from(seat));
-        return seatEntity.toDomain();
+        SeatEntity seatEntity = seat.id() == null
+                ? SeatEntity.from(seat)
+                : jpaSeatRepository.findById(seat.id().toString())
+                    .map(existing -> {
+                        existing.update(seat);
+                        return existing;
+                    })
+                    .orElseGet(() -> SeatEntity.from(seat));
+
+        SeatEntity savedSeatEntity = jpaSeatRepository.save(seatEntity);
+        return savedSeatEntity.toDomain();
     }
 
     @Override

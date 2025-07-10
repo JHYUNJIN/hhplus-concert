@@ -2,12 +2,15 @@ package kr.hhplus.be.server.api;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Queue;
 import java.util.UUID;
 
 import kr.hhplus.be.server.domain.concert.Concert;
 import kr.hhplus.be.server.domain.concertDate.ConcertDate;
 import kr.hhplus.be.server.domain.payment.Payment;
 import kr.hhplus.be.server.domain.payment.PaymentStatus;
+import kr.hhplus.be.server.domain.queue.QueueStatus;
+import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.reservation.Reservation;
 import kr.hhplus.be.server.domain.reservation.ReservationStatus;
 import kr.hhplus.be.server.domain.seat.Seat;
@@ -100,6 +103,20 @@ public class TestDataFactory {
                 .price(INIT_SEAT_PRICE)
                 .seatGrade(SeatGrade.VIP)
                 .status(SeatStatus.RESERVED)
+                .build();
+    }
+
+    public static QueueToken createQueueToken(UUID userId, UUID concertId) {
+        UUID newGeneratedTokenId = UUID.randomUUID();
+        return QueueToken.builder()
+                .tokenId(UUID.randomUUID())
+                .userId(userId)
+                .concertId(concertId)
+                .status(QueueStatus.ACTIVE)
+                .position(0)
+                .issuedAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusHours(1)) // 토큰 유효 시간 : 1시간
+                .enteredAt(LocalDateTime.now())
                 .build();
     }
 }

@@ -43,6 +43,7 @@ public record Seat(
                 .price(price)
                 .seatGrade(seatGrade)
                 .status(SeatStatus.RESERVED) // 상태를 RESERVED로 변경
+                .createdAt(this.createdAt)
                 .updatedAt(LocalDateTime.now())
                 .build();
     }
@@ -55,6 +56,7 @@ public record Seat(
                 .price(price)
                 .seatGrade(seatGrade)
                 .status(SeatStatus.ASSIGNED)
+                .createdAt(this.createdAt)
                 .updatedAt(LocalDateTime.now())
                 .build();
     }
