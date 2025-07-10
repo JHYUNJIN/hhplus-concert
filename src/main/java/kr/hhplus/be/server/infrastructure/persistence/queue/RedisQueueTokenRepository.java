@@ -1,39 +1,47 @@
 package kr.hhplus.be.server.infrastructure.persistence.queue;
 
+import kr.hhplus.be.server.domain.queue.QueueStatus;
+import kr.hhplus.be.server.domain.queue.QueueToken;
+import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
+import kr.hhplus.be.server.domain.queue.QueueTokenUtil;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Repository;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Repository;
-
-import kr.hhplus.be.server.domain.queue.QueueStatus;
-import kr.hhplus.be.server.domain.queue.QueueToken;
-import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
-import kr.hhplus.be.server.domain.queue.QueueTokenUtil;
-import lombok.RequiredArgsConstructor;
-
 @Repository
-@RequiredArgsConstructor
 public class RedisQueueTokenRepository implements QueueTokenRepository { // Redis 기반 대기열 토큰 저장소 구현체
 
-    private final RedisTemplate<String, Object> redisTemplate;
-    private final RedisTemplate<String, Object> queueTokenRedisTemplate;
+    private final RedisTemplate<String, String> redisTemplate; // String-String 타입 RedisTemplate (토큰 ID 저장용)
+    private final RedisTemplate<String, Object> queueTokenRedisTemplate; // String-Object 타입 RedisTemplate (QueueToken 객체 저장용)
+
+    // 생성자를 직접 작성하여 @Qualifier를 사용합니다.
+    public RedisQueueTokenRepository(
+            @Qualifier("luaScriptRedisTemplate") RedisTemplate<String, String> redisTemplate, // String-String 타입을 위한 템플릿 지정
+            @Qualifier("queueTokenRedisTemplate") RedisTemplate<String, Object> queueTokenRedisTemplate) { // Object (QueueToken) 타입을 위한 템플릿 지정
+        this.redisTemplate = redisTemplate;
+        this.queueTokenRedisTemplate = queueTokenRedisTemplate;
+    }
 
     @Override
     public void save(QueueToken queueToken) {
         String tokenInfoKey = QueueTokenUtil.formattingTokenInfoKey(queueToken.tokenId());
         String tokenIdKey = QueueTokenUtil.formattingTokenIdKey(queueToken.userId(), queueToken.concertId());
 
-        redisTemplate.opsForValue().set(tokenIdKey, queueToken.tokenId().toString()); // 유저 ID와 콘서트 ID로 토큰 ID를 저장하여 유저ID와 콘서트ID로 토큰ID를 조회 가능
-        queueTokenRedisTemplate.opsForValue().set(tokenInfoKey, queueToken); // 토큰 ID로 토큰 정보 조회 가능
         /* redis에 저장된 토큰 정보 예시
         127.0.0.1:6379> keys *
         1) "queue:active:0064f93c-956b-4763-a22b-2eee4b0d7196" // 콘서트 아이디, 콘서트별 활성화된 토큰 수 조회 가능
         2) "token:info:cc93b32f-aaa6-4821-94cc-c88e4030c327"
         3) "token:id:47ead46e-5cc4-44e2-9eda-a7aebecff179:0064f93c-956b-4763-a22b-2eee4b0d7196" // 유저 ID와 콘서트 ID로 토큰 ID 저장
          */
+
+        // Lua 스크립트에서 처리했기때문에, 아래 코드는 주석 처리함
+//        redisTemplate.opsForValue().set(tokenIdKey, queueToken.tokenId().toString());
+//        queueTokenRedisTemplate.opsForValue().set(tokenInfoKey, queueToken);
 
         if (queueToken.status().equals(QueueStatus.ACTIVE))
             saveActiveToken(queueToken, tokenInfoKey, tokenIdKey);
@@ -44,6 +52,7 @@ public class RedisQueueTokenRepository implements QueueTokenRepository { // Redi
     @Override
     public String findTokenIdByUserIdAndConcertId(UUID userId, UUID concertId) {
         String tokenIdKey = QueueTokenUtil.formattingTokenIdKey(userId, concertId);
+        // String 값을 다루므로, String-String 타입인 redisTemplate 사용
         Object tokenId = redisTemplate.opsForValue().get(tokenIdKey);
         return tokenId != null ? tokenId.toString() : null;
     }
@@ -51,6 +60,7 @@ public class RedisQueueTokenRepository implements QueueTokenRepository { // Redi
     @Override
     public QueueToken findQueueTokenByTokenId(String tokenId) {
         String tokenInfoKey = QueueTokenUtil.formattingTokenInfoKey(UUID.fromString(tokenId));
+        // QueueToken 객체를 다루므로, String-Object 타입인 queueTokenRedisTemplate 사용
         Object tokenInfo = queueTokenRedisTemplate.opsForValue().get(tokenInfoKey);
         return tokenInfo != null ? (QueueToken) tokenInfo : null;
     }
@@ -60,6 +70,7 @@ public class RedisQueueTokenRepository implements QueueTokenRepository { // Redi
         String waitingTokenKey = QueueTokenUtil.formattingWaitingTokenKey(queueToken.concertId());
         String tokenIdKey = QueueTokenUtil.formattingTokenIdKey(queueToken.userId(), queueToken.concertId());
 
+        // ZSet의 멤버는 String이므로, String-String 타입인 redisTemplate 사용
         Long rank = redisTemplate.opsForZSet().rank(waitingTokenKey, tokenIdKey);
 
         return rank != null ? rank.intValue() + 1 : null;
@@ -67,15 +78,17 @@ public class RedisQueueTokenRepository implements QueueTokenRepository { // Redi
 
     @Override
     public Integer countWaitingTokens(UUID concertId) {
+        // ZSet의 멤버는 String이므로, String-String 타입인 redisTemplate 사용
         Long count = redisTemplate.opsForZSet().count(QueueTokenUtil.formattingWaitingTokenKey(concertId), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         return count != null ? count.intValue() : 0;
     }
 
     @Override
     public Integer countActiveTokens(UUID concertId) {
-        Object count = redisTemplate.opsForZSet().count(QueueTokenUtil.formattingActiveTokenKey(concertId), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        // ZSet의 멤버는 String이므로, String-String 타입인 redisTemplate 사용
+        Long count = redisTemplate.opsForZSet().count(QueueTokenUtil.formattingActiveTokenKey(concertId), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         if (count == null) return 0;
-        return Integer.parseInt(count.toString());
+        return count.intValue(); // Long을 Integer로 변환
     }
 
     @Override
@@ -86,8 +99,8 @@ public class RedisQueueTokenRepository implements QueueTokenRepository { // Redi
         String tokenInfoKey = QueueTokenUtil.formattingTokenInfoKey(queueToken.tokenId());
         String tokenIdKey = QueueTokenUtil.formattingTokenIdKey(queueToken.userId(), queueToken.concertId());
 
-        queueTokenRedisTemplate.delete(tokenInfoKey);
-        redisTemplate.delete(tokenIdKey);
+        queueTokenRedisTemplate.delete(tokenInfoKey); // QueueToken 객체 키 삭제
+        redisTemplate.delete(tokenIdKey); // String UUID 키 삭제
 
         if (queueToken.status().equals(QueueStatus.ACTIVE))
             redisTemplate.opsForZSet().remove(QueueTokenUtil.formattingActiveTokenKey(queueToken.concertId()), tokenIdKey);

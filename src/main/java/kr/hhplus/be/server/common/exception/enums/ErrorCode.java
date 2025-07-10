@@ -63,10 +63,14 @@ public enum ErrorCode {
 
     // Queue Service Errors (대기열 관련 오류) - 대부분 WARN 레벨
     INVALID_QUEUE_TOKEN(HttpStatus.BAD_REQUEST, "Q001", "대기열 토큰이 유효하지 않습니다.", Level.WARN),
+    QUEUE_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "Q002", "대기열 토큰을 찾을 수 없습니다.", Level.WARN), // 락 처리 중 예상 가능한 경합
+    QUEUE_TOKEN_SERIALIZATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Q003", "대기열 토큰 직렬화 오류가 발생했습니다.", Level.ERROR),
 
     // Lock Service Errors (락 관련 오류) - 대부분 WARN 레벨
     LOCK_CONFLICT(HttpStatus.CONFLICT, "L001", "락 충돌이 발생했습니다.", Level.WARN),
-    INVALID_SEAT_COUNT(HttpStatus.BAD_REQUEST, "L002", "좌석 수가 유효하지 않습니다.", Level.WARN); // 락 처리 중 예상 가능한 경합
+    INVALID_SEAT_COUNT(HttpStatus.BAD_REQUEST, "L002", "좌석 수가 유효하지 않습니다.", Level.WARN),
+    UNEXPECTED_RACE_CONDITION(HttpStatus.CONFLICT, "L003", "예상치 못한 경합 상태가 발생했습니다.", Level.ERROR);
+
 
 
     private final HttpStatus httpStatus;
