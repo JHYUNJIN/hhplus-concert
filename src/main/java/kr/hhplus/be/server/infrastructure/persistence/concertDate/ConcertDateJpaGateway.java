@@ -2,11 +2,9 @@ package kr.hhplus.be.server.infrastructure.persistence.concertDate;
 
 import kr.hhplus.be.server.domain.concertDate.ConcertDate;
 import kr.hhplus.be.server.domain.concertDate.ConcertDateRepository;
-import kr.hhplus.be.server.infrastructure.persistence.concertDate.dto.ConcertDateWithSeatCountDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,30 +29,8 @@ public class ConcertDateJpaGateway implements ConcertDateRepository {
 
     @Override
     public List<ConcertDate> findAvailableDatesWithAvailableSeatCount(UUID concertId) {
-        List<ConcertDateWithSeatCountDto> results = jpaConcertDateRepository
+        return jpaConcertDateRepository
                 .findAvailableDatesWithAvailableSeatCount(concertId.toString());
-
-        return results.stream()
-                .map(result -> {
-                    String id = result.id();
-                    String concertIdStr = result.concertId();
-                    LocalDateTime date = result.date();
-                    LocalDateTime deadline = result.deadline();
-                    LocalDateTime createdAt = result.createdAt();
-                    LocalDateTime updatedAt = result.updatedAt();
-                    Long seatCount = result.remainingSeatCount();
-
-                    return ConcertDate.builder()
-                            .id(UUID.fromString(id))
-                            .concertId(UUID.fromString(concertIdStr))
-                            .date(date)
-                            .deadline(deadline)
-                            .remainingSeatCount(seatCount.intValue())
-                            .createdAt(createdAt)
-                            .updatedAt(updatedAt)
-                            .build();
-                })
-                .toList();
     }
 
     @Override

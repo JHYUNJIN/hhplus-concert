@@ -6,6 +6,7 @@ import kr.hhplus.be.server.domain.concert.ConcertRepository;
 import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
 import kr.hhplus.be.server.domain.user.UserRepository;
+import kr.hhplus.be.server.infrastructure.persistence.queue.RedisAtomicQueueTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class QueueService {
     private final QueueTokenRepository queueTokenRepository;
     private final ConcertRepository concertRepository;
     private final UserRepository userRepository;
+    private final RedisAtomicQueueTokenRepository redisAtomicQueueTokenRepository;
 
     // 대기열 토큰 발급
     @Transactional
@@ -34,17 +36,41 @@ public class QueueService {
 
         // 이미 발급된 토큰이 있는지 확인
         String findTokenId = queueTokenRepository.findTokenIdByUserIdAndConcertId(userId, concertId);
-        if (findTokenId != null)
+        // 로그 출력
+        System.out.println("🚀[로그:정현진] findTokenId : " + findTokenId);
+        if (findTokenId != null) {
+            log.debug("이미 발급된 토큰이 있습니다: USER_ID - {}, CONCERT_ID - {}, TOKEN_ID - {}", userId, concertId, findTokenId);
             return queueTokenRepository.findQueueTokenByTokenId(findTokenId);
+        }
 
-        // 콘서트 ID에 대한 활성화된 토큰 수 조회
-        Integer activeTokens = queueTokenRepository.countActiveTokens(concertId);
-        System.out.println("🚀[로그:정현진] activeTokens : " + activeTokens);
-        QueueToken queueToken = createQueueToken(activeTokens, userId, concertId);
+        Integer activeTokenCount = queueTokenRepository.countActiveTokens(concertId);
+        System.out.println("🚀[로그:정현진] activeTokenCount : " + activeTokenCount);
+        // 1. 토큰이 없는 경우, 새 토큰을 생성하고 SETNX 시도
+        QueueToken newQueueToken = createQueueToken(activeTokenCount, userId, concertId);
+        System.out.println("🚀[로그:정현진] newQueueToken : " + newQueueToken);
 
-        log.debug("대기열 토큰 발급: USER_ID - {}, CONCERT_ID - {}, 상태 - {}", userId, concertId, queueToken.status());
-        queueTokenRepository.save(queueToken);
-        return queueToken;
+        // 2. Lua 스크립트를 사용하여 토큰 ID 및 정보를 원자적으로 저장 시도, 동시성 문제 해결
+        // 새로 발급된 토큰 ID 반환
+        // SETNX와 SET (토큰 정보 저장)이 Redis 내부에서 원자적으로 처리됩니다.
+        String resultTokenId = redisAtomicQueueTokenRepository.issueTokenAtomic(userId, concertId, newQueueToken);
+        // resultTokenId 로그 출력
+        System.out.println("🚀[로그:정현진] resultTokenId : " + resultTokenId);
+
+        // 3. Lua 스크립트로부터 받은 resultTokenId로 실제 QueueToken 객체 조회
+        // 이 시점에서는 Redis에 토큰 정보가 확실히 저장되어 있어야 합니다 (Lua 스크립트의 원자성 덕분).
+        QueueToken finalQueueToken = queueTokenRepository.findQueueTokenByTokenId(resultTokenId);
+        if (finalQueueToken == null) {
+            throw new CustomException(ErrorCode.QUEUE_TOKEN_NOT_FOUND, "발급된 토큰 정보를 찾을 수 없습니다.");
+        }
+
+        // 4. Redis ZSET을 이용한 큐 토큰 상태 관리 및 저장
+        queueTokenRepository.save(finalQueueToken);
+
+        // 5. 최종 반환
+        log.debug("최종 발급/조회된 대기열 토큰: USER_ID - {}, CONCERT_ID - {}, TOKEN_ID - {}, 상태 - {}",
+                finalQueueToken.userId(), finalQueueToken.concertId(), finalQueueToken.tokenId(), finalQueueToken.status());
+
+        return finalQueueToken;
     }
 
     public QueueToken getQueueInfo(UUID concertId, String tokenId) throws CustomException {
@@ -75,9 +101,9 @@ public class QueueService {
         UUID tokenId = UUID.randomUUID();
 
         if (activeTokens < MAX_ACTIVE_TOKEN_SIZE)
-            return QueueToken.activeTokenOf(tokenId, userId, concertId, QUEUE_EXPIRES_TIME);
+            return QueueToken.activeTokenOf(tokenId, userId, concertId, QUEUE_EXPIRES_TIME); // 활성 토큰 발급
 
         Integer waitingTokens = queueTokenRepository.countWaitingTokens(concertId);
-        return QueueToken.waitingTokenOf(tokenId, userId, concertId, waitingTokens);
+        return QueueToken.waitingTokenOf(tokenId, userId, concertId, waitingTokens); // 대기 토큰 발급
     }
 }

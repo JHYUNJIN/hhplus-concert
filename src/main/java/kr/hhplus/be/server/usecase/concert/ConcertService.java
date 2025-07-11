@@ -87,7 +87,7 @@ public class ConcertService {
         return concerts;
     }
 
-    // 콘서트 예약 가능한 날짜 조회
+    // 예약 가능한 콘서트 날짜 조회
     public List<ConcertDate> getAvailableConcertDates(UUID concertId) throws CustomException {
         existsConcert(concertId);
         log.debug("예약 가능한 콘서트 날짜 조회: CONCERT_ID - {}", concertId);
@@ -100,7 +100,7 @@ public class ConcertService {
 
         List<Seat> availableSeats = seatRepository.findAvailableSeats(concertId, concertDateId);
 
-        if (availableSeats.isEmpty()) {
+        if (availableSeats.isEmpty()) { // 예약 가능한 좌석이 없는 경우
             existsConcertDate(concertDateId);
 
             log.debug("콘서트 예약 가능 좌석 조회 - 없음: CONCERT_DATE_ID - {}", concertDateId);

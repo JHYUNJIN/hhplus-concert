@@ -17,6 +17,7 @@ public record QueueToken(
         LocalDateTime enteredAt
 ) {
 
+    // 활성 토큰을 생성하는 메서드
     public static QueueToken activeTokenOf(UUID tokenId, UUID userId, UUID concertId, long expiresTime) {
         LocalDateTime now = LocalDateTime.now();
 
@@ -32,6 +33,7 @@ public record QueueToken(
                 .build();
     }
 
+    // 대기 중인 토큰을 생성하는 메서드
     public static QueueToken waitingTokenOf(UUID tokenId, UUID userId, UUID concertId, int waitingTokens) {
         return QueueToken.builder()
                 .tokenId(tokenId)
@@ -45,6 +47,7 @@ public record QueueToken(
                 .build();
     }
 
+    // 대기 중인 토큰의 순서를 업데이트하는 메서드
     public QueueToken withWaitingPosition(int waitingPosition) {
         return QueueToken.builder()
                 .tokenId(tokenId)

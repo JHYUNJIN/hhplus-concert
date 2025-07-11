@@ -50,7 +50,6 @@ public class QueueController {
             @PathVariable UUID userId
     ) throws CustomException {
         QueueToken queueToken = queueService.issueQueueToken(userId, concertId);
-        System.out.println("🚀[로그:정현진] queueToken : " + queueToken);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(QueueTokenResponse.from(queueToken));
     }
@@ -79,8 +78,8 @@ public class QueueController {
             @PathVariable UUID concertId,
             @RequestHeader(value = "Authorization") String queueToken
     ) throws CustomException {
-        String parsedQueueToken = queueToken.substring("Bearer ".length());
-        QueueToken result = queueService.getQueueInfo(concertId, parsedQueueToken);
+        queueToken = queueToken.startsWith("Bearer ") ? queueToken.substring("Bearer ".length()) : queueToken;
+        QueueToken result = queueService.getQueueInfo(concertId, queueToken);
 
         return ResponseEntity.ok(QueueTokenResponse.from(result));
     }

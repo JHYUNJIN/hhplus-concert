@@ -29,19 +29,20 @@ public enum ErrorCode {
     INVALID_USER_DATA(HttpStatus.BAD_REQUEST, "U006", "유효하지 않은 사용자 데이터입니다.", Level.WARN),
     USER_ALREADY_EXISTS(HttpStatus.CONFLICT, "U007", "이미 존재하는 사용자입니다.", Level.WARN), // 비즈니스 예외
     USER_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "U008", "사용자 생성에 실패했습니다.", Level.ERROR), // 내부 오류, ERROR
+    CHARGE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "U009", "충전에 실패했습니다.", Level.ERROR),
 
     // Concert Service Errors (콘서트 관련 오류) - 대부분 WARN 레벨
     CONCERT_NOT_FOUND(HttpStatus.NOT_FOUND, "CT001", "콘서트를 찾을 수 없습니다.", Level.WARN), // 예상 가능한 비즈니스 예외
-    CANNOT_RESERVATION_DATE(HttpStatus.CONFLICT, "C002", "해당 날짜는 예약이 불가능 합니다.", Level.WARN),
+    CANNOT_RESERVATION_DATE(HttpStatus.BAD_REQUEST, "C002", "해당 날짜는 예약이 불가능 합니다.", Level.WARN),
     CONCERT_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CT003", "콘서트 생성에 실패했습니다.", Level.ERROR), // 내부 오류, ERROR
     CONCERT_DATE_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CT004", "콘서트 날짜 생성에 실패했습니다.", Level.ERROR), // 내부 오류, ERROR
     CONCERT_DATE_ALREADY_EXISTS(HttpStatus.CONFLICT, "CT005", "해당 콘서트 날짜는 이미 존재합니다.", Level.WARN), // 비즈니스 예외
     CONCERT_DATE_NOT_FOUND(HttpStatus.NOT_FOUND, "CT002", "콘서트 날짜를 찾을 수 없습니다.", Level.WARN), // 예상 가능한 비즈니스 예외
     SEAT_NOT_FOUND(HttpStatus.NOT_FOUND, "CT003", "좌석을 찾을 수 없습니다.", Level.WARN), // 예상 가능한 비즈니스 예외
     SEAT_NOT_AVAILABLE(HttpStatus.CONFLICT, "CT004", "해당 좌석은 현재 예약할 수 없습니다.", Level.WARN), // 예상 가능한 비즈니스 예외
-    SEAT_ALREADY_RESERVED(HttpStatus.CONFLICT, "CT005", "해당 좌석은 이미 예약되었습니다.", Level.WARN), // 예상 가능한 비즈니스 예외
+    SEAT_ALREADY_RESERVED(HttpStatus.BAD_REQUEST, "CT005", "해당 좌석은 이미 예약되었습니다.", Level.WARN), // 예상 가능한 비즈니스 예외
+    ALREADY_RESERVED_SEAT(HttpStatus.BAD_REQUEST, "C006", "해당 좌석은 이미 예약되었습니다.", Level.WARN), // SEAT_ALREADY_RESERVED와 유사 (코드 중복 의심)
     SEAT_LOCK_CONFLICT(HttpStatus.CONFLICT, "C007", "이미 다른 사용자가 예약중입니다.", Level.WARN), // 동시성 처리 중 예상 가능한 경합
-    ALREADY_RESERVED_SEAT(HttpStatus.CONFLICT, "C006", "해당 좌석은 이미 예약되었습니다.", Level.WARN), // SEAT_ALREADY_RESERVED와 유사 (코드 중복 의심)
     OVER_DEADLINE(HttpStatus.BAD_REQUEST, "C004", "해당 날짜의 마감시간이 지났습니다.", Level.WARN), // 비즈니스 로직에 따른 마감
     SEAT_NOT_HOLD(HttpStatus.CONFLICT, "C008", "해당 좌석은 임시 배정되어있지 않습니다.", Level.WARN),
 
@@ -62,10 +63,14 @@ public enum ErrorCode {
 
     // Queue Service Errors (대기열 관련 오류) - 대부분 WARN 레벨
     INVALID_QUEUE_TOKEN(HttpStatus.BAD_REQUEST, "Q001", "대기열 토큰이 유효하지 않습니다.", Level.WARN),
+    QUEUE_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "Q002", "대기열 토큰을 찾을 수 없습니다.", Level.WARN), // 락 처리 중 예상 가능한 경합
+    QUEUE_TOKEN_SERIALIZATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Q003", "대기열 토큰 직렬화 오류가 발생했습니다.", Level.ERROR),
 
     // Lock Service Errors (락 관련 오류) - 대부분 WARN 레벨
     LOCK_CONFLICT(HttpStatus.CONFLICT, "L001", "락 충돌이 발생했습니다.", Level.WARN),
-    INVALID_SEAT_COUNT(HttpStatus.BAD_REQUEST, "L002", "좌석 수가 유효하지 않습니다.", Level.WARN); // 락 처리 중 예상 가능한 경합
+    INVALID_SEAT_COUNT(HttpStatus.BAD_REQUEST, "L002", "좌석 수가 유효하지 않습니다.", Level.WARN),
+    UNEXPECTED_RACE_CONDITION(HttpStatus.CONFLICT, "L003", "예상치 못한 경합 상태가 발생했습니다.", Level.ERROR);
+
 
 
     private final HttpStatus httpStatus;
