@@ -58,7 +58,7 @@ public class QueueConcurrencyTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private static final int THREAD_SIZE = 2;
+    private static final int THREAD_SIZE = 5;
 
     private UUID concertId;
     private UUID userId;
@@ -86,7 +86,7 @@ public class QueueConcurrencyTest {
     }
 
     @Test
-    @DisplayName("대기열_토큰_동시발급")
+    @DisplayName("대기열_토큰_동시발급_동일사용자")
     void issueQueueToken_Concurrency_Test() throws Exception {
         List<String> tokenIdList = Collections.synchronizedList(new ArrayList<>()); // 동시성 문제를 피하기 위해 스레드 안전한 리스트 사용
         List<CompletableFuture<Void>> futures = new ArrayList<>(); // 동시 실행을 위한 CompletableFuture 리스트
@@ -118,5 +118,39 @@ public class QueueConcurrencyTest {
         System.out.println("🚀[로그:정현진] tokenIdList : " + tokenIdList);
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(10, TimeUnit.SECONDS);
         assertThat(tokenIdList.get(0)).isEqualTo(tokenIdList.get(1)); // 기존 토큰이 있을 시 기존 토큰 사용
+    }
+
+    @Test
+    @DisplayName("대기열_토큰_동시발급_여러사용자")
+    void issueQueueToken_Concurrency_MultipleUsers_Test() throws Exception {
+        List<String> tokenIdList = Collections.synchronizedList(new ArrayList<>()); // 동시성 문제를 피하기 위해 스레드 안전한 리스트 사용
+        List<CompletableFuture<Void>> futures = new ArrayList<>(); // 동시 실행을 위한 CompletableFuture 리스트
+
+        for (int i = 0; i < THREAD_SIZE; i++) {
+            User user = TestDataFactory.createUser();
+            User savedUser = userRepository.save(user);
+            UUID userId = savedUser.id();
+
+            futures.add(CompletableFuture.runAsync(() -> {
+                try {
+                    MvcResult mvcResult = mockMvc.perform(
+                                    post("/api/v1/queue/concerts/{concertId}/users/{userId}", concertId, userId)
+                                            .contentType(MediaType.APPLICATION_JSON))
+                            .andExpect(status().isCreated())
+                            .andReturn();
+
+                    String responseContent = mvcResult.getResponse().getContentAsString();
+                    JsonNode jsonNode = objectMapper.readTree(responseContent);
+                    String tokenId = jsonNode.get("tokenId").asText();
+                    tokenIdList.add(tokenId);
+                    System.out.println("🚀[로그:정현진] 발급된 토큰 ID: " + tokenId);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }));
+        }
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(10, TimeUnit.SECONDS);
+        assertThat(tokenIdList.size()).isEqualTo(THREAD_SIZE); // 모든 사용자에 대해 토큰이 발급되어야 함
     }
 }
