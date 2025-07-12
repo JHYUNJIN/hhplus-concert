@@ -14,6 +14,11 @@ import lombok.RequiredArgsConstructor;
 public class PaymentDomainService {
 
     public PaymentDomainResult processPayment(Reservation reservation, Payment payment, Seat seat, User user) throws CustomException {
+
+        // 결제 상태가 PROCESSING이 아니면 예외 발생
+        if (payment.status() != PaymentStatus.PROCESSING) {
+            throw new CustomException(ErrorCode.ALREADY_PROCESSED, "결제가 이미 처리 중이거나 완료되었습니다.");
+        }
         validatePayment(payment);
         validateUserBalance(payment, user);
 

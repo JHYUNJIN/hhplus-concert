@@ -1,37 +1,33 @@
 package kr.hhplus.be.server.usecase.payment.interactor;
 
-import java.util.UUID;
-
-import kr.hhplus.be.server.common.aop.lock.DistributedLock;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
-
-import kr.hhplus.be.server.domain.seat.Seat;
-import kr.hhplus.be.server.domain.event.payment.PaymentSuccessEvent;
-import kr.hhplus.be.server.domain.payment.Payment;
-import kr.hhplus.be.server.domain.payment.PaymentDomainResult;
-import kr.hhplus.be.server.domain.payment.PaymentDomainService;
-import kr.hhplus.be.server.domain.queue.QueueToken;
-import kr.hhplus.be.server.domain.reservation.Reservation;
-import kr.hhplus.be.server.domain.user.User;
-import kr.hhplus.be.server.domain.seat.SeatRepository;
-import kr.hhplus.be.server.usecase.event.EventPublisher;
+import kr.hhplus.be.server.common.aop.lock.DistributedLock;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.enums.ErrorCode;
-import kr.hhplus.be.server.domain.payment.PaymentRepository;
+import kr.hhplus.be.server.domain.event.payment.PaymentFailedEvent;
+import kr.hhplus.be.server.domain.event.payment.PaymentSuccessEvent;
+import kr.hhplus.be.server.domain.payment.*;
+import kr.hhplus.be.server.domain.queue.QueueToken;
+import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
+import kr.hhplus.be.server.domain.queue.QueueTokenUtil;
+import kr.hhplus.be.server.domain.reservation.Reservation;
+import kr.hhplus.be.server.domain.reservation.ReservationRepository;
+import kr.hhplus.be.server.domain.seat.Seat;
+import kr.hhplus.be.server.domain.seat.SeatHoldRepository;
+import kr.hhplus.be.server.domain.seat.SeatRepository;
+import kr.hhplus.be.server.domain.user.User;
+import kr.hhplus.be.server.domain.user.UserRepository;
+import kr.hhplus.be.server.usecase.event.EventPublisher;
 import kr.hhplus.be.server.usecase.payment.input.PaymentCommand;
 import kr.hhplus.be.server.usecase.payment.input.PaymentInput;
 import kr.hhplus.be.server.usecase.payment.output.PaymentOutput;
 import kr.hhplus.be.server.usecase.payment.output.PaymentResult;
-import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
-import kr.hhplus.be.server.domain.queue.QueueTokenUtil;
-import kr.hhplus.be.server.domain.reservation.ReservationRepository;
-import kr.hhplus.be.server.domain.seat.SeatHoldRepository;
-import kr.hhplus.be.server.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -49,10 +45,27 @@ public class PaymentInteractor implements PaymentInput {
     private final PaymentDomainService paymentDomainService;
     private final EventPublisher eventPublisher;
 
+    /* 결제 상태 흐름
+    [PENDING]
+   │
+   ├── (updateStatusIfExpected → PROCESSING 성공)
+   │       │
+   │       ├── [processPayment 성공] → update → SUCCESS
+   │       │
+   │       └── [예외 발생] → rollback → FAILED
+   │
+   └── (이미 처리됨) → ALREADY_PROCESSED 예외
+     */
     @Override
     @DistributedLock(key = "'payment:reservation:' + #command.reservationId()", waitTime = 3L, leaseTime = 10L)
     @Transactional // 이 트랜잭션은 분산락이 획득된 후에 시작됩니다.
     public void payment(PaymentCommand command) throws CustomException {
+
+        Reservation reservation = null;
+        Payment payment = null;
+        Seat seat = null;
+        User user = null;
+
         try {
             System.out.println("🚀[로그:정현진] command : " + command);
             // 토큰 검증
@@ -60,13 +73,13 @@ public class PaymentInteractor implements PaymentInput {
             System.out.println("🚀[로그:정현진] 토큰검증 queueToken : " + queueToken);
 
             // 예약, 결제, 좌석, 사용자 정보 조회
-            Reservation reservation = getReservation(command);
+            reservation = getReservation(command);
             System.out.println("🚀[로그:정현진] 예약 정보 : " + reservation);
-            Payment payment = getPayment(reservation);
+            payment = getPayment(reservation);
             System.out.println("🚀[로그:정현진] 결제 정보 : " + payment);
-            Seat seat = getSeat(reservation);
+            seat = getSeat(reservation);
             System.out.println("🚀[로그:정현진] 좌석 정보 : " + seat);
-            User user = getUser(queueToken.userId());
+            user = getUser(queueToken.userId());
             System.out.println("🚀[로그:정현진] 사용자 정보 : " + user);
 
             // 좌석 예약 상태 확인
@@ -74,10 +87,30 @@ public class PaymentInteractor implements PaymentInput {
             // 예약 로직 안에 좌석 잠금 로직이 있음
             // 튜터님께 : 예약 로직을 루아 스크립트로 구현하여 동시성을 제어했는데 레디스 좌석 잠금 로직에 분산락이 추가로 필요한지 피드백이 필요함
             validateSeatHold(seat.id(), user.id());
+            System.out.println("🚀[로그:정현진] @00");
+            // 🔐 낙관적 락: 상태 선점 (PENDING → PROCESSING)
+            int updated = paymentRepository.updateStatusIfExpected(
+                    payment.id(),
+                    PaymentStatus.PROCESSING,
+                    PaymentStatus.PENDING
+            );
+            if (updated != 1) {
+                throw new CustomException(ErrorCode.ALREADY_PROCESSED, "결제가 이미 처리되었습니다.");
+            }
+            // 결제 상태를 PROCESSING으로 업데이트
+            payment = payment.toProcessing();
 
             System.out.println("🚀[로그:정현진] @01");
             // 결제 진행
             PaymentDomainResult result = paymentDomainService.processPayment(reservation, payment, seat, user);
+            System.out.println("🚀[로그:정현진] result : " + result);
+
+            // 결제 상태 업데이트
+            paymentRepository.updateStatusIfExpected(
+                    payment.id(),
+                    PaymentStatus.SUCCESS,
+                    PaymentStatus.PROCESSING
+            );
 
             System.out.println("🚀[로그:정현진] @02");
             // 결제 성공 시 데이터 저장 및 이벤트 발행
@@ -149,3 +182,4 @@ public class PaymentInteractor implements PaymentInput {
 
 결과적으로 인터랙터는 비즈니스 로직의 독립성을 보장하고, 시스템의 견고함과 유연성을 증대시키는 데 중요한 역할을 합니다.
  */
+

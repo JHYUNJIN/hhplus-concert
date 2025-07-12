@@ -60,6 +60,7 @@ public enum ErrorCode {
     PAYMENT_ALREADY_PROCESSED(HttpStatus.CONFLICT, "P004", "이미 처리된 결제입니다.", Level.WARN),
     INVALID_PAYMENT_AMOUNT(HttpStatus.BAD_REQUEST, "P002", "결제 금액이 잘못되었습니다.", Level.WARN), // PAYMENT_INVALID_AMOUNT와 유사 (코드 중복 의심)
     ALREADY_PAID(HttpStatus.BAD_REQUEST, "P004", "이미 결제되었습니다.", Level.WARN), // PAYMENT_ALREADY_PROCESSED와 유사 (코드 중복 의심)
+    ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "P005", "결제가 이미 처리되었습니다.", Level.WARN),
 
     // Queue Service Errors (대기열 관련 오류) - 대부분 WARN 레벨
     INVALID_QUEUE_TOKEN(HttpStatus.BAD_REQUEST, "Q001", "대기열 토큰이 유효하지 않습니다.", Level.WARN),

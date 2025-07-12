@@ -31,4 +31,9 @@ public class PaymentJpaGateway implements PaymentRepository {
         jpaPaymentRepository.deleteAll();
     }
 
+    @Override
+    public int updateStatusIfExpected(UUID paymentId, PaymentStatus newStatus, PaymentStatus expectedStatus) {
+        return jpaPaymentRepository.updateStatusIfExpected(paymentId.toString(), newStatus, expectedStatus);
+    }
+
 }

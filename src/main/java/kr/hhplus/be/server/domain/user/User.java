@@ -34,6 +34,14 @@ public record User (
                 .build();
     }
 
+    public User refund(BigDecimal balance) {
+        return User.builder()
+                .id(id)
+                .amount(amount.add(balance))
+                .updatedAt(updatedAt)
+                .build();
+    }
+
     public boolean checkEnoughAmount(BigDecimal balance) {
         return amount.compareTo(balance) >= 0;
     }
