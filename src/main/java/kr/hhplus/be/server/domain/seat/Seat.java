@@ -1,12 +1,12 @@
 package kr.hhplus.be.server.domain.seat;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.UUID;
-
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.enums.ErrorCode;
 import lombok.Builder;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Builder
 public record Seat(
@@ -56,6 +56,19 @@ public record Seat(
                 .price(price)
                 .seatGrade(seatGrade)
                 .status(SeatStatus.ASSIGNED)
+                .createdAt(this.createdAt)
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+
+    public Seat fail() {
+        return Seat.builder()
+                .id(id)
+                .concertDateId(concertDateId)
+                .seatNo(seatNo)
+                .price(price)
+                .seatGrade(seatGrade)
+                .status(SeatStatus.AVAILABLE)
                 .createdAt(this.createdAt)
                 .updatedAt(LocalDateTime.now())
                 .build();

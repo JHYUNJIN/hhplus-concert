@@ -32,4 +32,15 @@ public record Reservation(
                 .updatedAt(LocalDateTime.now())
                 .build();
     }
+
+    public Reservation fail() {
+        return Reservation.builder()
+                .id(id)
+                .userId(userId)
+                .seatId(seatId)
+                .status(ReservationStatus.FAILED)
+                .createdAt(createdAt)
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
 }

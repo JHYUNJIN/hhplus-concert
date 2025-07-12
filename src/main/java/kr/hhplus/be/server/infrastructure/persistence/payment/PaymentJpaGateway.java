@@ -2,9 +2,11 @@ package kr.hhplus.be.server.infrastructure.persistence.payment;
 
 import kr.hhplus.be.server.domain.payment.Payment;
 import kr.hhplus.be.server.domain.payment.PaymentRepository;
+import kr.hhplus.be.server.domain.payment.PaymentStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,6 +15,11 @@ import java.util.UUID;
 public class PaymentJpaGateway implements PaymentRepository {
 
     private final JpaPaymentRepository jpaPaymentRepository;
+
+    @Override
+    public Optional<Payment> findById(UUID paymentId) {
+        return jpaPaymentRepository.findById(paymentId.toString()).map(PaymentEntity::toDomain);
+    }
 
     @Override
     public Payment save(Payment payment) {

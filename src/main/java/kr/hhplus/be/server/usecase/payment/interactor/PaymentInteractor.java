@@ -127,9 +127,11 @@ public class PaymentInteractor implements PaymentInput {
             paymentOutput.ok(PaymentResult.of(savedPayment, savedSeat, savedReservation.id(), savedUser.id()));
         } catch (CustomException e) {
             log.warn("결제 진행 중 비즈니스 예외 발생 - {}", e.getErrorCode().name());
+            handleFailure(payment, reservation, seat, user, e.getErrorCode());
             throw e;
         } catch (Exception e) {
             log.error("결제 진행 중 예외 발생 - {}", ErrorCode.INTERNAL_SERVER_ERROR, e);
+            handleFailure(payment, reservation, seat, user, ErrorCode.INTERNAL_SERVER_ERROR);
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
@@ -164,6 +166,19 @@ public class PaymentInteractor implements PaymentInput {
         if (!seatHoldRepository.isHoldSeat(seatId, userId))
             throw new CustomException(ErrorCode.SEAT_NOT_HOLD);
     }
+
+    private void handleFailure(Payment payment, Reservation reservation, Seat seat, User user, ErrorCode errorCode) {
+        // 메인 트랜잭션은 롤백될 것이므로, 여기서는 실패 처리 이벤트만 발행
+        // DB 상태 변경은 트랜잭션 롤백 후 이벤트 리스너에서 처리함
+        if (payment != null && reservation != null && user != null && seat != null) {
+            log.info("결제 실패로 인한 롤백 발생. 실패 처리 이벤트를 발행합니다. errorCode={}", errorCode);
+            eventPublisher.publish(PaymentFailedEvent.of(payment, reservation, seat, user, errorCode));
+        } else {
+            log.warn("결제 실패 이벤트 발행에 필요한 정보가 부족하여 이벤트를 발행할 수 없습니다.");
+        }
+    }
+
+
 }
 
 

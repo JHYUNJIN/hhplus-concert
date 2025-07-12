@@ -36,11 +36,31 @@ public record Payment(
                 .build();
     }
 
+    public Payment toProcessing() {
+        return Payment.builder()
+                .id(id)
+                .userId(userId)
+                .reservationId(reservationId)
+                .amount(amount)
+                .status(PaymentStatus.PROCESSING)
+                .build();
+    }
+
     public boolean isPaid() {
         return status.equals(PaymentStatus.SUCCESS);
     }
 
     public boolean checkAmount() {
         return amount().compareTo(BigDecimal.ZERO) > 0;
+    }
+
+    public Payment fail() {
+        return Payment.builder()
+                .id(id)
+                .userId(userId)
+                .reservationId(reservationId)
+                .amount(amount)
+                .status(PaymentStatus.FAILED)
+                .build();
     }
 }
