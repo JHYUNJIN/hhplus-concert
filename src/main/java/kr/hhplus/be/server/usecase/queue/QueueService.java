@@ -19,7 +19,7 @@ import java.util.UUID;
 @Slf4j
 public class QueueService {
 
-    private static final int MAX_ACTIVE_TOKEN_SIZE = 50; // 동시 접속자 최대 수
+    private static final int MAX_ACTIVE_TOKEN_SIZE = 2; // 동시 접속자 최대 수
     private static final long QUEUE_EXPIRES_TIME = 60L;
 
     private final QueueTokenRepository queueTokenRepository;
@@ -44,7 +44,6 @@ public class QueueService {
         }
 
         Integer activeTokenCount = queueTokenRepository.countActiveTokens(concertId);
-        System.out.println("🚀[로그:정현진] activeTokenCount : " + activeTokenCount);
         // 1. 토큰이 없는 경우, 새 토큰을 생성하고 SETNX 시도
         QueueToken newQueueToken = createQueueToken(activeTokenCount, userId, concertId);
         System.out.println("🚀[로그:정현진] newQueueToken : " + newQueueToken);
@@ -97,13 +96,16 @@ public class QueueService {
             throw new CustomException(ErrorCode.CONCERT_NOT_FOUND);
     }
 
-    private QueueToken createQueueToken(Integer activeTokens, UUID userId, UUID concertId) {
+    private QueueToken createQueueToken(Integer activeTokenCount, UUID userId, UUID concertId) {
         UUID tokenId = UUID.randomUUID();
 
-        if (activeTokens < MAX_ACTIVE_TOKEN_SIZE)
+        System.out.println("🚀[로그:정현진] activeTokenCount : " + activeTokenCount);
+        System.out.println("🚀[로그:정현진] MAX_ACTIVE_TOKEN_SIZE : " + MAX_ACTIVE_TOKEN_SIZE);
+        if (activeTokenCount < MAX_ACTIVE_TOKEN_SIZE)
             return QueueToken.activeTokenOf(tokenId, userId, concertId, QUEUE_EXPIRES_TIME); // 활성 토큰 발급
 
-        Integer waitingTokens = queueTokenRepository.countWaitingTokens(concertId);
-        return QueueToken.waitingTokenOf(tokenId, userId, concertId, waitingTokens); // 대기 토큰 발급
+        Integer waitingTokenCount = queueTokenRepository.countWaitingTokens(concertId);
+        System.out.println("🚀[로그:정현진] waitingTokenCount : " + waitingTokenCount);
+        return QueueToken.waitingTokenOf(tokenId, userId, concertId, waitingTokenCount); // 대기 토큰 발급
     }
 }

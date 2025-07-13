@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
@@ -26,6 +27,9 @@ public class RedisAtomicQueueTokenRepository {
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapperForLua;
     private final DefaultRedisScript<String> issueQueueTokenAtomicScript;
+
+    // 대기 상태 토큰을 위한 기본 TTL (예: 1시간)
+    private static final long WAITING_TOKEN_DEFAULT_TTL_SECONDS = 60 * 60;
 
     // 생성자 주입
     // Qualifier를 사용하여 RedisTemplate과 ObjectMapper를 주입
@@ -67,9 +71,18 @@ public class RedisAtomicQueueTokenRepository {
 
         // 토큰 만료 시간 계산 (초 단위)
         // newQueueToken.expiresAt()이 LocalDateTime 이므로, Instant로 변환 후 초 계산
-        long expirationSeconds = Duration.between(Instant.now(), newQueueToken.expiresAt().atZone(ZoneOffset.UTC).toInstant()).getSeconds();
-        if (expirationSeconds <= 0) {
-            expirationSeconds = 1; // 최소 1초 TTL 보장
+        // newQueueToken.expiresAt()이 null일 경우를 처리 (대기 상태의 QueueToken은 만료 시간이 설정되지 않음)
+        long expirationSeconds;
+        LocalDateTime expiresAt = newQueueToken.expiresAt();
+        if (expiresAt != null) {
+            expirationSeconds = Duration.between(Instant.now(), expiresAt.atZone(ZoneOffset.UTC).toInstant()).getSeconds();
+            if (expirationSeconds <= 0) {
+                expirationSeconds = 1; // 최소 1초 TTL 보장
+            }
+        } else {
+            // expiresAt이 null인 경우 (예: WAITING 토큰), WAITING_TOKEN_DEFAULT_TTL_SECONDS 설정
+            expirationSeconds = WAITING_TOKEN_DEFAULT_TTL_SECONDS;
+            log.info("QueueToken의 expiresAt 필드가 null입니다. 기본 TTL({})초로 설정합니다. 토큰 ID: {}", WAITING_TOKEN_DEFAULT_TTL_SECONDS, newQueueToken.tokenId());
         }
 
         // KEYS 인자: Redis 키 목록

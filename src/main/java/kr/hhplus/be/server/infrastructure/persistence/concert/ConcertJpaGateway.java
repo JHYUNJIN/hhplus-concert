@@ -41,6 +41,15 @@ public class ConcertJpaGateway implements ConcertRepository {
     }
 
     @Override
+    public List<Concert> findByOpenConcerts() {
+        return jpaConcertRepository.findByOpenConcerts()
+                .stream()
+                .map(ConcertEntity::toDomain)
+                .toList();
+    }
+
+
+    @Override
     public void deleteAll() {
         jpaConcertRepository.deleteAll();
     }

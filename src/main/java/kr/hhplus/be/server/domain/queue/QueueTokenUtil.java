@@ -4,6 +4,7 @@ import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.enums.ErrorCode;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import java.util.UUID;
 
@@ -40,4 +41,45 @@ public final class QueueTokenUtil {
     public static String formattingWaitingTokenKey(UUID concertId) {
         return String.format(WAITING_TOKEN_KEY, concertId);
     }
+
+    public static DefaultRedisScript<Long> promoteWaitingTokenScript() {
+        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
+        script.setScriptText(PROMOTE_WAITING_TOKEN_SCRIPT);
+
+        script.setResultType(Long.class);
+
+        return script;
+    }
+
+    public static final String PROMOTE_WAITING_TOKEN_SCRIPT = """
+          local activeTokenKey = KEYS[1]
+          local waitingTokenKey = KEYS[2]
+          local maxActiveTokenSize = tonumber(ARGV[1])
+
+          -- 활성 토큰 개수 조회 (SCARD -> ZCARD 로 변경)
+          local activeCount = redis.call('ZCARD', activeTokenKey)
+          local leftActiveCount = maxActiveTokenSize - activeCount
+
+          if leftActiveCount <= 0 then
+              return 0
+          end
+
+          -- 남은 활성 토큰 개수 만큼 대기 토큰 조회
+          local waitingTokens = redis.call('ZRANGE', waitingTokenKey, 0, leftActiveCount - 1)
+          if #waitingTokens == 0 then
+              return 0
+          end
+          
+          -- 현재 시간을 점수(score)로 사용하기 위해 조회
+          local currentTime = redis.call('TIME')
+          local score = currentTime[1]
+
+          -- 대기 토큰 활성 토큰으로 승급
+          for i, tokenId in ipairs(waitingTokens) do
+              -- SADD -> ZADD 로 변경하고, score를 함께 전달
+              redis.call('ZADD', activeTokenKey, score, tokenId)
+              redis.call('ZREM', waitingTokenKey, tokenId)
+          end
+          return #waitingTokens
+          """;
 }
