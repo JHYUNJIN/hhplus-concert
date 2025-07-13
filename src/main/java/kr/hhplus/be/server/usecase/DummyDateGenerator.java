@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.stereotype.Component;
 
@@ -64,13 +65,26 @@ public class DummyDateGenerator {
         log.info("콘서트 더미 데이터 삽입중....");
         List<Concert> concerts = new ArrayList<>();
 
+        // 랜덤 날짜 범위 설정 (현재로부터 1년 전 ~ 1년 후)
+        LocalDateTime start = LocalDateTime.now().minusYears(1);
+        LocalDateTime end = LocalDateTime.now().plusYears(1);
+
         for (int i = 0; i < 1000; i++) {
             String artist = faker.music().genre() + " " + faker.name().firstName();
             String title = artist + " 콘서트 " + faker.music().instrument();
 
+            // 랜덤 날짜 생성 (시간은 10:00:00으로 통일)
+            long randomDayEpoch = ThreadLocalRandom.current().nextLong(start.toLocalDate().toEpochDay(), end.toLocalDate().toEpochDay());
+            LocalDateTime openTime = LocalDateTime.ofEpochSecond(randomDayEpoch * 24 * 60 * 60, 0, java.time.ZoneOffset.UTC)
+                    .withHour(10).withMinute(0).withSecond(0);
+            LocalDateTime soldOutTime = openTime.plusDays(3)
+                .withHour(faker.number().numberBetween(18, 22)).withMinute(0).withSecond(0);
+
             Concert concert = Concert.builder()
                     .title(title)
                     .artist(artist)
+                    .openTime(openTime)
+                    .soldOutTime(soldOutTime)
                     .build();
 
             concerts.add(concertRepository.save(concert));

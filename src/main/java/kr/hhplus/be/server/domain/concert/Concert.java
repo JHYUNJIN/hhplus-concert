@@ -10,6 +10,25 @@ public record Concert(
         UUID id,
         String title,
         String artist,
+        LocalDateTime openTime,
+        LocalDateTime soldOutTime,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt) {
+        LocalDateTime updatedAt
+) {
+
+    public boolean isOpen() {
+        return openTime.isAfter(LocalDateTime.now());
+    }
+
+    public Concert soldOut(LocalDateTime soldOutTime) {
+        return Concert.builder()
+                .id(id)
+                .title(title)
+                .artist(artist)
+                .openTime(openTime)
+                .soldOutTime(soldOutTime)
+                .createdAt(createdAt)
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
 }

@@ -1,13 +1,24 @@
 package kr.hhplus.be.server.infrastructure.persistence.concert;
 
-import jakarta.persistence.*;
-import kr.hhplus.be.server.domain.concert.Concert;
-import kr.hhplus.be.server.infrastructure.persistence.BaseTimeEntity;
-import lombok.*;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.util.UUID;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import kr.hhplus.be.server.domain.concert.Concert;
+import kr.hhplus.be.server.infrastructure.persistence.BaseTimeEntity;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "CONCERT")
@@ -29,11 +40,19 @@ public class ConcertEntity extends BaseTimeEntity {
 	@Column(name = "artist", length = 50, nullable = false)
 	private String artist;
 
+	@Column(name = "open_time", nullable = false)
+	private LocalDateTime openTime;
+
+	@Column(name = "sold_out_time")
+	private LocalDateTime soldOutTime;
+
 	public static ConcertEntity from(Concert concert) {
 		return ConcertEntity.builder()
 				.id(concert.id() != null ? concert.id().toString() : null)
 				.title(concert.title())
 				.artist(concert.artist())
+				.openTime(concert.openTime())
+				.soldOutTime(concert.soldOutTime())
 				.build();
 	}
 
@@ -42,6 +61,8 @@ public class ConcertEntity extends BaseTimeEntity {
 				.id(UUID.fromString(id))
 				.title(title)
 				.artist(artist)
+				.openTime(openTime)
+				.soldOutTime(soldOutTime)
 				.createdAt(getCreatedAt())
 				.updatedAt(getUpdatedAt())
 				.build();
