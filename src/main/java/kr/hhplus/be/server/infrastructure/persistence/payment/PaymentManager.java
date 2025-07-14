@@ -48,20 +48,14 @@ public class PaymentManager {
      */
     @Transactional
     public PaymentTransactionResult processPayment(PaymentCommand command, QueueToken queueToken) throws CustomException {
-        System.out.println("🚀[로그:정현진] processPayment() 시작");
-
         // 객체 조회 및 유효성 검사
-        System.out.println("🚀[로그:정현진] 01");
         User user = getUser(queueToken.userId());
         Reservation reservation = getReservation(command.reservationId());
         Seat seat = getSeat(reservation.seatId());
         Payment payment = getPayment(reservation.id());
         validateSeatHold(seat.id(), user.id());
-
-
         try{
             // 🔐 낙관적 락: 상태 선점 (PENDING → PROCESSING)
-            System.out.println("🚀[로그:정현진] 02");
             int updated = paymentRepository.updateStatusIfExpected(
                     payment.id(),
                     PaymentStatus.PROCESSING,
@@ -71,15 +65,12 @@ public class PaymentManager {
                 throw new CustomException(ErrorCode.ALREADY_PROCESSED, "결제가 이미 처리되었습니다.");
             }
 
-            // 결제 상태를 PROCESSING으로 업데이트
+            // 결제 객체 상태 변경 후 결제 진행
             payment = payment.toProcessing();
-
-            // 결제 진행
-            System.out.println("🚀[로그:정현진] 03");
             PaymentDomainResult result = paymentDomainService.processPayment(reservation, payment, seat, user);
             PaymentTransactionResult paymentTransactionResult = processPayment(result);
 
-            // 결제 상태 업데이트
+            // 결제 상태 SUCCESS 업데이트
             paymentRepository.updateStatusIfExpected(
                     payment.id(),
                     PaymentStatus.SUCCESS,
@@ -87,11 +78,9 @@ public class PaymentManager {
             );
 
             // 좌석해제 및 토큰 만료 처리
-            System.out.println("🚀[로그:정현진] 04");
             seatHoldRepository.deleteHold(paymentTransactionResult.seat().id(), paymentTransactionResult.user().id());
             queueTokenRepository.expiresQueueToken(queueToken.tokenId().toString());
 
-            System.out.println("🚀[로그:정현진] processPayment() 종료 ");
             return paymentTransactionResult;
         } catch (CustomException e) {
             eventPublisher.publish(PaymentFailedEvent.of(payment, reservation, seat, user, e.getErrorCode()));

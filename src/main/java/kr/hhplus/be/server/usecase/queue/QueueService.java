@@ -37,7 +37,6 @@ public class QueueService {
         // 이미 발급된 토큰이 있는지 확인
         String findTokenId = queueTokenRepository.findTokenIdByUserIdAndConcertId(userId, concertId);
         // 로그 출력
-        System.out.println("🚀[로그:정현진] findTokenId : " + findTokenId);
         if (findTokenId != null) {
             log.debug("이미 발급된 토큰이 있습니다: USER_ID - {}, CONCERT_ID - {}, TOKEN_ID - {}", userId, concertId, findTokenId);
             return queueTokenRepository.findQueueTokenByTokenId(findTokenId);
@@ -46,14 +45,11 @@ public class QueueService {
         Integer activeTokenCount = queueTokenRepository.countActiveTokens(concertId);
         // 1. 토큰이 없는 경우, 새 토큰을 생성하고 SETNX 시도
         QueueToken newQueueToken = createQueueToken(activeTokenCount, userId, concertId);
-        System.out.println("🚀[로그:정현진] newQueueToken : " + newQueueToken);
 
         // 2. Lua 스크립트를 사용하여 토큰 ID 및 정보를 원자적으로 저장 시도, 동시성 문제 해결
         // 새로 발급된 토큰 ID 반환
         // SETNX와 SET (토큰 정보 저장)이 Redis 내부에서 원자적으로 처리됩니다.
         String resultTokenId = redisAtomicQueueTokenRepository.issueTokenAtomic(userId, concertId, newQueueToken);
-        // resultTokenId 로그 출력
-        System.out.println("🚀[로그:정현진] resultTokenId : " + resultTokenId);
 
         // 3. Lua 스크립트로부터 받은 resultTokenId로 실제 QueueToken 객체 조회
         // 이 시점에서는 Redis에 토큰 정보가 확실히 저장되어 있어야 합니다 (Lua 스크립트의 원자성 덕분).
@@ -98,14 +94,10 @@ public class QueueService {
 
     private QueueToken createQueueToken(Integer activeTokenCount, UUID userId, UUID concertId) {
         UUID tokenId = UUID.randomUUID();
-
-        System.out.println("🚀[로그:정현진] activeTokenCount : " + activeTokenCount);
-        System.out.println("🚀[로그:정현진] MAX_ACTIVE_TOKEN_SIZE : " + MAX_ACTIVE_TOKEN_SIZE);
         if (activeTokenCount < MAX_ACTIVE_TOKEN_SIZE)
             return QueueToken.activeTokenOf(tokenId, userId, concertId, QUEUE_EXPIRES_TIME); // 활성 토큰 발급
 
         Integer waitingTokenCount = queueTokenRepository.countWaitingTokens(concertId);
-        System.out.println("🚀[로그:정현진] waitingTokenCount : " + waitingTokenCount);
         return QueueToken.waitingTokenOf(tokenId, userId, concertId, waitingTokenCount); // 대기 토큰 발급
     }
 }

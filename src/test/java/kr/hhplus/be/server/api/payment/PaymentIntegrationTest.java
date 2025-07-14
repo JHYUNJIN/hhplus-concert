@@ -331,7 +331,6 @@ class PaymentIntegrationTest {
     @Test
     @DisplayName("결제_실패_만료된토큰")
     void payment_Failure_cancelToken() throws Exception {
-        System.out.println("🚀[로그:정현진] payment_Failure_cancelToken 시작");
         UUID expiredTokenId = UUID.randomUUID();
         QueueToken expiredToken = QueueToken.builder()
                 .tokenId(expiredTokenId)

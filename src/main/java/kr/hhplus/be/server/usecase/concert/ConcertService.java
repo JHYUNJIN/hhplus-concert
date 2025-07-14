@@ -137,9 +137,7 @@ public class ConcertService {
         // 좌석 생성 로직 (예: 50개의 좌석 생성) 1~10:vip 11~30:premium 31~50:normal
         // 좌석별 가격 설정 (예: vip 170000, premium 130000, normal 90000)
         SeatStatus seatStatus = SeatStatus.AVAILABLE;
-        System.out.println("🚀[로그:정현진] 01");
         for (int i = 1; i <= 50; i++) {
-            System.out.println("🚀[로그:정현진] " + i + "번째 반복");
             SeatGrade seatGrade;
             BigDecimal price;
             if (i <= 10) {
@@ -151,8 +149,7 @@ public class ConcertService {
             }
             price = SeatPrice.getPriceByGrade(seatGrade);
 
-
-        System.out.println("🚀[로그:정현진] 02");
+            // 좌석 생성
             Seat seat = Seat.builder()
                     .concertDateId(concertDateId)
                     .seatNo(i)
@@ -161,7 +158,6 @@ public class ConcertService {
                     .status(seatStatus)
                     .build();
 
-        System.out.println("🚀[로그:정현진] 03");
             log.debug("좌석 저장 시도: concertDateId={}, seatNo={}, seatId={}", concertDateId, i, seat.id());
             seatRepository.save(seat);
         }

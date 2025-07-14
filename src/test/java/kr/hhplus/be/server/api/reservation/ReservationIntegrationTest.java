@@ -91,7 +91,6 @@ class ReservationIntegrationTest {
     void beforeEach() {
         // 매 테스트 시작 전 Redis 데이터 초기화
         redisTemplate.getConnectionFactory().getConnection().flushAll();
-        System.out.println("🚀[로그:정현진] Redis 접속 정보: " + redisTemplate.getConnectionFactory().getConnection().info());
 
         // H2 DB에 테스트 데이터 저장
         Concert concert = TestDataFactory.createConcert();
@@ -104,7 +103,6 @@ class ReservationIntegrationTest {
 
         Seat seat = TestDataFactory.createSeat(concertDateId);
         Seat savedSeat = seatRepository.save(seat);
-        System.out.println("🚀[로그:정현진] savedSeat : " + savedSeat);
         seatId = savedSeat.id(); // 이 seatId가 MockMvc 요청 및 응답 검증에 사용될 실제 좌석 ID
 
         User user = TestDataFactory.createUser();
@@ -240,7 +238,6 @@ class ReservationIntegrationTest {
     @DisplayName("좌석_예약_실패_이미예약된좌석")
     void reserveSeat_Failure_AlreadyReservedSeat() throws Exception {
         Seat seat = seatRepository.findById(seatId).get();
-        System.out.println("🚀[로그:정현진] seat : " + seat);
         seatRepository.save(seat.reserve());
 
         mockMvc.perform(post("/api/v1/reservations/seats/{seatId}", seatId)

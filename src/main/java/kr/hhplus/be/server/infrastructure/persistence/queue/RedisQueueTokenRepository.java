@@ -119,14 +119,11 @@ public class RedisQueueTokenRepository implements QueueTokenRepository { // Redi
     // 대기 토큰을 활성 상태로 승격
     @Override
     public void promoteQueueToken(List<Concert> openConcerts) {
-        System.out.println("🚀[로그:정현진] promoteQueueToken");
         for (Concert openConcert : openConcerts) {
             String activeTokenKey = QueueTokenUtil.formattingActiveTokenKey(openConcert.id());
             String waitingTokenKey = QueueTokenUtil.formattingWaitingTokenKey(openConcert.id());
 
             List<String> keys = List.of(activeTokenKey, waitingTokenKey);
-            System.out.println("🚀[로그:정현진] keys : " + keys);
-
             Long promotedCount = redisTemplate.execute(QueueTokenUtil.promoteWaitingTokenScript(), keys, String.valueOf(2));
 
             // 저장된 값을 로그로 출력합니다.

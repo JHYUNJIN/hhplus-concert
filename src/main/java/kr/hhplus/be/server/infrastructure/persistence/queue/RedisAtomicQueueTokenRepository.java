@@ -55,9 +55,7 @@ public class RedisAtomicQueueTokenRepository {
      */
     public String issueTokenAtomic(UUID userId, UUID concertId, QueueToken newQueueToken) {
         String tokenIdKey = QueueTokenUtil.formattingTokenIdKey(userId, concertId);
-        System.out.println("🚀[로그:정현진] tokenIdKey : " + tokenIdKey);
         String tokenInfoKey = QueueTokenUtil.formattingTokenInfoKey(newQueueToken.tokenId());
-        System.out.println("🚀[로그:정현진] tokenInfoKey : " + tokenInfoKey);
 
         String serializedQueueTokenJson;
         try {

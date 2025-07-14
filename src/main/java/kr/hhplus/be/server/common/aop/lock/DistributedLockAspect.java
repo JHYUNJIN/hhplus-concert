@@ -31,13 +31,9 @@
 //    // 분산락 획득을 위한 키 생성, around 어드바이스는 메소드 실행 전후에 동작함
 //    @Around("@annotation(distributedLock)")
 //    public Object around(ProceedingJoinPoint joinPoint, DistributedLock distributedLock) throws Throwable {
-//        System.out.println("🚀[로그:정현진] 분산락 생성 들어옴");
-//        System.out.println("🚀[로그:정현진]distributedLock : " + distributedLock);
 //        // 1. 분산락 객체 생성
 //        String lockKey = distributedLock.prefix() + parseLockKey(distributedLock.key(), joinPoint);
-//        System.out.println("🚀[로그:정현진] lockKey : " + lockKey);
 //        RLock lock = redissonClient.getLock(lockKey);
-//        System.out.println("🚀[로그:정현진] lock : " + lock);
 //
 //        // 2. 분산락 획득 시도
 //        try {
@@ -46,7 +42,6 @@
 //                    distributedLock.leaseTime(),
 //                    TimeUnit.SECONDS
 //            );
-//            System.out.println("🚀[로그:정현진] isLocked : " + isLocked);
 //
 //            // 3. 분산락 획득 실패 시 예외 처리
 //            if (!isLocked) {
@@ -62,7 +57,6 @@
 //            log.warn("분산락 획득 대기중 인터럽트 발생: Key - {}", lockKey);
 //            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
 //        } finally { // 5. 분산락 해제
-//            System.out.println("🚀[로그:정현진] 분산락 해제");
 //            if (lock.isHeldByCurrentThread()) {
 //                lock.unlock();
 //            }
@@ -94,9 +88,7 @@
 //            context.setVariable(parameterNames[i], args[i]); // 파라미터 이름을 키로, 파라미터 값을 값으로 설정
 //
 //        Expression expression = parser.parseExpression(key); // SpEL 표현식 파싱
-//        System.out.println("🚀[로그:정현진] key : " + key); // 예시: 'payment:reservation:' + #command.reservationId()
 //        // SpEL 표현식을 평가하여 최종 lock key 생성
-//        System.out.println("🚀[로그:정현진] expression : " + expression.getValue(context, String.class)); // 예시: payment:reservation:9c749ea4-ab0a-47cf-9499-4d3767062aab
 //        return expression.getValue(context, String.class);
 //    }
 //}

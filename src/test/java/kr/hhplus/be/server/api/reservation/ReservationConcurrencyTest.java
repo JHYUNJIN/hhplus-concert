@@ -131,8 +131,6 @@ class ReservationConcurrencyTest {
             UUID tokenId = UUID.fromString(issuedTokenIdString);
             tokenIds.add(tokenId);
         }
-        System.out.println("🚀[로그:정현진] tokenIds : " + tokenIds);
-        System.out.println("🚀[로그:정현진] tokenIds 갯수 : " + tokenIds.size());
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         AtomicInteger successCount = new AtomicInteger(0);
@@ -271,9 +269,6 @@ class ReservationConcurrencyTest {
                 }
             }));
         }
-        System.out.println("🚀[로그:정현진] THREAD_SIZE : " + THREAD_SIZE);
-        System.out.println("🚀[로그:정현진] successCount : " + successCount);
-
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(10, TimeUnit.SECONDS);
 
         // 모든 좌석이 예약됨 상태인지 확인

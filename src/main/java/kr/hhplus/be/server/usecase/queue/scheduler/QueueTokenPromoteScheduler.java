@@ -25,11 +25,8 @@ public class QueueTokenPromoteScheduler {
      */
     @Scheduled(fixedRate = 10000)
     public void promoteWaitingTokens() {
-        System.out.println("🚀[로그:정현진] 스케줄러 실행: 대기열 토큰 승급 시작 promoteWaitingTokens");
+        log.info("🚀[로그:정현진] 스케줄러 실행: 대기열 토큰 승급 시작 promoteWaitingTokens");
         List<Concert> openConcerts = concertRepository.findByOpenConcerts();
-        log.info("openConcerts title: {}", openConcerts.stream()
-                .map(concert -> concert.title())
-                .toList());
         queueTokenRepository.promoteQueueToken(openConcerts);
     }
 }

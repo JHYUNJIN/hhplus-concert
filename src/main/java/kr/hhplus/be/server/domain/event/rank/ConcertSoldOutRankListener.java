@@ -37,7 +37,7 @@ public class ConcertSoldOutRankListener {
     @Async
     @TransactionalEventListener
     public void handleEvent(PaymentSuccessEvent event) {
-        System.out.println("🚀[로그:정현진] 결제 성공이벤트 발생: " + event);
+        log.info("🚀[로그:정현진] 결제 성공 이벤트 발생: {}", event);
         try {
             ConcertDate concertDate = getConcertDate(event.seat().concertDateId());
 
@@ -45,7 +45,6 @@ public class ConcertSoldOutRankListener {
             List<Seat> allSeats = seatRepository.findByConcertDateId(concertDate.id());
             boolean isAllSeatsAssigned = allSeats.stream()
                     .allMatch(seatItem -> seatItem.status() == SeatStatus.ASSIGNED);
-            System.out.println("🚀[로그:정현진] isAllSeatsAssigned : " + isAllSeatsAssigned);
 
             // 매진된 경우 랭킹 업데이트
             if (isAllSeatsAssigned)

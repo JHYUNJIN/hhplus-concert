@@ -32,7 +32,6 @@ public class ConcertSoldOutManager {
     @Transactional
     public void processUpdateRanking(PaymentSuccessEvent event, UUID concertId, int seatSize) throws CustomException {
         try {
-            System.out.println("🚀[로그:정현진] processUpdateRanking");
             Concert concert = getConcert(concertId);
 
             long soldOutTime = Duration.between(concert.openTime(), event.occurredAt()).getSeconds();
