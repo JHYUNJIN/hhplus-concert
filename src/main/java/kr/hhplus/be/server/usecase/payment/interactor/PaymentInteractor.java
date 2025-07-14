@@ -1,22 +1,10 @@
 package kr.hhplus.be.server.usecase.payment.interactor;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import kr.hhplus.be.server.common.aop.lock.DistributedLock;
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.common.exception.enums.ErrorCode;
-import kr.hhplus.be.server.domain.event.payment.PaymentFailedEvent;
 import kr.hhplus.be.server.domain.event.payment.PaymentSuccessEvent;
-import kr.hhplus.be.server.domain.payment.*;
 import kr.hhplus.be.server.domain.queue.QueueToken;
-import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
 import kr.hhplus.be.server.domain.queue.QueueTokenUtil;
-import kr.hhplus.be.server.domain.reservation.Reservation;
-import kr.hhplus.be.server.domain.reservation.ReservationRepository;
-import kr.hhplus.be.server.domain.seat.Seat;
-import kr.hhplus.be.server.domain.seat.SeatHoldRepository;
-import kr.hhplus.be.server.domain.seat.SeatRepository;
-import kr.hhplus.be.server.domain.user.User;
-import kr.hhplus.be.server.domain.user.UserRepository;
+import kr.hhplus.be.server.infrastructure.persistence.lock.DistributedLockManager;
 import kr.hhplus.be.server.infrastructure.persistence.payment.PaymentManager;
 import kr.hhplus.be.server.infrastructure.persistence.payment.PaymentTransactionResult;
 import kr.hhplus.be.server.infrastructure.persistence.queue.QueueTokenManager;
@@ -26,34 +14,37 @@ import kr.hhplus.be.server.usecase.payment.input.PaymentInput;
 import kr.hhplus.be.server.usecase.payment.output.PaymentOutput;
 import kr.hhplus.be.server.usecase.payment.output.PaymentResult;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
-@Slf4j
 public class PaymentInteractor implements PaymentInput {
+
+    private static final String RESERVATION_LOCK_KEY = "reservation:";
+    private static final String USER_LOCK_KEY = "user:";
 
     private final PaymentOutput paymentOutput;
     private final EventPublisher eventPublisher;
     private final PaymentManager paymentManager;
     private final QueueTokenManager queueTokenManager;
+    private final DistributedLockManager distributedLockManager;
 
     @Override
-    @DistributedLock(key = "'payment:reservation:' + #command.reservationId()", waitTime = 3L, leaseTime = 10L)
-    @Transactional // 이 트랜잭션은 분산락이 획득된 후 시작됩니다.
-    public void payment(PaymentCommand command) throws CustomException {
-        System.out.println("🚀[로그:정현진] 결제 요청: " + command);
-
-        // 토큰 검증
+    public void payment(PaymentCommand command) throws Exception {
         QueueToken queueToken = getQueueTokenAndValid(command.queueTokenId());
+        String reservationLockKey = RESERVATION_LOCK_KEY + command.reservationId();
+        String userLockKey = USER_LOCK_KEY + queueToken.userId();
 
-        // 결제 실행
-        PaymentTransactionResult paymentTransactionResult = paymentManager.processPayment(command, queueToken);
+        /* 분산락 획득 후 결제 트랜잭션 수행
+         * 1. user:{userId} 락 획득
+         * 2. reservation:{reservationId} 락 획득
+         * 3. 결제 트랜잭션 수행
+         */
+        PaymentTransactionResult paymentTransactionResult = distributedLockManager.executeWithLockHasReturn(
+                userLockKey,
+                () -> distributedLockManager.executeWithLockHasReturn(
+                        reservationLockKey,
+                        () -> paymentManager.processPayment(command, queueToken)));
 
         // 결제 성공 이벤트 발행 및 결과 반환
         eventPublisher.publish(PaymentSuccessEvent.from(paymentTransactionResult));
@@ -65,7 +56,6 @@ public class PaymentInteractor implements PaymentInput {
         QueueTokenUtil.validateActiveQueueToken(queueToken);
         return queueToken;
     }
-
 
 }
 

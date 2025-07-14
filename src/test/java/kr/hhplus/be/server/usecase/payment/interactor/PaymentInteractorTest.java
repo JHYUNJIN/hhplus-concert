@@ -96,7 +96,7 @@ class PaymentInteractorTest {
 
     @Test
     @DisplayName("결제_성공")
-    void payment_Success() throws CustomException {
+    void payment_Success() throws Exception {
         Payment successPayment = new Payment(paymentId, userId, reservationId, BigDecimal.valueOf(10000),
                 PaymentStatus.SUCCESS, null, LocalDateTime.now(), LocalDateTime.now()); // 결제 성공 상태로 설정
         Reservation successReservation = new Reservation(reservationId, userId, seatId, ReservationStatus.SUCCESS,
@@ -142,7 +142,7 @@ class PaymentInteractorTest {
 
     @Test
     @DisplayName("결제_실패_대기열토큰유효하지않음")
-    void payment_Failure_InvalidQueueToken() throws CustomException {
+    void payment_Failure_InvalidQueueToken() throws Exception {
         QueueToken waitingToken = QueueToken.waitingTokenOf(queueTokenId, userId, concertId, 10);
 
         when(queueTokenRepository.findQueueTokenByTokenId(paymentCommand.queueTokenId())).thenReturn(waitingToken);
@@ -171,7 +171,7 @@ class PaymentInteractorTest {
 
     @Test
     @DisplayName("결제_실패_예약정보찾지못함")
-    void payment_Failure_ReservationNotFound() throws CustomException {
+    void payment_Failure_ReservationNotFound() throws Exception {
         when(queueTokenRepository.findQueueTokenByTokenId(paymentCommand.queueTokenId())).thenReturn(queueToken);
         when(reservationRepository.findById(paymentCommand.reservationId())).thenReturn(Optional.empty());
 
@@ -191,7 +191,7 @@ class PaymentInteractorTest {
 
     @Test
     @DisplayName("결제_실패_결제정보찾지못함")
-    void payment_Failure_PaymentNotFound() throws CustomException {
+    void payment_Failure_PaymentNotFound() throws Exception {
         when(queueTokenRepository.findQueueTokenByTokenId(paymentCommand.queueTokenId())).thenReturn(queueToken);
         when(reservationRepository.findById(paymentCommand.reservationId())).thenReturn(Optional.of(reservation));
         when(paymentRepository.findByReservationId(reservation.id())).thenReturn(Optional.empty());
@@ -220,7 +220,7 @@ class PaymentInteractorTest {
 
     @Test
     @DisplayName("결제_실패_좌석정보찾지못함")
-    void payment_Failure_SeatNotFound() throws CustomException {
+    void payment_Failure_SeatNotFound() throws Exception {
         when(queueTokenRepository.findQueueTokenByTokenId(paymentCommand.queueTokenId())).thenReturn(queueToken);
         when(reservationRepository.findById(paymentCommand.reservationId())).thenReturn(Optional.of(reservation));
         when(paymentRepository.findByReservationId(reservation.id())).thenReturn(Optional.of(payment));
@@ -251,7 +251,7 @@ class PaymentInteractorTest {
 
     @Test
     @DisplayName("결제_실패_유저정보찾지못함")
-    void payment_Failure_UserNotFound() throws CustomException {
+    void payment_Failure_UserNotFound() throws Exception {
         when(queueTokenRepository.findQueueTokenByTokenId(paymentCommand.queueTokenId())).thenReturn(queueToken);
         when(reservationRepository.findById(paymentCommand.reservationId())).thenReturn(Optional.of(reservation));
         when(paymentRepository.findByReservationId(reservation.id())).thenReturn(Optional.of(payment));
@@ -282,7 +282,7 @@ class PaymentInteractorTest {
 
     @Test
     @DisplayName("결제_실패_임시배정끝남")
-    void payment_Failure_ExpiredSeatHold() throws CustomException {
+    void payment_Failure_ExpiredSeatHold() throws Exception {
         when(queueTokenRepository.findQueueTokenByTokenId(paymentCommand.queueTokenId())).thenReturn(queueToken);
         when(reservationRepository.findById(paymentCommand.reservationId())).thenReturn(Optional.of(reservation));
         when(paymentRepository.findByReservationId(reservation.id())).thenReturn(Optional.of(payment));
