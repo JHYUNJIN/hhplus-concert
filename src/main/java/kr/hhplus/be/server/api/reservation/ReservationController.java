@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import kr.hhplus.be.server.api.reservation.dto.request.ReservationRequest;
 import kr.hhplus.be.server.api.reservation.dto.response.ReservationResponse;
+import kr.hhplus.be.server.usecase.payment.input.PaymentCommand;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -78,8 +79,11 @@ public class ReservationController implements ReservationOutput {
             @RequestBody ReservationRequest request,
             @RequestHeader(value = "Authorization") String queueToken
     ) throws CustomException {
-        queueToken = queueToken.startsWith("Bearer ") ? queueToken.substring("Bearer ".length()) : queueToken;
-        reservationInput.reserveSeat(ReserveSeatCommand.of(request, seatId, queueToken));
+        final String parsedQueueToken = queueToken.startsWith("Bearer ")
+                ? queueToken.substring("Bearer ".length())
+                : queueToken;
+        reservationInput.reserveSeat(ReserveSeatCommand.of(request, seatId, parsedQueueToken));
+
         return ResponseEntity.ok(reservationResponse);
     }
 

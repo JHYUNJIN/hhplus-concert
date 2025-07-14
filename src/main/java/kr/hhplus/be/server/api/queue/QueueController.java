@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import kr.hhplus.be.server.usecase.payment.input.PaymentCommand;
 import kr.hhplus.be.server.usecase.queue.QueueService;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.domain.queue.QueueToken;
@@ -78,8 +79,10 @@ public class QueueController {
             @PathVariable UUID concertId,
             @RequestHeader(value = "Authorization") String queueToken
     ) throws CustomException {
-        queueToken = queueToken.startsWith("Bearer ") ? queueToken.substring("Bearer ".length()) : queueToken;
-        QueueToken result = queueService.getQueueInfo(concertId, queueToken);
+        final String parsedQueueToken = queueToken.startsWith("Bearer ")
+                ? queueToken.substring("Bearer ".length())
+                : queueToken;
+        QueueToken result = queueService.getQueueInfo(concertId, parsedQueueToken);
 
         return ResponseEntity.ok(QueueTokenResponse.from(result));
     }

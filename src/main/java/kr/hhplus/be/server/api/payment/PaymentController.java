@@ -60,8 +60,10 @@ public class PaymentController implements PaymentOutput {
             @PathVariable UUID reservationId,
             @RequestHeader(value = "Authorization") String queueToken
     ) throws Exception {
-        queueToken = queueToken.startsWith("Bearer ") ? queueToken.substring("Bearer ".length()) : queueToken;
-        paymentInput.payment(PaymentCommand.of(reservationId, queueToken));
+        final String parsedQueueToken = queueToken.startsWith("Bearer ")
+                ? queueToken.substring("Bearer ".length())
+                : queueToken;
+        paymentInput.payment(PaymentCommand.of(reservationId, parsedQueueToken));
 
         return ResponseEntity.ok(paymentResponse);
     }
