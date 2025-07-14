@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.infrastructure.persistence.payment;
+package kr.hhplus.be.server.infrastructure.persistence.payment.jpa;
 
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
@@ -12,7 +12,7 @@ public interface JpaPaymentRepository extends JpaRepository<PaymentEntity, Strin
     Optional<PaymentEntity> findByReservationId(String reservationId);
 
     @Query("select p from PaymentEntity p where p.reservationId = :reservationId")
-    @Lock(LockModeType.PESSIMISTIC_WRITE) // 비관적 락을 사용하여 동시성 문제 방지
+    @Lock(LockModeType.PESSIMISTIC_WRITE) // 비관적 락을 사용하여 동시성 제어
     @QueryHints({
             @QueryHint(name = "javax.persistence.lock.timeout", value = "5000")
     })

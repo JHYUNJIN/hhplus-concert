@@ -14,4 +14,6 @@ public interface SeatRepository {
     Optional<Seat> findById(UUID seatId);
 
     void deleteAll();
+
+    List<Seat> findByConcertDateId(UUID id);
 }

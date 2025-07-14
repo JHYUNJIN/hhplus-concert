@@ -1,34 +1,31 @@
 package kr.hhplus.be.server.domain.event.payment;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
-import kr.hhplus.be.server.domain.seat.Seat;
 import kr.hhplus.be.server.domain.event.Event;
 import kr.hhplus.be.server.domain.event.EventTopic;
 import kr.hhplus.be.server.domain.payment.Payment;
 import kr.hhplus.be.server.domain.reservation.Reservation;
+import kr.hhplus.be.server.domain.seat.Seat;
 import kr.hhplus.be.server.domain.user.User;
+import kr.hhplus.be.server.infrastructure.persistence.payment.PaymentTransactionResult;
 import lombok.Builder;
 
 @Builder
 public record PaymentSuccessEvent (
-        UUID paymentId,
-        UUID reservationId,
-        UUID seatId,
-        UUID userId,
-        BigDecimal amount,
+        Payment payment,
+        Reservation reservation,
+        Seat seat,
+        User user,
         LocalDateTime occurredAt
 ) implements Event {
 
-    public static PaymentSuccessEvent of(Payment savedPayment, Reservation savedReservation, Seat savedSeat, User savedUser) {
+    public static PaymentSuccessEvent from(PaymentTransactionResult paymentTransactionResult) {
         return PaymentSuccessEvent.builder()
-                .paymentId(savedPayment.id())
-                .reservationId(savedReservation.id())
-                .seatId(savedSeat.id())
-                .userId(savedUser.id())
-                .amount(savedPayment.amount())
+                .payment(paymentTransactionResult.payment())
+                .reservation(paymentTransactionResult.reservation())
+                .seat(paymentTransactionResult.seat())
+                .user(paymentTransactionResult.user())
                 .occurredAt(LocalDateTime.now())
                 .build();
     }
@@ -40,6 +37,6 @@ public record PaymentSuccessEvent (
 
     @Override
     public String getKey() {
-        return paymentId.toString();
+        return payment.id().toString();
     }
 }

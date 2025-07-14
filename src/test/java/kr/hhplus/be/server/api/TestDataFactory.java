@@ -30,6 +30,7 @@ public class TestDataFactory {
         return Concert.builder()
                 .title("GD 콘서트")
                 .artist("GD")
+                .openTime(LocalDateTime.now().minusDays(7))
                 .build();
     }
 

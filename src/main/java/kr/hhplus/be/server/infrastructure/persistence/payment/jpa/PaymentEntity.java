@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.infrastructure.persistence.payment;
+package kr.hhplus.be.server.infrastructure.persistence.payment.jpa;
 
 import jakarta.persistence.*;
 import kr.hhplus.be.server.domain.payment.Payment;

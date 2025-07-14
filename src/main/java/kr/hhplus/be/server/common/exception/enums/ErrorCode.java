@@ -62,6 +62,9 @@ public enum ErrorCode {
     ALREADY_PAID(HttpStatus.BAD_REQUEST, "P004", "이미 결제되었습니다.", Level.WARN), // PAYMENT_ALREADY_PROCESSED와 유사 (코드 중복 의심)
     ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "P005", "결제가 이미 처리되었습니다.", Level.WARN),
 
+    // Ranking Service Errors (랭킹 관련 오류) - 대부분 WARN 레벨
+    RANKING_UPDATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "RK001", "랭킹 정보 갱신에 실패했습니다.", Level.ERROR),
+
     // Queue Service Errors (대기열 관련 오류) - 대부분 WARN 레벨
     INVALID_QUEUE_TOKEN(HttpStatus.BAD_REQUEST, "Q001", "대기열 토큰이 유효하지 않습니다.", Level.WARN),
     QUEUE_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "Q002", "대기열 토큰을 찾을 수 없습니다.", Level.WARN), // 락 처리 중 예상 가능한 경합

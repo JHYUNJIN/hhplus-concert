@@ -35,4 +35,11 @@ public interface JpaSeatRepository extends JpaRepository<SeatEntity, String> {
 			and s.concertDateId = :concertDateId
 	""")
 	Optional<SeatEntity> findBySeatIdAndConcertDateId(String seatId, String concertDateId);
+
+	@Query("""
+		select s
+		from SeatEntity s
+		where s.concertDateId = :concertDateId
+	""")
+	List<SeatEntity> findByConcertDateId(String concertDateId);
 }

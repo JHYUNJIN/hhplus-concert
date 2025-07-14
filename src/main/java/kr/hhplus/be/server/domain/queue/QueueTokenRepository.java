@@ -1,5 +1,8 @@
 package kr.hhplus.be.server.domain.queue;
 
+import kr.hhplus.be.server.domain.concert.Concert;
+
+import java.util.List;
 import java.util.UUID;
 
 public interface QueueTokenRepository {
@@ -10,4 +13,5 @@ public interface QueueTokenRepository {
     Integer countWaitingTokens(UUID concertId);
     Integer countActiveTokens(UUID concertId);
     void expiresQueueToken(String tokenId);
+    void promoteQueueToken(List<Concert> openConcerts);
 }

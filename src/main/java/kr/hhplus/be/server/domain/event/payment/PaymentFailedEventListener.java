@@ -50,8 +50,8 @@ public class PaymentFailedEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_ROLLBACK) // 메인 트랜잭션이 롤백된 후 실행
     @Transactional(propagation = Propagation.REQUIRES_NEW) // 새로운 트랜잭션에서 실행
     public void handlePaymentFailedEvent(PaymentFailedEvent event) {
-        log.info("PaymentFailedEvent (AFTER_ROLLBACK) 수신: reservationId={}, userId={}, errorCode={}",
-                event.reservationId(), event.userId(), event.errorCode());
+        log.info("PaymentFailedEvent 수신: paymentId={}, userId={}, reservationId={}, seatId={}, errorCode={}",
+                event.paymentId(), event.userId(), event.reservationId(), event.seatId(), event.errorCode());
 
         try {
             // 0. 결제 상태 FAILED로 변경

@@ -24,11 +24,11 @@ public record PaymentResponse(
 ) {
     public static PaymentResponse from(PaymentResult paymentResult) {
         return PaymentResponse.builder()
-                .paymentId(paymentResult.paymentId())
-                .reservationId(paymentResult.reservationId())
-                .amount(paymentResult.price())
-                .status(paymentResult.status())
-                .createdAt(paymentResult.createdAt())
+                .paymentId(paymentResult.payment().id())
+                .reservationId(paymentResult.reservation().id())
+                .amount(paymentResult.payment().amount())
+                .status(paymentResult.payment().status())
+                .createdAt(paymentResult.payment().updatedAt())
                 .build();
     }
 }
