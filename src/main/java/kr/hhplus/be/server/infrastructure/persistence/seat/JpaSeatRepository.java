@@ -1,10 +1,13 @@
 package kr.hhplus.be.server.infrastructure.persistence.seat;
 
+import kr.hhplus.be.server.domain.seat.Seat;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface JpaSeatRepository extends JpaRepository<SeatEntity, String> {
 
@@ -42,4 +45,12 @@ public interface JpaSeatRepository extends JpaRepository<SeatEntity, String> {
 		where s.concertDateId = :concertDateId
 	""")
 	List<SeatEntity> findByConcertDateId(String concertDateId);
+
+
+	@Query("""
+        select s
+        from SeatEntity s
+        where s.concertDateId in :concertDateIds
+    """)
+	List<SeatEntity> findByConcertDateIds(List<String> concertDateIds);
 }

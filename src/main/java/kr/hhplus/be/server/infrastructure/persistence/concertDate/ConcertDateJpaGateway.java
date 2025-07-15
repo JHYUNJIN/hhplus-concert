@@ -43,4 +43,10 @@ public class ConcertDateJpaGateway implements ConcertDateRepository {
     public void deleteAll() {
         jpaConcertDateRepository.deleteAll();
     }
+
+
+    @Override
+    public void updateAvailableSeatCount(UUID dateId, Long count) {
+        jpaConcertDateRepository.updateAvailableSeatCount(dateId.toString(), count);
+    }
 }

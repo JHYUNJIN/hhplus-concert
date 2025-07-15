@@ -15,4 +15,8 @@ public interface ConcertDateRepository {
     boolean existsById(UUID concertDateId);
 
     void deleteAll();
+
+
+    // 더미데이터 전용 메소드
+    void updateAvailableSeatCount(UUID dateId, Long count);
 }

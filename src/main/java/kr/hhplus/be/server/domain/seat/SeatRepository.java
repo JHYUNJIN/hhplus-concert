@@ -16,4 +16,8 @@ public interface SeatRepository {
     void deleteAll();
 
     List<Seat> findByConcertDateId(UUID id);
+
+    // 더미데이터 전용 메소드
+    List<Seat> findByConcertDateIds(List<UUID> concertDateIds);
+
 }

@@ -22,4 +22,9 @@ public interface JpaConcertDateRepository extends JpaRepository<ConcertDateEntit
           AND cd.availableSeatCount > 0
     """)
 	List<ConcertDate> findAvailableDates(String concertId);
+
+
+	@Modifying(clearAutomatically = true)
+	@Query("UPDATE ConcertDateEntity cd SET cd.availableSeatCount = :count WHERE cd.id = :id")
+	void updateAvailableSeatCount(@Param("id") String id, @Param("count") Long count);
 }
