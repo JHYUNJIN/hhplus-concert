@@ -52,6 +52,7 @@ public enum ErrorCode {
     RESERVATION_INVALID_STATUS(HttpStatus.BAD_REQUEST, "R003", "현재 예약 상태에서는 요청을 처리할 수 없습니다.", Level.WARN),
     DEADLINE_PASSED(HttpStatus.BAD_REQUEST, "R004", "예약 마감 기한이 지났습니다.", Level.WARN), // 비즈니스 로직에 따른 마감
     RESERVATION_OWNERSHIP_MISMATCH(HttpStatus.FORBIDDEN, "R005", "예약 소유자가 일치하지 않습니다.", Level.WARN), // 권한/소유권 오류
+    NO_AVAILABLE_SEAT(HttpStatus.NOT_FOUND, "R006", "예약 가능한 좌석이 없습니다.", Level.WARN),
 
     // Payment Service Errors (결제 관련 오류) - 대부분 WARN 레벨
     PAYMENT_FAILED(HttpStatus.BAD_REQUEST, "P001", "결제에 실패했습니다.", Level.WARN), // 외부 결제 시스템 실패, 비즈니스 예외

@@ -1,11 +1,14 @@
 package kr.hhplus.be.server.domain.concertDate;
 
+import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.common.exception.enums.ErrorCode;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Builder
+// toBuilder=true를 추가하여 일부 필드만 변경된 새 객체를 쉽게 만들 수 있도록 합니다.
+@Builder(toBuilder = true)
 public record ConcertDate(
         UUID id,
         UUID concertId,
@@ -13,40 +16,33 @@ public record ConcertDate(
         LocalDateTime date,
         LocalDateTime deadline,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt) {
-
-    /**
-     * JPQL DTO 프로젝션을 위한 생성자. (findAvailableDatesWithAvailableSeatCount)
-     * @Query 내에서 new 키워드를 사용하면, DB에서 조회된 원시 타입(예: String, Long)을
-     * 그대로 전달받을 생성자가 필요합니다. 이 생성자는 해당 값들을 애플리케이션의
-     * 도메인 타입(UUID, Integer)으로 변환하는 역할을 수행합니다.
-     * 이는 DB에 부담을 주지 않고, 코드의 이식성과 유지보수성을 높이는 방법입니다.
-     */
-    public ConcertDate(String id, String concertId, Long remainingSeatCount, LocalDateTime date, LocalDateTime deadline, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this(
-                UUID.fromString(id), // String -> UUID
-                UUID.fromString(concertId), // String -> UUID
-                remainingSeatCount.intValue(), // Long -> Integer
-                date,
-                deadline,
-                createdAt,
-                updatedAt
-        );
-    }
+        LocalDateTime updatedAt,
+        Long availableSeatCount, // 현재 예약 가능한 좌석 수
+        Long version // 낙관적 락을 위한 버전 필드
+        ) {
 
     public boolean checkDeadline() {
         return deadline.isAfter(LocalDateTime.now()); // 현재 시간보다 마감 시간이 이후인지 확인
     }
 
-    public ConcertDate withRemainingSeatCount(Integer availableSeatCount) {
-        return ConcertDate.builder()
-                .id(id)
-                .concertId(concertId)
-                .remainingSeatCount(availableSeatCount)
-                .date(date)
-                .deadline(deadline)
-                .createdAt(createdAt)
-                .updatedAt(updatedAt)
+    public ConcertDate decreaseAvailableSeatCount() throws CustomException {
+        System.out.println("🚀[로그:정현진] availableSeatCount : " + this.availableSeatCount);
+        if (this.availableSeatCount == null || this.availableSeatCount <= 0) {
+            throw new CustomException(ErrorCode.NO_AVAILABLE_SEAT, "남은 좌석이 없어 감소할 수 없습니다.");
+        }
+        // toBuilder를 사용하여 availableSeatCount만 변경된 새 record를 반환
+        return this.toBuilder()
+                .availableSeatCount(this.availableSeatCount - 1)
+                .build();
+    }
+
+    public ConcertDate increaseAvailableSeatCount() {
+        if (this.availableSeatCount == null) {
+            // 초기값이 없는 경우를 대비
+            return this.toBuilder().availableSeatCount(1L).build();
+        }
+        return this.toBuilder()
+                .availableSeatCount(this.availableSeatCount + 1)
                 .build();
     }
 }

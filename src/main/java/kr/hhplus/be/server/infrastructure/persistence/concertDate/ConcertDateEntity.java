@@ -34,12 +34,20 @@ public class ConcertDateEntity extends BaseTimeEntity {
     @Column(name = "deadline", nullable = false)
     private LocalDateTime deadline;
 
+    @Column(name = "available_seat_count")
+    private Long availableSeatCount; // 예약가능 좌석 수
+
+    @Version // 낙관적 락을 위한 버전 필드
+    private Long version;
+
     public static ConcertDateEntity from(ConcertDate concertDate) {
         return ConcertDateEntity.builder()
                 .id(concertDate.id() != null ? concertDate.id().toString() : null)
                 .concertId(concertDate.concertId().toString())
                 .date(concertDate.date())
                 .deadline(concertDate.deadline())
+                .availableSeatCount(concertDate.availableSeatCount())
+                .version(concertDate.version())
                 .build();
     }
 
@@ -49,6 +57,8 @@ public class ConcertDateEntity extends BaseTimeEntity {
                 .concertId(UUID.fromString(concertId))
                 .date(date)
                 .deadline(deadline)
+                .availableSeatCount(availableSeatCount)
+                .version(version)
                 .createdAt(getCreatedAt())
                 .updatedAt(getUpdatedAt())
                 .build();

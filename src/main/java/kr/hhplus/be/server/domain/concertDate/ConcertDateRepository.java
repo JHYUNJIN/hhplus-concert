@@ -8,7 +8,7 @@ public interface ConcertDateRepository {
     Optional<ConcertDate> findById(UUID concertDateId);
 
     // "콘서트 ID로 콘서트 날짜 조회"
-    List<ConcertDate> findAvailableDatesWithAvailableSeatCount(UUID concertId);
+    List<ConcertDate> findAvailableDates(UUID concertId);
 
     ConcertDate save(ConcertDate concertDate);
 

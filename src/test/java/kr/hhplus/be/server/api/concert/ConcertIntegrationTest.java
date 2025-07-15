@@ -119,7 +119,7 @@ class ConcertIntegrationTest {
     @DisplayName("예약가능_날짜조회_성공(좌석없음)")
     void getAvailableConcertDate_Success_NoAvailableSeat() throws Exception {
         // 콘서트별 좌석 수 조회
-        List<ConcertDate> result  = concertDateRepository.findAvailableDatesWithAvailableSeatCount(concertId);
+        List<ConcertDate> result  = concertDateRepository.findAvailableDates(concertId);
         Seat reservedSeat = Seat.builder()
                 .id(this.seat.id()) // 기존 Seat의 ID 사용
                 .concertDateId(this.seat.concertDateId()) // 기존 Seat의 concertDateId 사용

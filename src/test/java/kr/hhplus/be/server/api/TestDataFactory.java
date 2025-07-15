@@ -25,6 +25,7 @@ public class TestDataFactory {
     public static final BigDecimal INIT_USER_POINT = BigDecimal.valueOf(100_000);
     public static final BigDecimal INIT_POOR_USER_POINT = BigDecimal.valueOf(10_000);
     public static final BigDecimal INIT_SEAT_PRICE = BigDecimal.valueOf(50_000);
+    public static final Long INIT_AVAILABLE_SEAT_COUNT = 50L;
 
     public static Concert createConcert() {
         return Concert.builder()
@@ -39,6 +40,7 @@ public class TestDataFactory {
                 .concertId(concertId)
                 .date(LocalDateTime.now().plusDays(7))
                 .deadline(LocalDateTime.now().plusDays(5))
+                .availableSeatCount(INIT_AVAILABLE_SEAT_COUNT)
                 .build();
     }
 

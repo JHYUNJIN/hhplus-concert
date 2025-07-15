@@ -15,19 +15,15 @@ public class ReservationDomainService {
 
     // 좌석 예약 처리
     public ReservationDomainResult processReservation(ConcertDate concertDate, Seat seat, UUID userId) throws CustomException {
-//        validateSeatAvailable(seat); // reserve() 메소드 내부로 이동, 고튜터님 피드백 적용
-        validateConcertDateDeadline(concertDate);
+        validateConcertDateDeadline(concertDate); // 콘서트 날짜 마감일 검증
 
         Seat 		reservedSeat 	= 	seat.reserve();
         Reservation reservation 	= 	Reservation.of(userId, seat.id());
+        ConcertDate updatedConcertDate = concertDate.decreaseAvailableSeatCount();
+        System.out.println("🚀[로그:정현진] 업데이트 availableSeatCount : " + updatedConcertDate.availableSeatCount());
 
         return new ReservationDomainResult(reservedSeat, reservation);
     }
-
-//    private void validateSeatAvailable(Seat seat) throws CustomException {
-//        if (!seat.isAvailable())
-//            throw new CustomException(ErrorCode.ALREADY_RESERVED_SEAT);
-//    }
 
     private void validateConcertDateDeadline(ConcertDate concertDate) throws CustomException {
         if (!concertDate.checkDeadline())

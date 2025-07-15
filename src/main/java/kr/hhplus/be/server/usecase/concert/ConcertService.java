@@ -91,7 +91,7 @@ public class ConcertService {
     public List<ConcertDate> getAvailableConcertDates(UUID concertId) throws CustomException {
         existsConcert(concertId);
         log.debug("예약 가능한 콘서트 날짜 조회: CONCERT_ID - {}", concertId);
-        return concertDateRepository.findAvailableDatesWithAvailableSeatCount(concertId);
+        return concertDateRepository.findAvailableDates(concertId);
     }
 
     // 콘서트 예약 가능한 좌석 조회

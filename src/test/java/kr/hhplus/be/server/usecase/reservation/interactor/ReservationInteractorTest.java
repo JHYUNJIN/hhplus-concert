@@ -106,7 +106,17 @@ public class ReservationInteractorTest {
         seat = new Seat(seatId, concertDateId, 10, BigDecimal.valueOf(100000), SeatGrade.VIP, SeatStatus.AVAILABLE, now,
                 now); // 좌석 ID, 콘서트 날짜 ID, 좌석 번호, 가격, 좌석 등급, 좌석 상태, 생성일시, 수정일시
         reservedSeat = seat.reserve(); // 예약하기 -> 좌석을 예약 상태로 변경
-        concertDate = new ConcertDate(concertDateId, concertId, null, now.plusDays(7), now.plusDays(5), now, now);
+        concertDate = ConcertDate.builder()
+                .id(concertDateId)
+                .concertId(concertId)
+                .remainingSeatCount(50)
+                .date(now.plusDays(7))
+                .deadline(now.plusDays(5))
+                .createdAt(now)
+                .updatedAt(now)
+                .availableSeatCount(50L)
+                .version(0L)
+                .build();
         reservation = new Reservation(reservationId, userId, seatId, ReservationStatus.PENDING, now, now);
         payment = new Payment(paymentId, userId, reservationId, BigDecimal.valueOf(100000), PaymentStatus.PENDING, null,
                 now, now); // 결제 ID, 사용자 ID, 예약 ID, 결제 금액, 결제 상태, 결제 승인 코드, 생성일시, 수정일시
