@@ -10,6 +10,7 @@ import kr.hhplus.be.server.domain.event.Event;
 import kr.hhplus.be.server.domain.event.EventTopic;
 import kr.hhplus.be.server.domain.payment.Payment;
 import kr.hhplus.be.server.domain.reservation.Reservation;
+import kr.hhplus.be.server.usecase.reservation.output.CreateReservationResult;
 import lombok.Builder;
 
 @Builder
@@ -18,35 +19,19 @@ public record ReservationCreatedEvent(
         UUID userId,
         UUID paymentId,
         UUID seatId,
-        UUID concertId,
         BigDecimal amount,
         LocalDateTime expiresAt,
         LocalDateTime occurredAt
 ) implements Event {
 
-    public static ReservationCreatedEvent of(UUID reservationId, UUID userId, UUID paymentId, UUID seatId, UUID concertId, BigDecimal amount, LocalDateTime now) {
-        return ReservationCreatedEvent.builder()
-                .reservationId(reservationId)
-                .userId(userId)
-                .paymentId(paymentId)
-                .seatId(seatId)
-                .concertId(concertId)
-                .amount(amount)
-                .expiresAt(now.plusMinutes(5))
-                .occurredAt(now)
-                .build();
-    }
-
-    public static ReservationCreatedEvent of(Payment savedPayment, Reservation savedReservation, Seat savedSeat, ConcertDate concertDate, UUID userId) {
+    public static ReservationCreatedEvent from(CreateReservationResult result) {
         LocalDateTime now = LocalDateTime.now();
-
         return ReservationCreatedEvent.builder()
-                .reservationId(savedReservation.id())
-                .userId(userId)
-                .paymentId(savedPayment.id())
-                .seatId(savedSeat.id())
-                .concertId(concertDate.id())
-                .amount(savedPayment.amount())
+                .reservationId(result.reservation().id())
+                .userId(result.userId())
+                .paymentId(result.payment().id())
+                .seatId(result.payment().id())
+                .amount(result.payment().amount())
                 .expiresAt(now.plusMinutes(5))
                 .occurredAt(now)
                 .build();
