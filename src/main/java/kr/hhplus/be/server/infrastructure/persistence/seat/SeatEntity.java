@@ -1,6 +1,8 @@
 package kr.hhplus.be.server.infrastructure.persistence.seat;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.common.exception.enums.ErrorCode;
 import kr.hhplus.be.server.domain.seat.Seat;
 import kr.hhplus.be.server.domain.seat.SeatGrade;
 import kr.hhplus.be.server.domain.seat.SeatStatus;
@@ -71,5 +73,10 @@ public class SeatEntity extends BaseTimeEntity {
                 .createdAt(getCreatedAt())
                 .updatedAt(getUpdatedAt())
                 .build();
+    }
+
+    // record 영속성 문제로 인해 엔티티 상태를 변경하는 메서드 추가
+    public void changeStatus(SeatStatus newStatus) {
+        this.status = newStatus;
     }
 }

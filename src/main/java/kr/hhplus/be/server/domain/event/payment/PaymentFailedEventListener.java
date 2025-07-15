@@ -12,7 +12,6 @@ import kr.hhplus.be.server.domain.user.User;
 import kr.hhplus.be.server.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,7 +80,7 @@ public class PaymentFailedEventListener {
             // 3. 좌석 상태 롤백 (AVAILABLE)
             Seat seat = seatRepository.findById(event.seatId())
                     .orElseThrow(() -> new CustomException(ErrorCode.SEAT_NOT_FOUND, "좌석을 찾을 수 없어 상태 롤백 실패"));
-            Seat rolledBackSeat = seat.fail();
+            Seat rolledBackSeat = seat.expire();
             seatRepository.save(rolledBackSeat);
             log.info("좌석 상태 롤백 완료: seatId={}, status={}", rolledBackSeat.id(), rolledBackSeat.status());
 

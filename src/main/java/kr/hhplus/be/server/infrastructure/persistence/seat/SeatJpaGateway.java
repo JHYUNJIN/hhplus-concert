@@ -1,8 +1,11 @@
 package kr.hhplus.be.server.infrastructure.persistence.seat;
 
+import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.common.exception.enums.ErrorCode;
 import kr.hhplus.be.server.domain.seat.Seat;
 import kr.hhplus.be.server.domain.seat.SeatRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -15,9 +18,18 @@ public class SeatJpaGateway implements SeatRepository {
 
     private final JpaSeatRepository jpaSeatRepository;
 
+    // 캐시에서 해당 콘서트 날짜의 좌석 정보를 제거
+    @CacheEvict(value = "cache:seat:available", key   = "#seat.concertDateId")
     @Override
     public Seat save(Seat seat) {
-        return jpaSeatRepository.save(SeatEntity.from(seat)).toDomain();
+        if (seat.id() == null) return jpaSeatRepository.save(SeatEntity.from(seat)).toDomain();
+        // 1. DB에서 영속 상태의 엔티티를 조회
+        SeatEntity seatEntity = jpaSeatRepository.findById(seat.id().toString())
+                .orElseThrow(() -> new CustomException(ErrorCode.SEAT_NOT_FOUND, seat.id() + " 좌석을 업데이트 할 수 없습니다."));
+        // 2. 영속 상태의 엔티티를 직접 수정
+        seatEntity.changeStatus(seat.status());
+        // 3. 트랜잭션 커밋 시, JPA의 변경 감지(Dirty Checking)에 의해 자동으로 UPDATE 쿼리가 실행
+        return seatEntity.toDomain();
     }
 
     @Override

@@ -45,6 +45,7 @@ public enum ErrorCode {
     SEAT_LOCK_CONFLICT(HttpStatus.CONFLICT, "C007", "이미 다른 사용자가 예약중입니다.", Level.WARN), // 동시성 처리 중 예상 가능한 경합
     OVER_DEADLINE(HttpStatus.BAD_REQUEST, "C004", "해당 날짜의 마감시간이 지났습니다.", Level.WARN), // 비즈니스 로직에 따른 마감
     SEAT_NOT_HOLD(HttpStatus.CONFLICT, "C008", "해당 좌석은 임시 배정되어있지 않습니다.", Level.WARN),
+    CONCERT_NOT_OPEN(HttpStatus.BAD_REQUEST, "CT006", "콘서트가 아직 오픈되지 않았습니다.", Level.WARN),
 
     // Reservation Service Errors (예약 관련 오류) - 대부분 WARN 레벨
     RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "예약을 찾을 수 없습니다.", Level.WARN), // 예상 가능한 비즈니스 예외
@@ -53,6 +54,9 @@ public enum ErrorCode {
     DEADLINE_PASSED(HttpStatus.BAD_REQUEST, "R004", "예약 마감 기한이 지났습니다.", Level.WARN), // 비즈니스 로직에 따른 마감
     RESERVATION_OWNERSHIP_MISMATCH(HttpStatus.FORBIDDEN, "R005", "예약 소유자가 일치하지 않습니다.", Level.WARN), // 권한/소유권 오류
     NO_AVAILABLE_SEAT(HttpStatus.NOT_FOUND, "R006", "예약 가능한 좌석이 없습니다.", Level.WARN),
+    RESERVATION_STATUS_NOT_PENDING(HttpStatus.BAD_REQUEST, "R007", "예약 상태가 PENDING 이 아닙니다.", Level.WARN),
+    SEAT_STATUS_NOT_RESERVED(HttpStatus.BAD_REQUEST, "R008", "좌석 상태가 RESERVED 가 아닙니다.", Level.WARN),
+    SEAT_LOCK_FAILED(HttpStatus.CONFLICT, "R009", "좌석 락 획득에 실패했습니다.", Level.WARN),
 
     // Payment Service Errors (결제 관련 오류) - 대부분 WARN 레벨
     PAYMENT_FAILED(HttpStatus.BAD_REQUEST, "P001", "결제에 실패했습니다.", Level.WARN), // 외부 결제 시스템 실패, 비즈니스 예외
@@ -62,6 +66,7 @@ public enum ErrorCode {
     INVALID_PAYMENT_AMOUNT(HttpStatus.BAD_REQUEST, "P002", "결제 금액이 잘못되었습니다.", Level.WARN), // PAYMENT_INVALID_AMOUNT와 유사 (코드 중복 의심)
     ALREADY_PAID(HttpStatus.BAD_REQUEST, "P004", "이미 결제되었습니다.", Level.WARN), // PAYMENT_ALREADY_PROCESSED와 유사 (코드 중복 의심)
     ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "P005", "결제가 이미 처리되었습니다.", Level.WARN),
+    PAYMENT_STATUS_NOT_PENDING(HttpStatus.BAD_REQUEST, "P006", "결제 상태가 PENDING 이 아닙니다.", Level.WARN),
 
     // Ranking Service Errors (랭킹 관련 오류) - 대부분 WARN 레벨
     RANKING_UPDATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "RK001", "랭킹 정보 갱신에 실패했습니다.", Level.ERROR),

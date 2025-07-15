@@ -21,7 +21,7 @@ public record Seat(
 ) {
 
     public boolean isAvailable() {
-        return status.equals(SeatStatus.AVAILABLE);
+        return status == SeatStatus.AVAILABLE;
     }
 
     public Seat reserve() throws CustomException { // 예외 처리를 위해 throws CustomException 추가
@@ -32,8 +32,7 @@ public record Seat(
         코드 이해도 향상: reserve 함수만 보더라도 "이 함수는 예약하기 전에 좌석 사용 가능 여부를 먼저 확인하는구나"라고 직관적으로 이해 가능
          */
         // 1. 좌석 사용 가능 여부 확인
-        if (!this.isAvailable())
-            throw new CustomException(ErrorCode.ALREADY_RESERVED_SEAT);
+        if (!this.isAvailable()) throw new CustomException(ErrorCode.ALREADY_RESERVED_SEAT);
 
         // 2. 좌석 예약 로직 수행
         return Seat.builder()
@@ -61,14 +60,18 @@ public record Seat(
                 .build();
     }
 
-    public Seat fail() {
+    public boolean isReserved() {
+        return status == SeatStatus.RESERVED;
+    }
+
+    public Seat expire() {
         return Seat.builder()
                 .id(id)
                 .concertDateId(concertDateId)
                 .seatNo(seatNo)
                 .price(price)
                 .seatGrade(seatGrade)
-                .status(SeatStatus.AVAILABLE)
+                .status(SeatStatus.AVAILABLE) // 상태 AVAILABLE 변경
                 .createdAt(this.createdAt)
                 .updatedAt(LocalDateTime.now())
                 .build();

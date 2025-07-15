@@ -2,6 +2,9 @@ package kr.hhplus.be.server.usecase.reservation.interactor;
 
 import kr.hhplus.be.server.domain.concertDate.ConcertDate;
 import kr.hhplus.be.server.domain.concertDate.ConcertDateRepository;
+import kr.hhplus.be.server.domain.payment.Payment;
+import kr.hhplus.be.server.domain.payment.PaymentRepository;
+import kr.hhplus.be.server.domain.payment.PaymentStatus;
 import kr.hhplus.be.server.domain.reservation.Reservation;
 import kr.hhplus.be.server.domain.reservation.ReservationRepository;
 import kr.hhplus.be.server.domain.reservation.ReservationStatus;
@@ -23,6 +26,7 @@ public class ReservationCancellationInteractor implements ReservationCancellatio
     private final ReservationRepository reservationRepository;
     private final SeatRepository seatRepository;
     private final ConcertDateRepository concertDateRepository;
+    private final PaymentRepository paymentRepository;
 
     @Override
     @Transactional
@@ -36,13 +40,19 @@ public class ReservationCancellationInteractor implements ReservationCancellatio
             return;
         }
 
+        // 5, 결제 만료 처리
+        Payment payment = paymentRepository.findByReservationId(reservationId).orElse(null);
+        if (payment != null && payment.status()== PaymentStatus.PENDING) {
+            paymentRepository.save(payment.expire());
+        }
+
         // 2. 예약 만료 처리
         Reservation expiredReservation = reservation.expire();
         reservationRepository.save(expiredReservation);
 
         // 3. 좌석의 상태를 AVAILABLE 변경
         Seat seat = seatRepository.findById(reservation.seatId()).orElseThrow();
-        Seat availableSeat = seat.fail(); // fail()은 상태를 AVAILABLE로 바꾸는 도메인 메소드
+        Seat availableSeat = seat.expire();
         seatRepository.save(availableSeat);
 
         // 4. 해당 날짜의 잔여 좌석 수 1 증가

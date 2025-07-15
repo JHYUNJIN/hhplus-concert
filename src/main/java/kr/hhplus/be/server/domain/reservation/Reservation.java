@@ -40,10 +40,15 @@ public record Reservation(
                 .build();
     }
 
+    public boolean isPending() {
+        return status == ReservationStatus.PENDING;
+    }
+
     public Reservation expire() {
         return this.toBuilder()
                 .status(ReservationStatus.EXPIRED)
                 .updatedAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now())
                 .build();
     }
 }
