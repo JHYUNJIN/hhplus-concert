@@ -17,24 +17,7 @@ public class SeatJpaGateway implements SeatRepository {
 
     @Override
     public Seat save(Seat seat) {
-        SeatEntity seatEntity = isNew(seat)
-                ? SeatEntity.from(seat)
-                : findOrCreateUpdatedEntity(seat);
-
-        return jpaSeatRepository.save(seatEntity).toDomain();
-    }
-
-    private boolean isNew(Seat seat) {
-        return seat.id() == null;
-    }
-
-    private SeatEntity findOrCreateUpdatedEntity(Seat seat) {
-        return jpaSeatRepository.findById(seat.id().toString())
-                .map(existing -> {
-                    existing.update(seat);
-                    return existing;
-                })
-                .orElseGet(() -> SeatEntity.from(seat));
+        return jpaSeatRepository.save(SeatEntity.from(seat)).toDomain();
     }
 
     @Override
@@ -73,15 +56,13 @@ public class SeatJpaGateway implements SeatRepository {
         jpaSeatRepository.deleteAll();
     }
 
-    
+
     @Override
     public List<Seat> findByConcertDateIds(List<UUID> concertDateIds) {
         return jpaSeatRepository.findByConcertDateIds(concertDateIds.stream()
-                .map(UUID::toString)
-                .toList()).stream()
+                        .map(UUID::toString)
+                        .toList()).stream()
                 .map(SeatEntity::toDomain)
                 .toList();
     }
-
 }
-

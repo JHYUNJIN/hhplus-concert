@@ -9,6 +9,7 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -34,9 +35,12 @@ public class ReservationEntity extends BaseTimeEntity {
     private String seatId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", length = 10, nullable = false)
     @ColumnDefault("'PENDING'")
     private ReservationStatus status;
+
+    @Column(name = "expires_at", nullable = true)
+    private LocalDateTime expiresAt;
 
     public static ReservationEntity from(Reservation reservation) {
         return ReservationEntity.builder()
@@ -44,6 +48,7 @@ public class ReservationEntity extends BaseTimeEntity {
                 .userId(reservation.userId().toString())
                 .seatId(reservation.seatId().toString())
                 .status(reservation.status())
+                .expiresAt(reservation.expiresAt())
                 .build();
     }
 
@@ -55,6 +60,7 @@ public class ReservationEntity extends BaseTimeEntity {
                 .status(status)
                 .createdAt(getCreatedAt())
                 .updatedAt(getUpdatedAt())
+                .expiresAt(expiresAt)
                 .build();
     }
 }

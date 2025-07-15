@@ -22,7 +22,7 @@ public class ReservationDomainService {
         ConcertDate updatedConcertDate = concertDate.decreaseAvailableSeatCount();
         System.out.println("🚀[로그:정현진] 업데이트 availableSeatCount : " + updatedConcertDate.availableSeatCount());
 
-        return new ReservationDomainResult(reservedSeat, reservation);
+        return new ReservationDomainResult(reservedSeat, reservation, updatedConcertDate);
     }
 
     private void validateConcertDateDeadline(ConcertDate concertDate) throws CustomException {

@@ -38,7 +38,7 @@ public class PaymentEntity extends BaseTimeEntity {
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", length = 10, nullable = false)
     @ColumnDefault("'PENDING'")
     private PaymentStatus status;
 

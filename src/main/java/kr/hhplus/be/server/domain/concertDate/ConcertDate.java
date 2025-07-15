@@ -26,7 +26,6 @@ public record ConcertDate(
     }
 
     public ConcertDate decreaseAvailableSeatCount() throws CustomException {
-        System.out.println("🚀[로그:정현진] availableSeatCount : " + this.availableSeatCount);
         if (this.availableSeatCount == null || this.availableSeatCount <= 0) {
             throw new CustomException(ErrorCode.NO_AVAILABLE_SEAT, "남은 좌석이 없어 감소할 수 없습니다.");
         }
@@ -38,8 +37,7 @@ public record ConcertDate(
 
     public ConcertDate increaseAvailableSeatCount() {
         if (this.availableSeatCount == null) {
-            // 초기값이 없는 경우를 대비
-            return this.toBuilder().availableSeatCount(1L).build();
+            throw new CustomException(ErrorCode.NO_AVAILABLE_SEAT, "남은 좌석이 없어 증가할 수 없습니다.");
         }
         return this.toBuilder()
                 .availableSeatCount(this.availableSeatCount + 1)

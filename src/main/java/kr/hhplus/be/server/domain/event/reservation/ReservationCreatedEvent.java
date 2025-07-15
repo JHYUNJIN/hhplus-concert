@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import kr.hhplus.be.server.domain.concertDate.ConcertDate;
 import kr.hhplus.be.server.domain.seat.Seat;
 import kr.hhplus.be.server.domain.event.Event;
 import kr.hhplus.be.server.domain.event.EventTopic;
@@ -17,24 +18,26 @@ public record ReservationCreatedEvent(
         UUID userId,
         UUID paymentId,
         UUID seatId,
+        UUID concertId,
         BigDecimal amount,
         LocalDateTime expiresAt,
         LocalDateTime occurredAt
 ) implements Event {
 
-    public static ReservationCreatedEvent of(UUID reservationId, UUID userId, UUID paymentId, UUID seatId, BigDecimal amount, LocalDateTime now) {
+    public static ReservationCreatedEvent of(UUID reservationId, UUID userId, UUID paymentId, UUID seatId, UUID concertId, BigDecimal amount, LocalDateTime now) {
         return ReservationCreatedEvent.builder()
                 .reservationId(reservationId)
                 .userId(userId)
                 .paymentId(paymentId)
                 .seatId(seatId)
+                .concertId(concertId)
                 .amount(amount)
                 .expiresAt(now.plusMinutes(5))
                 .occurredAt(now)
                 .build();
     }
 
-    public static ReservationCreatedEvent of(Payment savedPayment, Reservation savedReservation, Seat savedSeat, UUID userId) {
+    public static ReservationCreatedEvent of(Payment savedPayment, Reservation savedReservation, Seat savedSeat, ConcertDate concertDate, UUID userId) {
         LocalDateTime now = LocalDateTime.now();
 
         return ReservationCreatedEvent.builder()
@@ -42,6 +45,7 @@ public record ReservationCreatedEvent(
                 .userId(userId)
                 .paymentId(savedPayment.id())
                 .seatId(savedSeat.id())
+                .concertId(concertDate.id())
                 .amount(savedPayment.amount())
                 .expiresAt(now.plusMinutes(5))
                 .occurredAt(now)

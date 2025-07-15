@@ -71,12 +71,13 @@ public class ReservationInteractor implements ReservationInput {
             // DB 저장 (DB 트랜잭션 범위)
             Seat savedSeat = seatRepository.save(result.seat());
             Reservation savedReservation = reservationRepository.save(result.reservation());
+            ConcertDate savedConcertDate = concertDateRepository.save(result.concertDate());
             Payment savedPayment = paymentRepository.save(Payment.of(savedSeat.id(), savedReservation.id(), savedSeat.price()));
 
             // Redis 좌석 홀드 (DB 트랜잭션과 무관하게 즉시 실행될 수 있음. 이 또한 이벤트로 옮기는 것을 고려)
             seatHoldRepository.hold(seat.id(), queueToken.userId());
             // 예약 생성 이벤트 발행
-            eventPublisher.publish(ReservationCreatedEvent.of(savedPayment, savedReservation, savedSeat, queueToken.userId()));
+            eventPublisher.publish(ReservationCreatedEvent.of(savedPayment, savedReservation, savedSeat, savedConcertDate, queueToken.userId()));
             // 예약 결과 객체 생성 및 반환
             reservationOutput.ok(ReserveSeatResult.of(savedReservation, savedSeat));
         }catch (CustomException e) {
