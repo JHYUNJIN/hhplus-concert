@@ -30,7 +30,7 @@ public record ReservationCreatedEvent(
                 .reservationId(result.reservation().id())
                 .userId(result.userId())
                 .paymentId(result.payment().id())
-                .seatId(result.payment().id())
+                .seatId(result.seat().id())
                 .amount(result.payment().amount())
                 .expiresAt(now.plusMinutes(5))
                 .occurredAt(now)

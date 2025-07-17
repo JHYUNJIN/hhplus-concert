@@ -39,7 +39,7 @@ public class ReservationEntity extends BaseTimeEntity {
     @ColumnDefault("'PENDING'")
     private ReservationStatus status;
 
-    @Column(name = "expires_at", nullable = true)
+    @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
 
     public static ReservationEntity from(Reservation reservation) {
