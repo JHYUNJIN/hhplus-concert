@@ -15,6 +15,7 @@ import kr.hhplus.be.server.usecase.payment.output.PaymentOutput;
 import kr.hhplus.be.server.usecase.payment.output.PaymentResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -30,6 +31,7 @@ public class PaymentInteractor implements PaymentInput {
     private final DistributedLockManager distributedLockManager;
 
     @Override
+    @Transactional
     public void payment(PaymentCommand command) throws Exception {
         QueueToken queueToken = getQueueTokenAndValid(command.queueTokenId());
         String reservationLockKey = RESERVATION_LOCK_KEY + command.reservationId();

@@ -4,6 +4,7 @@ import kr.hhplus.be.server.common.exception.enums.ErrorCode;
 import kr.hhplus.be.server.domain.event.Event;
 import kr.hhplus.be.server.domain.event.EventTopic;
 import kr.hhplus.be.server.domain.payment.Payment;
+import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.reservation.Reservation;
 import kr.hhplus.be.server.domain.seat.Seat;
 import kr.hhplus.be.server.domain.user.User;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 @Builder
 public record PaymentFailedEvent(
+        UUID tokenId,
         UUID paymentId,
         UUID reservationId,
         UUID userId,
@@ -24,8 +26,9 @@ public record PaymentFailedEvent(
         LocalDateTime occurredAt
 ) implements Event {
 
-    public static PaymentFailedEvent of(Payment payment, Reservation reservation, Seat seat, User user, ErrorCode errorCode) {
+    public static PaymentFailedEvent of(QueueToken queueToken, Payment payment, Reservation reservation, Seat seat, User user, ErrorCode errorCode) {
         return PaymentFailedEvent.builder()
+                .tokenId(queueToken.tokenId())
                 .paymentId(payment.id())
                 .reservationId(reservation.id())
                 .seatId(seat.id())

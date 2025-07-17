@@ -77,13 +77,13 @@ public class PaymentManager {
                     PaymentStatus.PROCESSING
             );
 
-            // 좌석해제 및 토큰 만료 처리
-            seatHoldRepository.deleteHold(paymentTransactionResult.seat().id(), paymentTransactionResult.user().id());
-            queueTokenRepository.expiresQueueToken(queueToken.tokenId().toString());
+            // 좌석해제 및 토큰 만료 처리 -> 이벤트 발행으로 대체
+//            seatHoldRepository.deleteHold(paymentTransactionResult.seat().id(), paymentTransactionResult.user().id());
+//            queueTokenRepository.expiresQueueToken(queueToken.tokenId().toString());
 
             return paymentTransactionResult;
         } catch (CustomException e) {
-            eventPublisher.publish(PaymentFailedEvent.of(payment, reservation, seat, user, e.getErrorCode()));
+            eventPublisher.publish(PaymentFailedEvent.of(queueToken, payment, reservation, seat, user, e.getErrorCode()));
             throw e;
         }
     }

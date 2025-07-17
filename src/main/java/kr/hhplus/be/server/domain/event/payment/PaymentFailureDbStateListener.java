@@ -23,7 +23,7 @@ import java.util.Set;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class PaymentFailedEventListener {
+public class PaymentFailureDbStateListener {
 
     private final UserRepository userRepository;
     private final ReservationRepository reservationRepository;
@@ -46,10 +46,18 @@ public class PaymentFailedEventListener {
     );
 
 
+    /**
+     * 결제 실패 이벤트를 수신하여 DB 상태를 정리하는 리스너
+     * 이벤트는 메인 트랜잭션이 롤백된 후에 실행되며, 새로운 트랜잭션에서 처리됩니다.
+     * 이벤트 핸들러는 결제 상태를 FAILED 변경하고, 사용자 잔액을 복원하며,
+     * 예약과 좌석 상태를 롤백하는 작업을 수행합니다.
+     * @param event 결제 실패 이벤트
+     *
+     */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_ROLLBACK) // 메인 트랜잭션이 롤백된 후 실행
     @Transactional(propagation = Propagation.REQUIRES_NEW) // 새로운 트랜잭션에서 실행
     public void handlePaymentFailedEvent(PaymentFailedEvent event) {
-        log.info("PaymentFailedEvent 수신: paymentId={}, userId={}, reservationId={}, seatId={}, errorCode={}",
+        log.info("PaymentFailedEvent 수신. DB 데이터 정리 작업을 시작합니다. : paymentId={}, userId={}, reservationId={}, seatId={}, errorCode={}",
                 event.paymentId(), event.userId(), event.reservationId(), event.seatId(), event.errorCode());
 
         try {
@@ -85,9 +93,9 @@ public class PaymentFailedEventListener {
             log.info("좌석 상태 롤백 완료: seatId={}, status={}", rolledBackSeat.id(), rolledBackSeat.status());
 
         } catch (CustomException e) {
-            log.error("PaymentFailedEvent 처리 중 비즈니스 예외 발생: {}", e.getErrorCode().name(), e);
+            log.error("PaymentFailedEvent DB 처리 중 비즈니스 예외 발생: {}", e.getErrorCode().name(), e);
         } catch (Exception e) {
-            log.error("PaymentFailedEvent 처리 중 예상치 못한 예외 발생", e);
+            log.error("PaymentFailedEvent DB 처리 중 예상치 못한 예외 발생", e);
         }
     }
 }
