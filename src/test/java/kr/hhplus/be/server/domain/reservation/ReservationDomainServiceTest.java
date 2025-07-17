@@ -1,11 +1,14 @@
 package kr.hhplus.be.server.domain.reservation;
 
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.common.exception.enums.ErrorCode;
-import kr.hhplus.be.server.domain.concertDate.ConcertDate;
-import kr.hhplus.be.server.domain.seat.Seat;
-import kr.hhplus.be.server.domain.seat.SeatGrade;
-import kr.hhplus.be.server.domain.seat.SeatStatus;
+import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.concert.domain.ConcertDate;
+import kr.hhplus.be.server.concert.domain.Seat;
+import kr.hhplus.be.server.concert.domain.enums.SeatGrade;
+import kr.hhplus.be.server.concert.domain.enums.SeatStatus;
+import kr.hhplus.be.server.reservation.domain.enums.ReservationStatus;
+import kr.hhplus.be.server.reservation.port.in.dto.ReservationDomainResult;
+import kr.hhplus.be.server.reservation.usecase.ReservationDomainService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -1,13 +1,17 @@
 package kr.hhplus.be.server.domain.payment;
 
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.common.exception.enums.ErrorCode;
-import kr.hhplus.be.server.domain.reservation.Reservation;
-import kr.hhplus.be.server.domain.reservation.ReservationStatus;
-import kr.hhplus.be.server.domain.seat.Seat;
-import kr.hhplus.be.server.domain.seat.SeatGrade;
-import kr.hhplus.be.server.domain.seat.SeatStatus;
-import kr.hhplus.be.server.domain.user.User;
+import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.payment.domain.enums.PaymentStatus;
+import kr.hhplus.be.server.payment.port.in.dto.PaymentDomainResult;
+import kr.hhplus.be.server.payment.usecase.PaymentDomainService;
+import kr.hhplus.be.server.reservation.domain.Reservation;
+import kr.hhplus.be.server.payment.domain.Payment;
+import kr.hhplus.be.server.reservation.domain.enums.ReservationStatus;
+import kr.hhplus.be.server.concert.domain.Seat;
+import kr.hhplus.be.server.concert.domain.enums.SeatGrade;
+import kr.hhplus.be.server.concert.domain.enums.SeatStatus;
+import kr.hhplus.be.server.user.domain.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

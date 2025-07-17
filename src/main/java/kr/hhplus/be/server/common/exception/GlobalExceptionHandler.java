@@ -1,7 +1,6 @@
 // src/main/java/kr/hhplus/be/common/exception/GlobalExceptionHandler.java
 package kr.hhplus.be.server.common.exception;
 
-import kr.hhplus.be.server.common.exception.enums.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.event.Level;
 import org.springframework.http.HttpStatus;

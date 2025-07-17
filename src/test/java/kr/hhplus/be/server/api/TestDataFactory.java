@@ -2,21 +2,20 @@ package kr.hhplus.be.server.api;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Queue;
 import java.util.UUID;
 
-import kr.hhplus.be.server.domain.concert.Concert;
-import kr.hhplus.be.server.domain.concertDate.ConcertDate;
-import kr.hhplus.be.server.domain.payment.Payment;
-import kr.hhplus.be.server.domain.payment.PaymentStatus;
-import kr.hhplus.be.server.domain.queue.QueueStatus;
-import kr.hhplus.be.server.domain.queue.QueueToken;
-import kr.hhplus.be.server.domain.reservation.Reservation;
-import kr.hhplus.be.server.domain.reservation.ReservationStatus;
-import kr.hhplus.be.server.domain.seat.Seat;
-import kr.hhplus.be.server.domain.seat.SeatGrade;
-import kr.hhplus.be.server.domain.seat.SeatStatus;
-import kr.hhplus.be.server.domain.user.User;
+import kr.hhplus.be.server.concert.domain.Concert;
+import kr.hhplus.be.server.concert.domain.ConcertDate;
+import kr.hhplus.be.server.payment.domain.Payment;
+import kr.hhplus.be.server.payment.domain.enums.PaymentStatus;
+import kr.hhplus.be.server.queue.domain.QueueStatus;
+import kr.hhplus.be.server.queue.domain.QueueToken;
+import kr.hhplus.be.server.reservation.domain.Reservation;
+import kr.hhplus.be.server.reservation.domain.enums.ReservationStatus;
+import kr.hhplus.be.server.concert.domain.Seat;
+import kr.hhplus.be.server.concert.domain.enums.SeatGrade;
+import kr.hhplus.be.server.concert.domain.enums.SeatStatus;
+import kr.hhplus.be.server.user.domain.User;
 
 // 테스트에서 사용할 도메인 객체를 생성하는 팩토리 클래스
 // 반복되는 테스트 데이터 생성을 간소화하고 일관성을 제공함

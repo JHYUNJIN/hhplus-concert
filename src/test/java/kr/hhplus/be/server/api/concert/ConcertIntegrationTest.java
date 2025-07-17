@@ -20,14 +20,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.utility.TestcontainersConfiguration;
 
 import kr.hhplus.be.server.api.TestDataFactory;
-import kr.hhplus.be.server.domain.concert.Concert;
-import kr.hhplus.be.server.domain.concert.ConcertRepository;
-import kr.hhplus.be.server.domain.concertDate.ConcertDate;
-import kr.hhplus.be.server.domain.concertDate.ConcertDateRepository;
-import kr.hhplus.be.server.domain.seat.Seat;
-import kr.hhplus.be.server.domain.seat.SeatRepository;
-import kr.hhplus.be.server.domain.seat.SeatStatus;
-import kr.hhplus.be.server.common.exception.enums.ErrorCode;
+import kr.hhplus.be.server.concert.domain.Concert;
+import kr.hhplus.be.server.concert.port.out.ConcertRepository;
+import kr.hhplus.be.server.concert.domain.ConcertDate;
+import kr.hhplus.be.server.concert.port.out.ConcertDateRepository;
+import kr.hhplus.be.server.concert.domain.Seat;
+import kr.hhplus.be.server.concert.port.out.SeatRepository;
+import kr.hhplus.be.server.concert.domain.enums.SeatStatus;
+import kr.hhplus.be.server.common.exception.ErrorCode;
 
 @SpringBootTest(properties = {
         "spring.jpa.hibernate.ddl-auto=create-drop"

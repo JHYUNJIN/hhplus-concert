@@ -1,9 +1,10 @@
 package kr.hhplus.be.server.usecase.user;
 
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.common.exception.enums.ErrorCode;
-import kr.hhplus.be.server.domain.user.User;
-import kr.hhplus.be.server.domain.user.UserRepository;
+import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.user.domain.User;
+import kr.hhplus.be.server.user.port.out.UserRepository;
+import kr.hhplus.be.server.user.usecase.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

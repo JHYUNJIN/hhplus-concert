@@ -8,9 +8,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
+import kr.hhplus.be.server.concert.usecase.ConcertService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,16 +19,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import kr.hhplus.be.server.domain.concert.Concert;
-import kr.hhplus.be.server.domain.concert.ConcertRepository;
-import kr.hhplus.be.server.domain.concertDate.ConcertDate;
-import kr.hhplus.be.server.domain.concertDate.ConcertDateRepository;
-import kr.hhplus.be.server.domain.seat.Seat;
-import kr.hhplus.be.server.domain.seat.SeatGrade;
-import kr.hhplus.be.server.domain.seat.SeatRepository;
-import kr.hhplus.be.server.domain.seat.SeatStatus;
+import kr.hhplus.be.server.concert.domain.Concert;
+import kr.hhplus.be.server.concert.port.out.ConcertRepository;
+import kr.hhplus.be.server.concert.domain.ConcertDate;
+import kr.hhplus.be.server.concert.port.out.ConcertDateRepository;
+import kr.hhplus.be.server.concert.domain.Seat;
+import kr.hhplus.be.server.concert.domain.enums.SeatGrade;
+import kr.hhplus.be.server.concert.port.out.SeatRepository;
+import kr.hhplus.be.server.concert.domain.enums.SeatStatus;
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.common.exception.enums.ErrorCode;
+import kr.hhplus.be.server.common.exception.ErrorCode;
 
 @ExtendWith(MockitoExtension.class)
 public class ConcertServiceTest {

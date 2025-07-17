@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+import kr.hhplus.be.server.reservation.usecase.ReservationInteractor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,32 +18,32 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import kr.hhplus.be.server.domain.concertDate.ConcertDate;
-import kr.hhplus.be.server.domain.seat.Seat;
-import kr.hhplus.be.server.domain.seat.SeatGrade;
-import kr.hhplus.be.server.domain.seat.SeatStatus;
-import kr.hhplus.be.server.domain.event.reservation.ReservationCreatedEvent;
-import kr.hhplus.be.server.domain.payment.Payment;
-import kr.hhplus.be.server.domain.payment.PaymentStatus;
-import kr.hhplus.be.server.domain.queue.QueueToken;
-import kr.hhplus.be.server.domain.reservation.Reservation;
-import kr.hhplus.be.server.domain.reservation.ReservationDomainResult;
-import kr.hhplus.be.server.domain.reservation.ReservationDomainService;
-import kr.hhplus.be.server.domain.reservation.ReservationStatus;
-import kr.hhplus.be.server.domain.concertDate.ConcertDateRepository;
-import kr.hhplus.be.server.domain.concert.ConcertRepository;
-import kr.hhplus.be.server.domain.seat.SeatRepository;
-import kr.hhplus.be.server.usecase.event.EventPublisher;
+import kr.hhplus.be.server.concert.domain.ConcertDate;
+import kr.hhplus.be.server.concert.domain.Seat;
+import kr.hhplus.be.server.concert.domain.enums.SeatGrade;
+import kr.hhplus.be.server.concert.domain.enums.SeatStatus;
+import kr.hhplus.be.server.reservation.domain.ReservationCreatedEvent;
+import kr.hhplus.be.server.payment.domain.Payment;
+import kr.hhplus.be.server.payment.domain.enums.PaymentStatus;
+import kr.hhplus.be.server.queue.domain.QueueToken;
+import kr.hhplus.be.server.reservation.domain.Reservation;
+import kr.hhplus.be.server.reservation.port.in.dto.ReservationDomainResult;
+import kr.hhplus.be.server.reservation.usecase.ReservationDomainService;
+import kr.hhplus.be.server.reservation.domain.enums.ReservationStatus;
+import kr.hhplus.be.server.concert.port.out.ConcertDateRepository;
+import kr.hhplus.be.server.concert.port.out.ConcertRepository;
+import kr.hhplus.be.server.concert.port.out.SeatRepository;
+import kr.hhplus.be.server.payment.port.out.EventPublisher;
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.common.exception.enums.ErrorCode;
-import kr.hhplus.be.server.domain.payment.PaymentRepository;
-import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
-import kr.hhplus.be.server.domain.reservation.ReservationRepository;
-import kr.hhplus.be.server.domain.seat.SeatHoldRepository;
-import kr.hhplus.be.server.domain.seat.SeatLockRepository;
-import kr.hhplus.be.server.usecase.reservation.input.ReserveSeatCommand;
-import kr.hhplus.be.server.usecase.reservation.output.ReservationOutput;
-import kr.hhplus.be.server.usecase.reservation.output.ReserveSeatResult;
+import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.payment.port.out.PaymentRepository;
+import kr.hhplus.be.server.queue.port.out.QueueTokenRepository;
+import kr.hhplus.be.server.reservation.port.out.ReservationRepository;
+import kr.hhplus.be.server.reservation.port.out.SeatHoldRepository;
+import kr.hhplus.be.server.reservation.port.out.SeatLockRepository;
+import kr.hhplus.be.server.reservation.port.in.dto.ReserveSeatCommand;
+import kr.hhplus.be.server.reservation.port.in.ReservationOutput;
+import kr.hhplus.be.server.reservation.port.in.ReserveSeatResult;
 
 @ExtendWith(MockitoExtension.class)
 public class ReservationInteractorTest {
@@ -117,10 +118,10 @@ public class ReservationInteractorTest {
                 .availableSeatCount(50L)
                 .version(0L)
                 .build();
-        reservation = new Reservation(reservationId, userId, seatId, ReservationStatus.PENDING, now, now);
+        reservation = new Reservation(reservationId, userId, seatId, ReservationStatus.PENDING, now, now, now.plusMinutes(5));
         payment = new Payment(paymentId, userId, reservationId, BigDecimal.valueOf(100000), PaymentStatus.PENDING, null,
                 now, now); // 결제 ID, 사용자 ID, 예약 ID, 결제 금액, 결제 상태, 결제 승인 코드, 생성일시, 수정일시
-        reservationDomainResult = new ReservationDomainResult(reservedSeat, reservation); // 예약 도메인 결과 객체
+        reservationDomainResult = new ReservationDomainResult(reservedSeat, reservation,payment,concertDate); // 예약 도메인 결과 객체
     }
 
     @Test
