@@ -14,13 +14,19 @@ import lombok.RequiredArgsConstructor;
 public class PaymentDomainService {
 
     public PaymentDomainResult processPayment(Reservation reservation, Payment payment, Seat seat, User user) throws CustomException {
+
+        // 결제 상태가 PROCESSING이 아니면 예외 발생
+        if (payment.status() != PaymentStatus.PROCESSING) {
+            throw new CustomException(ErrorCode.ALREADY_PROCESSED, "결제가 이미 처리 중이거나 완료되었습니다.");
+        }
         validatePayment(payment);
         validateUserBalance(payment, user);
 
-        User paidUser 				= user.payment(payment.amount());
+        // 각 도메인 객체가 외부에 의존하지 않고 자신의 상태를 직접 변경하는 방식으로 결제 처리
+        User paidUser = user.payment(payment.amount());
         Reservation paidReservation = reservation.payment();
-        Payment paidPayment 		= payment.success();
-        Seat paidSeat 				= seat.payment();
+        Payment paidPayment = payment.success();
+        Seat paidSeat = seat.payment();
 
         return new PaymentDomainResult(paidUser, paidReservation, paidPayment, paidSeat);
     }

@@ -1,36 +1,33 @@
 package kr.hhplus.be.server.usecase.payment.interactor;
 
-import java.util.UUID;
-
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
-
-import kr.hhplus.be.server.domain.seat.Seat;
-import kr.hhplus.be.server.domain.event.payment.PaymentSuccessEvent;
-import kr.hhplus.be.server.domain.payment.Payment;
-import kr.hhplus.be.server.domain.payment.PaymentDomainResult;
-import kr.hhplus.be.server.domain.payment.PaymentDomainService;
-import kr.hhplus.be.server.domain.queue.QueueToken;
-import kr.hhplus.be.server.domain.reservation.Reservation;
-import kr.hhplus.be.server.domain.user.User;
-import kr.hhplus.be.server.domain.seat.SeatRepository;
-import kr.hhplus.be.server.usecase.event.EventPublisher;
+import kr.hhplus.be.server.common.aop.lock.DistributedLock;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.enums.ErrorCode;
-import kr.hhplus.be.server.domain.payment.PaymentRepository;
+import kr.hhplus.be.server.domain.event.payment.PaymentFailedEvent;
+import kr.hhplus.be.server.domain.event.payment.PaymentSuccessEvent;
+import kr.hhplus.be.server.domain.payment.*;
+import kr.hhplus.be.server.domain.queue.QueueToken;
+import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
+import kr.hhplus.be.server.domain.queue.QueueTokenUtil;
+import kr.hhplus.be.server.domain.reservation.Reservation;
+import kr.hhplus.be.server.domain.reservation.ReservationRepository;
+import kr.hhplus.be.server.domain.seat.Seat;
+import kr.hhplus.be.server.domain.seat.SeatHoldRepository;
+import kr.hhplus.be.server.domain.seat.SeatRepository;
+import kr.hhplus.be.server.domain.user.User;
+import kr.hhplus.be.server.domain.user.UserRepository;
+import kr.hhplus.be.server.usecase.event.EventPublisher;
 import kr.hhplus.be.server.usecase.payment.input.PaymentCommand;
 import kr.hhplus.be.server.usecase.payment.input.PaymentInput;
 import kr.hhplus.be.server.usecase.payment.output.PaymentOutput;
 import kr.hhplus.be.server.usecase.payment.output.PaymentResult;
-import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
-import kr.hhplus.be.server.domain.queue.QueueTokenUtil;
-import kr.hhplus.be.server.domain.reservation.ReservationRepository;
-import kr.hhplus.be.server.domain.seat.SeatHoldRepository;
-import kr.hhplus.be.server.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -48,26 +45,72 @@ public class PaymentInteractor implements PaymentInput {
     private final PaymentDomainService paymentDomainService;
     private final EventPublisher eventPublisher;
 
+    /* 결제 상태 흐름
+    [PENDING]
+   │
+   ├── (updateStatusIfExpected → PROCESSING 성공)
+   │       │
+   │       ├── [processPayment 성공] → update → SUCCESS
+   │       │
+   │       └── [예외 발생] → rollback → FAILED
+   │
+   └── (이미 처리됨) → ALREADY_PROCESSED 예외
+     */
     @Override
-    @Transactional
+    @DistributedLock(key = "'payment:reservation:' + #command.reservationId()", waitTime = 3L, leaseTime = 10L)
+    @Transactional // 이 트랜잭션은 분산락이 획득된 후에 시작됩니다.
     public void payment(PaymentCommand command) throws CustomException {
+
+        Reservation reservation = null;
+        Payment payment = null;
+        Seat seat = null;
+        User user = null;
+
         try {
+            System.out.println("🚀[로그:정현진] command : " + command);
             // 토큰 검증
             QueueToken queueToken = getQueueTokenAndValid(command);
-            System.out.println("🚀[로그:정현진] queueToken : " + queueToken);
+            System.out.println("🚀[로그:정현진] 토큰검증 queueToken : " + queueToken);
 
             // 예약, 결제, 좌석, 사용자 정보 조회
-            Reservation reservation = getReservation(command);
-            Payment payment = getPayment(reservation);
-            Seat seat = getSeat(reservation);
-            User user = getUser(queueToken.userId());
+            reservation = getReservation(command);
+            System.out.println("🚀[로그:정현진] 예약 정보 : " + reservation);
+            payment = getPayment(reservation);
+            System.out.println("🚀[로그:정현진] 결제 정보 : " + payment);
+            seat = getSeat(reservation);
+            System.out.println("🚀[로그:정현진] 좌석 정보 : " + seat);
+            user = getUser(queueToken.userId());
+            System.out.println("🚀[로그:정현진] 사용자 정보 : " + user);
 
             // 좌석 예약 상태 확인
+            // 테스트 시나리오에 따라 이 검증을 제거하거나, Redis 홀드 로직을 분산락으로 대체했다면 해당 검증이 필요 없을까 ?)
+            // 예약 로직 안에 좌석 잠금 로직이 있음
+            // 튜터님께 : 예약 로직을 루아 스크립트로 구현하여 동시성을 제어했는데 레디스 좌석 잠금 로직에 분산락이 추가로 필요한지 피드백이 필요함
             validateSeatHold(seat.id(), user.id());
+            System.out.println("🚀[로그:정현진] @00");
+            // 🔐 낙관적 락: 상태 선점 (PENDING → PROCESSING)
+            int updated = paymentRepository.updateStatusIfExpected(
+                    payment.id(),
+                    PaymentStatus.PROCESSING,
+                    PaymentStatus.PENDING
+            );
+            if (updated != 1) {
+                throw new CustomException(ErrorCode.ALREADY_PROCESSED, "결제가 이미 처리되었습니다.");
+            }
+            // 결제 상태를 PROCESSING으로 업데이트
+            payment = payment.toProcessing();
 
             System.out.println("🚀[로그:정현진] @01");
             // 결제 진행
             PaymentDomainResult result = paymentDomainService.processPayment(reservation, payment, seat, user);
+            System.out.println("🚀[로그:정현진] result : " + result);
+
+            // 결제 상태 업데이트
+            paymentRepository.updateStatusIfExpected(
+                    payment.id(),
+                    PaymentStatus.SUCCESS,
+                    PaymentStatus.PROCESSING
+            );
 
             System.out.println("🚀[로그:정현진] @02");
             // 결제 성공 시 데이터 저장 및 이벤트 발행
@@ -77,16 +120,18 @@ public class PaymentInteractor implements PaymentInput {
             Seat        savedSeat        = seatRepository.save(result.seat());
 
             System.out.println("🚀[로그:정현진] @03");
-            seatHoldRepository.deleteHold(savedSeat.id(), savedUser.id());
-            queueTokenRepository.expiresQueueToken(queueToken.tokenId().toString());
+            seatHoldRepository.deleteHold(savedSeat.id(), savedUser.id()); // Redis에 저장된 좌석 예약 해제
+            queueTokenRepository.expiresQueueToken(queueToken.tokenId().toString()); // 토큰 만료 처리
 
             eventPublisher.publish(PaymentSuccessEvent.of(savedPayment, savedReservation, savedSeat, savedUser));
             paymentOutput.ok(PaymentResult.of(savedPayment, savedSeat, savedReservation.id(), savedUser.id()));
         } catch (CustomException e) {
             log.warn("결제 진행 중 비즈니스 예외 발생 - {}", e.getErrorCode().name());
+            handleFailure(payment, reservation, seat, user, e.getErrorCode());
             throw e;
         } catch (Exception e) {
             log.error("결제 진행 중 예외 발생 - {}", ErrorCode.INTERNAL_SERVER_ERROR, e);
+            handleFailure(payment, reservation, seat, user, ErrorCode.INTERNAL_SERVER_ERROR);
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
@@ -121,4 +166,35 @@ public class PaymentInteractor implements PaymentInput {
         if (!seatHoldRepository.isHoldSeat(seatId, userId))
             throw new CustomException(ErrorCode.SEAT_NOT_HOLD);
     }
+
+    private void handleFailure(Payment payment, Reservation reservation, Seat seat, User user, ErrorCode errorCode) {
+        // 메인 트랜잭션은 롤백될 것이므로, 여기서는 실패 처리 이벤트만 발행
+        // DB 상태 변경은 트랜잭션 롤백 후 이벤트 리스너에서 처리함
+        if (payment != null && reservation != null && user != null && seat != null) {
+            log.info("결제 실패로 인한 롤백 발생. 실패 처리 이벤트를 발행합니다. errorCode={}", errorCode);
+            eventPublisher.publish(PaymentFailedEvent.of(payment, reservation, seat, user, errorCode));
+        } else {
+            log.warn("결제 실패 이벤트 발행에 필요한 정보가 부족하여 이벤트를 발행할 수 없습니다.");
+        }
+    }
+
+
 }
+
+
+/* 서비스와 인터렉터의 차이점 **
+서비스와 인터랙터의 주요 차이점은 의존성 관리와 책임 분리에 있습니다.
+
+기존 서비스는 입출력 처리와 비즈니스 로직이 명확히 분리되지 않아 컨트롤러와의 의존성이 높았습니다. 하지만 인터랙터는 입출력(Input/Output)과 핵심 비즈니스 로직을 명확하게 구분합니다.
+
+이러한 구조는 **의존성 역전 원칙(DIP)**을 준수하여 아키텍처의 안정성과 확장성을 크게 높입니다. 인터랙터는 비즈니스 로직을 외부 계층(컨트롤러, 영속성 등)으로부터 독립적으로 분리시켜, 다음 이점들을 제공합니다.
+
+테스트 용이성 확장: 비즈니스 로직이 독립적이므로 단위 테스트를 더 쉽고 효과적으로 수행할 수 있습니다.
+
+높은 재사용성: 외부 환경(예: 데이터베이스, UI 프레임워크)이 변경되더라도 핵심 비즈니스 로직은 수정 없이 재사용될 수 있습니다.
+
+명확한 책임: 각 계층의 책임이 명확해져 코드의 가독성과 유지보수성이 향상됩니다.
+
+결과적으로 인터랙터는 비즈니스 로직의 독립성을 보장하고, 시스템의 견고함과 유연성을 증대시키는 데 중요한 역할을 합니다.
+ */
+

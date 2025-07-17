@@ -9,14 +9,14 @@ import lombok.Builder;
 public record ConcertDate(
         UUID id,
         UUID concertId,
-        Integer remainingSeatCount,
+        Integer remainingSeatCount, // 현재 남은 좌석 수
         LocalDateTime date,
         LocalDateTime deadline,
         LocalDateTime createdAt,
         LocalDateTime updatedAt) {
 
     public boolean checkDeadline() {
-        return deadline.isAfter(LocalDateTime.now());
+        return deadline.isAfter(LocalDateTime.now()); // 현재 시간보다 마감 시간이 이후인지 확인
     }
 
     public ConcertDate withRemainingSeatCount(Integer availableSeatCount) {
