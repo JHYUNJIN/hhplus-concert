@@ -1,10 +1,10 @@
-package kr.hhplus.be.server.domain.event.rank;
+package kr.hhplus.be.server.domain.event.payment.success.listener;
 
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.enums.ErrorCode;
 import kr.hhplus.be.server.domain.concertDate.ConcertDate;
 import kr.hhplus.be.server.domain.concertDate.ConcertDateRepository;
-import kr.hhplus.be.server.domain.event.payment.PaymentSuccessEvent;
+import kr.hhplus.be.server.domain.event.payment.success.event.PaymentSuccessEvent;
 import kr.hhplus.be.server.domain.seat.Seat;
 import kr.hhplus.be.server.domain.seat.SeatRepository;
 import kr.hhplus.be.server.domain.seat.SeatStatus;

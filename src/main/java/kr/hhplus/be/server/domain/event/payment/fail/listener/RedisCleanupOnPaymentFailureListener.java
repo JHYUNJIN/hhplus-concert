@@ -1,6 +1,7 @@
 // 결제 실패 트랜잭션이 롤백된 후, Redis에 남아있는 데이터의 정합성을 맞추는 책임을 가집니다.
-package kr.hhplus.be.server.domain.event.payment;
+package kr.hhplus.be.server.domain.event.payment.fail.listener;
 
+import kr.hhplus.be.server.domain.event.payment.fail.event.PaymentFailedEvent;
 import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
 import kr.hhplus.be.server.domain.seat.SeatHoldRepository;
 import lombok.RequiredArgsConstructor;

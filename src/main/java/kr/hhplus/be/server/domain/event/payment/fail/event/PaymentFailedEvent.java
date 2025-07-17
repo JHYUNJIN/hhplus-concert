@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.domain.event.payment;
+package kr.hhplus.be.server.domain.event.payment.fail.event;
 
 import kr.hhplus.be.server.common.exception.enums.ErrorCode;
 import kr.hhplus.be.server.domain.event.Event;

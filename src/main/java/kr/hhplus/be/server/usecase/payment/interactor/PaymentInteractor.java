@@ -1,7 +1,7 @@
 package kr.hhplus.be.server.usecase.payment.interactor;
 
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.domain.event.payment.PaymentSuccessEvent;
+import kr.hhplus.be.server.domain.event.payment.success.event.PaymentSuccessEvent;
 import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.queue.QueueTokenUtil;
 import kr.hhplus.be.server.infrastructure.persistence.lock.DistributedLockManager;

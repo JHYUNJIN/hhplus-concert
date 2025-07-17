@@ -2,7 +2,7 @@ package kr.hhplus.be.server.infrastructure.persistence.payment;
 
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.enums.ErrorCode;
-import kr.hhplus.be.server.domain.event.payment.PaymentFailedEvent;
+import kr.hhplus.be.server.domain.event.payment.fail.event.PaymentFailedEvent;
 import kr.hhplus.be.server.domain.payment.*;
 import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.queue.QueueTokenRepository;

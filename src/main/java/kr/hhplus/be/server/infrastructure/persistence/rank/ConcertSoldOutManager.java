@@ -12,7 +12,7 @@ import kr.hhplus.be.server.domain.concert.Concert;
 import kr.hhplus.be.server.domain.concert.ConcertRepository;
 import kr.hhplus.be.server.domain.rank.SoldOutRank;
 import kr.hhplus.be.server.domain.rank.SoldOutRankRepository;
-import kr.hhplus.be.server.domain.event.payment.PaymentSuccessEvent;
+import kr.hhplus.be.server.domain.event.payment.success.event.PaymentSuccessEvent;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.enums.ErrorCode;
 import lombok.RequiredArgsConstructor;

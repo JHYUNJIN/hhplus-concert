@@ -1,7 +1,8 @@
-package kr.hhplus.be.server.domain.event.payment;
+package kr.hhplus.be.server.domain.event.payment.fail.listener;
 
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.enums.ErrorCode;
+import kr.hhplus.be.server.domain.event.payment.fail.event.PaymentFailedEvent;
 import kr.hhplus.be.server.domain.payment.Payment;
 import kr.hhplus.be.server.domain.payment.PaymentRepository;
 import kr.hhplus.be.server.domain.reservation.Reservation;
@@ -23,7 +24,7 @@ import java.util.Set;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class PaymentFailureDbStateListener {
+public class DbStatePaymentFailureListener {
 
     private final UserRepository userRepository;
     private final ReservationRepository reservationRepository;

@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.domain.event.payment;
+package kr.hhplus.be.server.domain.event.payment.success.event;
 
 import java.time.LocalDateTime;
 
