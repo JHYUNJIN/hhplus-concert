@@ -1,13 +1,10 @@
 package kr.hhplus.be.server.infrastructure.persistence.seat;
 
-import kr.hhplus.be.server.domain.seat.Seat;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface JpaSeatRepository extends JpaRepository<SeatEntity, String> {
 
@@ -22,14 +19,6 @@ public interface JpaSeatRepository extends JpaRepository<SeatEntity, String> {
 		order by s.seatNo
 	""")
 	List<SeatEntity> findAvailableSeats(String concertId, String concertDateId);
-
-	@Query("""
-		select count(s)
-		from SeatEntity s
-		where s.concertDateId = :concertDateId
-			and s.status = "AVAILABLE"
-	""")
-	Integer countRemainingSeat(String concertDateId);
 
 	@Query("""
 		select s

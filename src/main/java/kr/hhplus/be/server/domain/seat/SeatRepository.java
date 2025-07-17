@@ -8,14 +8,12 @@ public interface SeatRepository {
 
     Seat save(Seat seat);
     Optional<Seat> findBySeatIdAndConcertDateId(UUID seatId, UUID concertDateId);
-    Integer countRemainingSeat(UUID concertDateId);
-    List<Seat> findAvailableSeats(UUID concertId, UUID concertDateId);
-
     Optional<Seat> findById(UUID seatId);
+    List<Seat> findAvailableSeats(UUID concertId, UUID concertDateId);
+    List<Seat> findByConcertDateId(UUID concertDateId);
 
     void deleteAll();
 
-    List<Seat> findByConcertDateId(UUID id);
 
     // 더미데이터 전용 메소드
     List<Seat> findByConcertDateIds(List<UUID> concertDateIds);

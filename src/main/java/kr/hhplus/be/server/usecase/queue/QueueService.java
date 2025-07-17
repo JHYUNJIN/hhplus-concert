@@ -19,7 +19,7 @@ import java.util.UUID;
 @Slf4j
 public class QueueService {
 
-    private static final int MAX_ACTIVE_TOKEN_SIZE = 2; // 동시 접속자 최대 수
+    private static final int MAX_ACTIVE_TOKEN_SIZE = 50; // 동시 접속자 최대 수
     private static final long QUEUE_EXPIRES_TIME = 60L;
 
     private final QueueTokenRepository queueTokenRepository;

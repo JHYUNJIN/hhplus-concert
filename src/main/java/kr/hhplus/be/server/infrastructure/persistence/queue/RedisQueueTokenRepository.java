@@ -20,6 +20,8 @@ import java.util.UUID;
 @Repository
 public class RedisQueueTokenRepository implements QueueTokenRepository { // Redis 기반 대기열 토큰 저장소 구현체
 
+    private static final int MAX_ACTIVE_TOKEN_SIZE = 50; // 동시 접속자 최대 수
+
     private final RedisTemplate<String, String> redisTemplate; // String-String 타입 RedisTemplate (토큰 ID 저장용)
     private final RedisTemplate<String, Object> queueTokenRedisTemplate; // String-Object 타입 RedisTemplate (QueueToken 객체 저장용)
 
@@ -124,7 +126,7 @@ public class RedisQueueTokenRepository implements QueueTokenRepository { // Redi
             String waitingTokenKey = QueueTokenUtil.formattingWaitingTokenKey(openConcert.id());
 
             List<String> keys = List.of(activeTokenKey, waitingTokenKey);
-            Long promotedCount = redisTemplate.execute(QueueTokenUtil.promoteWaitingTokenScript(), keys, String.valueOf(2));
+            Long promotedCount = redisTemplate.execute(QueueTokenUtil.promoteWaitingTokenScript(), keys, String.valueOf(MAX_ACTIVE_TOKEN_SIZE));
 
             // 저장된 값을 로그로 출력합니다.
             if (promotedCount != null && promotedCount > 0) {

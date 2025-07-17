@@ -1,13 +1,9 @@
 package kr.hhplus.be.server.infrastructure.persistence.payment;
 
-import java.util.UUID;
-
+import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.common.exception.enums.ErrorCode;
 import kr.hhplus.be.server.domain.event.payment.PaymentFailedEvent;
 import kr.hhplus.be.server.domain.payment.*;
-import kr.hhplus.be.server.usecase.event.EventPublisher;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
 import kr.hhplus.be.server.domain.reservation.Reservation;
@@ -17,10 +13,13 @@ import kr.hhplus.be.server.domain.seat.SeatHoldRepository;
 import kr.hhplus.be.server.domain.seat.SeatRepository;
 import kr.hhplus.be.server.domain.user.User;
 import kr.hhplus.be.server.domain.user.UserRepository;
-import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.common.exception.enums.ErrorCode;
+import kr.hhplus.be.server.usecase.event.EventPublisher;
 import kr.hhplus.be.server.usecase.payment.input.PaymentCommand;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
