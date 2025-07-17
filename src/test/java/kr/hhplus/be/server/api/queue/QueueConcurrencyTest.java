@@ -104,18 +104,11 @@ public class QueueConcurrencyTest {
                     JsonNode jsonNode = objectMapper.readTree(responseContent);
                     String tokenId = jsonNode.get("tokenId").asText();
                     tokenIdList.add(tokenId);
-                    System.out.println("🚀[로그:정현진] 발급된 토큰 ID: " + tokenId);
-                    System.out.println("🚀[로그:정현진] 현재 토큰 리스트 길이: " + tokenIdList.size());
-                    // 리스트에 들어있는 토큰 ID 출력
-                    System.out.println("🚀[로그:정현진] 현재 토큰 ID 리스트: " + tokenIdList);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }));
         }
-
-        // tokenIdList 로그 출력
-        System.out.println("🚀[로그:정현진] tokenIdList : " + tokenIdList);
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(10, TimeUnit.SECONDS);
         assertThat(tokenIdList.get(0)).isEqualTo(tokenIdList.get(1)); // 기존 토큰이 있을 시 기존 토큰 사용
     }
@@ -143,7 +136,6 @@ public class QueueConcurrencyTest {
                     JsonNode jsonNode = objectMapper.readTree(responseContent);
                     String tokenId = jsonNode.get("tokenId").asText();
                     tokenIdList.add(tokenId);
-                    System.out.println("🚀[로그:정현진] 발급된 토큰 ID: " + tokenId);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }

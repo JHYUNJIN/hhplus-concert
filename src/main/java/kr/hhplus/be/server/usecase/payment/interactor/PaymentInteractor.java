@@ -1,183 +1,63 @@
 package kr.hhplus.be.server.usecase.payment.interactor;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import kr.hhplus.be.server.common.aop.lock.DistributedLock;
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.common.exception.enums.ErrorCode;
-import kr.hhplus.be.server.domain.event.payment.PaymentFailedEvent;
-import kr.hhplus.be.server.domain.event.payment.PaymentSuccessEvent;
-import kr.hhplus.be.server.domain.payment.*;
+import kr.hhplus.be.server.domain.event.payment.success.event.PaymentSuccessEvent;
 import kr.hhplus.be.server.domain.queue.QueueToken;
-import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
 import kr.hhplus.be.server.domain.queue.QueueTokenUtil;
-import kr.hhplus.be.server.domain.reservation.Reservation;
-import kr.hhplus.be.server.domain.reservation.ReservationRepository;
-import kr.hhplus.be.server.domain.seat.Seat;
-import kr.hhplus.be.server.domain.seat.SeatHoldRepository;
-import kr.hhplus.be.server.domain.seat.SeatRepository;
-import kr.hhplus.be.server.domain.user.User;
-import kr.hhplus.be.server.domain.user.UserRepository;
+import kr.hhplus.be.server.infrastructure.persistence.lock.DistributedLockManager;
+import kr.hhplus.be.server.infrastructure.persistence.payment.PaymentManager;
+import kr.hhplus.be.server.infrastructure.persistence.payment.PaymentTransactionResult;
+import kr.hhplus.be.server.infrastructure.persistence.queue.QueueTokenManager;
 import kr.hhplus.be.server.usecase.event.EventPublisher;
 import kr.hhplus.be.server.usecase.payment.input.PaymentCommand;
 import kr.hhplus.be.server.usecase.payment.input.PaymentInput;
 import kr.hhplus.be.server.usecase.payment.output.PaymentOutput;
 import kr.hhplus.be.server.usecase.payment.output.PaymentResult;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
-
 @Component
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
-@Slf4j
 public class PaymentInteractor implements PaymentInput {
 
-    private final QueueTokenRepository queueTokenRepository;
-    private final SeatHoldRepository seatHoldRepository;
-    private final ReservationRepository reservationRepository;
-    private final UserRepository userRepository;
-    private final SeatRepository seatRepository;
-    private final PaymentRepository paymentRepository;
+    private static final String RESERVATION_LOCK_KEY = "reservation:";
+    private static final String USER_LOCK_KEY = "user:";
+
     private final PaymentOutput paymentOutput;
-    private final PaymentDomainService paymentDomainService;
     private final EventPublisher eventPublisher;
+    private final PaymentManager paymentManager;
+    private final QueueTokenManager queueTokenManager;
+    private final DistributedLockManager distributedLockManager;
 
-    /* 결제 상태 흐름
-    [PENDING]
-   │
-   ├── (updateStatusIfExpected → PROCESSING 성공)
-   │       │
-   │       ├── [processPayment 성공] → update → SUCCESS
-   │       │
-   │       └── [예외 발생] → rollback → FAILED
-   │
-   └── (이미 처리됨) → ALREADY_PROCESSED 예외
-     */
     @Override
-    @DistributedLock(key = "'payment:reservation:' + #command.reservationId()", waitTime = 3L, leaseTime = 10L)
-    @Transactional // 이 트랜잭션은 분산락이 획득된 후에 시작됩니다.
-    public void payment(PaymentCommand command) throws CustomException {
+    @Transactional
+    public void payment(PaymentCommand command) throws Exception {
+        QueueToken queueToken = getQueueTokenAndValid(command.queueTokenId());
+        String reservationLockKey = RESERVATION_LOCK_KEY + command.reservationId();
+        String userLockKey = USER_LOCK_KEY + queueToken.userId();
 
-        Reservation reservation = null;
-        Payment payment = null;
-        Seat seat = null;
-        User user = null;
+        /* 분산락 획득 후 결제 트랜잭션 수행
+         * 1. user:{userId} 락 획득
+         * 2. reservation:{reservationId} 락 획득
+         * 3. 결제 트랜잭션 수행
+         */
+        PaymentTransactionResult paymentTransactionResult = distributedLockManager.executeWithLockHasReturn(
+                userLockKey,
+                () -> distributedLockManager.executeWithLockHasReturn(
+                        reservationLockKey,
+                        () -> paymentManager.processPayment(command, queueToken)));
 
-        try {
-            System.out.println("🚀[로그:정현진] command : " + command);
-            // 토큰 검증
-            QueueToken queueToken = getQueueTokenAndValid(command);
-            System.out.println("🚀[로그:정현진] 토큰검증 queueToken : " + queueToken);
-
-            // 예약, 결제, 좌석, 사용자 정보 조회
-            reservation = getReservation(command);
-            System.out.println("🚀[로그:정현진] 예약 정보 : " + reservation);
-            payment = getPayment(reservation);
-            System.out.println("🚀[로그:정현진] 결제 정보 : " + payment);
-            seat = getSeat(reservation);
-            System.out.println("🚀[로그:정현진] 좌석 정보 : " + seat);
-            user = getUser(queueToken.userId());
-            System.out.println("🚀[로그:정현진] 사용자 정보 : " + user);
-
-            // 좌석 예약 상태 확인
-            // 테스트 시나리오에 따라 이 검증을 제거하거나, Redis 홀드 로직을 분산락으로 대체했다면 해당 검증이 필요 없을까 ?)
-            // 예약 로직 안에 좌석 잠금 로직이 있음
-            // 튜터님께 : 예약 로직을 루아 스크립트로 구현하여 동시성을 제어했는데 레디스 좌석 잠금 로직에 분산락이 추가로 필요한지 피드백이 필요함
-            validateSeatHold(seat.id(), user.id());
-            System.out.println("🚀[로그:정현진] @00");
-            // 🔐 낙관적 락: 상태 선점 (PENDING → PROCESSING)
-            int updated = paymentRepository.updateStatusIfExpected(
-                    payment.id(),
-                    PaymentStatus.PROCESSING,
-                    PaymentStatus.PENDING
-            );
-            if (updated != 1) {
-                throw new CustomException(ErrorCode.ALREADY_PROCESSED, "결제가 이미 처리되었습니다.");
-            }
-            // 결제 상태를 PROCESSING으로 업데이트
-            payment = payment.toProcessing();
-
-            System.out.println("🚀[로그:정현진] @01");
-            // 결제 진행
-            PaymentDomainResult result = paymentDomainService.processPayment(reservation, payment, seat, user);
-            System.out.println("🚀[로그:정현진] result : " + result);
-
-            // 결제 상태 업데이트
-            paymentRepository.updateStatusIfExpected(
-                    payment.id(),
-                    PaymentStatus.SUCCESS,
-                    PaymentStatus.PROCESSING
-            );
-
-            System.out.println("🚀[로그:정현진] @02");
-            // 결제 성공 시 데이터 저장 및 이벤트 발행
-            User        savedUser        = userRepository.save(result.user());
-            Reservation savedReservation = reservationRepository.save(result.reservation());
-            Payment     savedPayment     = paymentRepository.save(result.payment());
-            Seat        savedSeat        = seatRepository.save(result.seat());
-
-            System.out.println("🚀[로그:정현진] @03");
-            seatHoldRepository.deleteHold(savedSeat.id(), savedUser.id()); // Redis에 저장된 좌석 예약 해제
-            queueTokenRepository.expiresQueueToken(queueToken.tokenId().toString()); // 토큰 만료 처리
-
-            eventPublisher.publish(PaymentSuccessEvent.of(savedPayment, savedReservation, savedSeat, savedUser));
-            paymentOutput.ok(PaymentResult.of(savedPayment, savedSeat, savedReservation.id(), savedUser.id()));
-        } catch (CustomException e) {
-            log.warn("결제 진행 중 비즈니스 예외 발생 - {}", e.getErrorCode().name());
-            handleFailure(payment, reservation, seat, user, e.getErrorCode());
-            throw e;
-        } catch (Exception e) {
-            log.error("결제 진행 중 예외 발생 - {}", ErrorCode.INTERNAL_SERVER_ERROR, e);
-            handleFailure(payment, reservation, seat, user, ErrorCode.INTERNAL_SERVER_ERROR);
-            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
+        // 결제 성공 이벤트 발행 및 결과 반환
+        eventPublisher.publish(PaymentSuccessEvent.from(paymentTransactionResult));
+        paymentOutput.ok(PaymentResult.from(paymentTransactionResult));
     }
 
-    private User getUser(UUID userId) throws CustomException {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-    }
-
-    private Seat getSeat(Reservation reservation) throws CustomException {
-        return seatRepository.findById(reservation.seatId())
-                .orElseThrow(() -> new CustomException(ErrorCode.SEAT_NOT_FOUND));
-    }
-
-    private Payment getPayment(Reservation reservation) throws CustomException {
-        return paymentRepository.findByReservationId(reservation.id())
-                .orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
-    }
-
-    private Reservation getReservation(PaymentCommand command) throws CustomException {
-        return reservationRepository.findById(command.reservationId())
-                .orElseThrow(() -> new CustomException(ErrorCode.RESERVATION_NOT_FOUND));
-    }
-
-    private QueueToken getQueueTokenAndValid(PaymentCommand command) throws CustomException, JsonProcessingException {
-        QueueToken queueToken = queueTokenRepository.findQueueTokenByTokenId(command.queueTokenId());
+    private QueueToken getQueueTokenAndValid(String tokenId) throws CustomException {
+        QueueToken queueToken = queueTokenManager.getQueueToken(tokenId);
         QueueTokenUtil.validateActiveQueueToken(queueToken);
         return queueToken;
     }
-
-    private void validateSeatHold(UUID seatId, UUID userId) throws CustomException {
-        if (!seatHoldRepository.isHoldSeat(seatId, userId))
-            throw new CustomException(ErrorCode.SEAT_NOT_HOLD);
-    }
-
-    private void handleFailure(Payment payment, Reservation reservation, Seat seat, User user, ErrorCode errorCode) {
-        // 메인 트랜잭션은 롤백될 것이므로, 여기서는 실패 처리 이벤트만 발행
-        // DB 상태 변경은 트랜잭션 롤백 후 이벤트 리스너에서 처리함
-        if (payment != null && reservation != null && user != null && seat != null) {
-            log.info("결제 실패로 인한 롤백 발생. 실패 처리 이벤트를 발행합니다. errorCode={}", errorCode);
-            eventPublisher.publish(PaymentFailedEvent.of(payment, reservation, seat, user, errorCode));
-        } else {
-            log.warn("결제 실패 이벤트 발행에 필요한 정보가 부족하여 이벤트를 발행할 수 없습니다.");
-        }
-    }
-
 
 }
 

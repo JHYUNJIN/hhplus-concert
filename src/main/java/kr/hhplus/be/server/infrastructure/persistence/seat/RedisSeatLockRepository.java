@@ -12,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class RedisSeatLockRepository implements SeatLockRepository {
 
-    private final RedisTemplate<String, Object> redisTemplate;
-
     @Override
     public boolean acquisitionLock(UUID seatId) {
         return true;

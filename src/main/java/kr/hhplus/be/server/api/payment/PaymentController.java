@@ -6,12 +6,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import kr.hhplus.be.server.api.payment.dto.response.PaymentResponse;
 import kr.hhplus.be.server.usecase.payment.input.PaymentCommand;
 import kr.hhplus.be.server.usecase.payment.input.PaymentInput;
 import kr.hhplus.be.server.usecase.payment.output.PaymentOutput;
 import kr.hhplus.be.server.usecase.payment.output.PaymentResult;
-import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.api.payment.dto.response.PaymentResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -60,9 +59,11 @@ public class PaymentController implements PaymentOutput {
     public ResponseEntity<PaymentResponse> payReservation(
             @PathVariable UUID reservationId,
             @RequestHeader(value = "Authorization") String queueToken
-    ) throws CustomException {
-        queueToken = queueToken.startsWith("Bearer ") ? queueToken.substring("Bearer ".length()) : queueToken;
-        paymentInput.payment(PaymentCommand.of(reservationId, queueToken));
+    ) throws Exception {
+        final String parsedQueueToken = queueToken.startsWith("Bearer ")
+                ? queueToken.substring("Bearer ".length())
+                : queueToken;
+        paymentInput.payment(PaymentCommand.of(reservationId, parsedQueueToken));
 
         return ResponseEntity.ok(paymentResponse);
     }

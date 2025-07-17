@@ -8,11 +8,15 @@ public interface ConcertDateRepository {
     Optional<ConcertDate> findById(UUID concertDateId);
 
     // "콘서트 ID로 콘서트 날짜 조회"
-    List<ConcertDate> findAvailableDatesWithAvailableSeatCount(UUID concertId);
+    List<ConcertDate> findAvailableDates(UUID concertId);
 
     ConcertDate save(ConcertDate concertDate);
 
     boolean existsById(UUID concertDateId);
 
     void deleteAll();
+
+
+    // 더미데이터 전용 메소드
+    void updateAvailableSeatCount(UUID dateId, Long count);
 }

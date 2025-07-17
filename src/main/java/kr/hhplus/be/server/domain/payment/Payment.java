@@ -63,4 +63,21 @@ public record Payment(
                 .status(PaymentStatus.FAILED)
                 .build();
     }
+
+    public boolean isPending() {
+        return status == PaymentStatus.PENDING;
+    }
+
+    public Payment expire() {
+        return Payment.builder()
+                .id(id)
+                .userId(userId)
+                .reservationId(reservationId)
+                .amount(amount)
+                .status(PaymentStatus.FAILED)
+                .failureReason("임시 배정이 만료되었습니다.")
+                .createdAt(createdAt)
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
 }

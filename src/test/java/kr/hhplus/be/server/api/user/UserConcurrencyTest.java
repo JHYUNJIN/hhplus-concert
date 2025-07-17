@@ -111,14 +111,6 @@ public class UserConcurrencyTest {
         assertThat(successfulCharges.get()).isEqualTo(THREAD_SIZE);
         User chargedUser = userRepository.findById(userId).orElseThrow();
 
-        // 최종적으로 모든 요청이 성공했는지 확인
-        System.out.println("🚀[로그:정현진] successfulCharges.get() : " + successfulCharges.get());
-        System.out.println("🚀[로그:정현진]THREAD_SIZE : "+ THREAD_SIZE);
-        System.out.println("🚀[로그:정현진] Point 조회");
-        System.out.println("🚀[로그:정현진] chargedUser.amount() : " + chargedUser.amount());
-        System.out.println("🚀[로그:정현진] initPoint : " + initPoint);
-        System.out.println("🚀[로그:정현진] chargePoint.multiply(BigDecimal.valueOf(THREAD_SIZE)) : " + chargePoint.multiply(BigDecimal.valueOf(THREAD_SIZE)));
-
         assertThat(chargedUser.amount())
                 .isEqualTo(initPoint.add(chargePoint.multiply(BigDecimal.valueOf(THREAD_SIZE))));
     }

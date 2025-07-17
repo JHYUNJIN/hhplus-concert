@@ -1,15 +1,5 @@
 package kr.hhplus.be.server.usecase;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-
-import org.springframework.stereotype.Component;
-
-import net.datafaker.Faker;
-
 import kr.hhplus.be.server.domain.concert.Concert;
 import kr.hhplus.be.server.domain.concert.ConcertRepository;
 import kr.hhplus.be.server.domain.concertDate.ConcertDate;
@@ -22,6 +12,16 @@ import kr.hhplus.be.server.domain.user.User;
 import kr.hhplus.be.server.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.datafaker.Faker;
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Component
 @RequiredArgsConstructor
@@ -32,6 +32,7 @@ public class DummyDateGenerator {
     private final ConcertRepository concertRepository;
     private final ConcertDateRepository concertDateRepository;
     private final SeatRepository seatRepository;
+    private final AsyncSeatCountUpdater asyncSeatCountUpdater;
 
     private final Faker faker = new Faker(new Locale("ko", "ko"));
 
@@ -42,6 +43,11 @@ public class DummyDateGenerator {
         List<Concert> concerts = generateConcert();
         List<ConcertDate> concertDates = generateConcertDates(concerts);
         generateSeats(concertDates);
+
+        // 비동기로 좌석 수 업데이트 로직을 호출합니다.
+        List<UUID> concertDateIds = concertDates.stream().map(ConcertDate::id).toList();
+        asyncSeatCountUpdater.updateAvailableSeatCounts(concertDateIds);
+        // 비동기 작업이 완료될 때까지 기다리지 않고 메소드가 종료됩니다.
         log.info("===============더미데이터 생성종료===============");
         log.info("소요 시간 : {}ms", System.currentTimeMillis() - start);
     }
@@ -64,13 +70,26 @@ public class DummyDateGenerator {
         log.info("콘서트 더미 데이터 삽입중....");
         List<Concert> concerts = new ArrayList<>();
 
+        // 랜덤 날짜 범위 설정 (현재로부터 1년 전 ~ 1년 후)
+        LocalDateTime start = LocalDateTime.now().minusYears(1);
+        LocalDateTime end = LocalDateTime.now().plusYears(1);
+
         for (int i = 0; i < 1000; i++) {
             String artist = faker.music().genre() + " " + faker.name().firstName();
             String title = artist + " 콘서트 " + faker.music().instrument();
 
+            // 랜덤 날짜 생성 (시간은 10:00:00으로 통일)
+            long randomDayEpoch = ThreadLocalRandom.current().nextLong(start.toLocalDate().toEpochDay(), end.toLocalDate().toEpochDay());
+            LocalDateTime openTime = LocalDateTime.ofEpochSecond(randomDayEpoch * 24 * 60 * 60, 0, java.time.ZoneOffset.UTC)
+                    .withHour(10).withMinute(0).withSecond(0);
+            LocalDateTime soldOutTime = openTime.plusDays(3)
+                .withHour(faker.number().numberBetween(18, 22)).withMinute(0).withSecond(0);
+
             Concert concert = Concert.builder()
                     .title(title)
                     .artist(artist)
+                    .openTime(openTime)
+                    .soldOutTime(soldOutTime)
                     .build();
 
             concerts.add(concertRepository.save(concert));
@@ -84,7 +103,7 @@ public class DummyDateGenerator {
         List<ConcertDate> concertDates = new ArrayList<>();
 
         for (Concert concert : concerts) {
-            int dateCount = faker.number().numberBetween(2, 4); // 콘서트당 2-5개 날짜
+            int dateCount = faker.number().numberBetween(2, 4); // 콘서트당 2-4개 날짜
 
             for (int i = 0; i < dateCount; i++) {
                 LocalDateTime concertDate = LocalDateTime.now()
@@ -94,10 +113,13 @@ public class DummyDateGenerator {
 
                 LocalDateTime deadline = concertDate.minusDays(1);
 
+                // 여기서는 각 날짜마다 50개의 좌석이 있다고 가정합니다.
                 ConcertDate date = ConcertDate.builder()
                         .concertId(concert.id())
                         .date(concertDate)
                         .deadline(deadline)
+                        .availableSeatCount(50L) // 좌석 수 초기값 설정 (null 방지)
+                        .version(0L)             // 버전 초기값 설정
                         .build();
 
                 concertDates.add(concertDateRepository.save(date));
@@ -107,6 +129,7 @@ public class DummyDateGenerator {
         log.info("콘서트 날짜 더미 데이터 삽입 완료");
         return concertDates;
     }
+
 
     private void generateSeats(List<ConcertDate> concertDates) {
         log.info("좌석 더미 데이터 삽입중....");
@@ -154,4 +177,5 @@ public class DummyDateGenerator {
             return SeatStatus.ASSIGNED;
         }
     }
+
 }

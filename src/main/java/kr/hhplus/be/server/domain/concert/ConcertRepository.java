@@ -11,5 +11,7 @@ public interface ConcertRepository {
 
     Optional<Concert> findById(UUID concertId);
 
+    List<Concert> findByOpenConcerts();
+
     void deleteAll();
 }

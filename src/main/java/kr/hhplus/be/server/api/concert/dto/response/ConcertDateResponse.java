@@ -21,7 +21,7 @@ public record ConcertDateResponse(
                 .concertDateId(concertDate.id())
                 .date(concertDate.date())
                 .deadline(concertDate.deadline())
-                .remainingSeatCount(concertDate.remainingSeatCount())
+                .remainingSeatCount(concertDate.availableSeatCount().intValue())
                 .build();
     }
 }

@@ -1,7 +1,8 @@
-package kr.hhplus.be.server.domain.event.payment;
+package kr.hhplus.be.server.domain.event.payment.fail.listener;
 
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.enums.ErrorCode;
+import kr.hhplus.be.server.domain.event.payment.fail.event.PaymentFailedEvent;
 import kr.hhplus.be.server.domain.payment.Payment;
 import kr.hhplus.be.server.domain.payment.PaymentRepository;
 import kr.hhplus.be.server.domain.reservation.Reservation;
@@ -12,7 +13,6 @@ import kr.hhplus.be.server.domain.user.User;
 import kr.hhplus.be.server.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +24,7 @@ import java.util.Set;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class PaymentFailedEventListener {
+public class DbStatePaymentFailureListener {
 
     private final UserRepository userRepository;
     private final ReservationRepository reservationRepository;
@@ -47,11 +47,19 @@ public class PaymentFailedEventListener {
     );
 
 
+    /**
+     * 결제 실패 이벤트를 수신하여 DB 상태를 정리하는 리스너
+     * 이벤트는 메인 트랜잭션이 롤백된 후에 실행되며, 새로운 트랜잭션에서 처리됩니다.
+     * 이벤트 핸들러는 결제 상태를 FAILED 변경하고, 사용자 잔액을 복원하며,
+     * 예약과 좌석 상태를 롤백하는 작업을 수행합니다.
+     * @param event 결제 실패 이벤트
+     *
+     */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_ROLLBACK) // 메인 트랜잭션이 롤백된 후 실행
     @Transactional(propagation = Propagation.REQUIRES_NEW) // 새로운 트랜잭션에서 실행
     public void handlePaymentFailedEvent(PaymentFailedEvent event) {
-        log.info("PaymentFailedEvent (AFTER_ROLLBACK) 수신: reservationId={}, userId={}, errorCode={}",
-                event.reservationId(), event.userId(), event.errorCode());
+        log.info("PaymentFailedEvent 수신. DB 데이터 정리 작업을 시작합니다. : paymentId={}, userId={}, reservationId={}, seatId={}, errorCode={}",
+                event.paymentId(), event.userId(), event.reservationId(), event.seatId(), event.errorCode());
 
         try {
             // 0. 결제 상태 FAILED로 변경
@@ -81,14 +89,14 @@ public class PaymentFailedEventListener {
             // 3. 좌석 상태 롤백 (AVAILABLE)
             Seat seat = seatRepository.findById(event.seatId())
                     .orElseThrow(() -> new CustomException(ErrorCode.SEAT_NOT_FOUND, "좌석을 찾을 수 없어 상태 롤백 실패"));
-            Seat rolledBackSeat = seat.fail();
+            Seat rolledBackSeat = seat.expire();
             seatRepository.save(rolledBackSeat);
             log.info("좌석 상태 롤백 완료: seatId={}, status={}", rolledBackSeat.id(), rolledBackSeat.status());
 
         } catch (CustomException e) {
-            log.error("PaymentFailedEvent 처리 중 비즈니스 예외 발생: {}", e.getErrorCode().name(), e);
+            log.error("PaymentFailedEvent DB 처리 중 비즈니스 예외 발생: {}", e.getErrorCode().name(), e);
         } catch (Exception e) {
-            log.error("PaymentFailedEvent 처리 중 예상치 못한 예외 발생", e);
+            log.error("PaymentFailedEvent DB 처리 중 예상치 못한 예외 발생", e);
         }
     }
 }

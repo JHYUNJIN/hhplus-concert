@@ -1,9 +1,11 @@
 package kr.hhplus.be.server.infrastructure.persistence.queue;
 
+import kr.hhplus.be.server.domain.concert.Concert;
 import kr.hhplus.be.server.domain.queue.QueueStatus;
 import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
 import kr.hhplus.be.server.domain.queue.QueueTokenUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -11,10 +13,14 @@ import org.springframework.stereotype.Repository;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Repository
 public class RedisQueueTokenRepository implements QueueTokenRepository { // Redis 기반 대기열 토큰 저장소 구현체
+
+    private static final int MAX_ACTIVE_TOKEN_SIZE = 50; // 동시 접속자 최대 수
 
     private final RedisTemplate<String, String> redisTemplate; // String-String 타입 RedisTemplate (토큰 ID 저장용)
     private final RedisTemplate<String, Object> queueTokenRedisTemplate; // String-Object 타입 RedisTemplate (QueueToken 객체 저장용)
@@ -65,6 +71,7 @@ public class RedisQueueTokenRepository implements QueueTokenRepository { // Redi
         return tokenInfo != null ? (QueueToken) tokenInfo : null;
     }
 
+    // 대기열 토큰 대기 순번 조회
     @Override
     public Integer findWaitingPosition(QueueToken queueToken) {
         String waitingTokenKey = QueueTokenUtil.formattingWaitingTokenKey(queueToken.concertId());
@@ -76,6 +83,7 @@ public class RedisQueueTokenRepository implements QueueTokenRepository { // Redi
         return rank != null ? rank.intValue() + 1 : null;
     }
 
+    // 대기열 토큰 수 조회
     @Override
     public Integer countWaitingTokens(UUID concertId) {
         // ZSet의 멤버는 String이므로, String-String 타입인 redisTemplate 사용
@@ -83,6 +91,7 @@ public class RedisQueueTokenRepository implements QueueTokenRepository { // Redi
         return count != null ? count.intValue() : 0;
     }
 
+    // 활성화된 토큰 수 조회
     @Override
     public Integer countActiveTokens(UUID concertId) {
         // ZSet의 멤버는 String이므로, String-String 타입인 redisTemplate 사용
@@ -91,6 +100,7 @@ public class RedisQueueTokenRepository implements QueueTokenRepository { // Redi
         return count.intValue(); // Long을 Integer로 변환
     }
 
+    // 토큰 만료 처리
     @Override
     public void expiresQueueToken(String tokenId) {
         QueueToken queueToken = findQueueTokenByTokenId(tokenId);
@@ -108,6 +118,26 @@ public class RedisQueueTokenRepository implements QueueTokenRepository { // Redi
             redisTemplate.opsForZSet().remove(QueueTokenUtil.formattingWaitingTokenKey(queueToken.concertId()), tokenIdKey);
     }
 
+    // 대기 토큰을 활성 상태로 승격
+    @Override
+    public void promoteQueueToken(List<Concert> openConcerts) {
+        for (Concert openConcert : openConcerts) {
+            String activeTokenKey = QueueTokenUtil.formattingActiveTokenKey(openConcert.id());
+            String waitingTokenKey = QueueTokenUtil.formattingWaitingTokenKey(openConcert.id());
+
+            List<String> keys = List.of(activeTokenKey, waitingTokenKey);
+            Long promotedCount = redisTemplate.execute(QueueTokenUtil.promoteWaitingTokenScript(), keys, String.valueOf(MAX_ACTIVE_TOKEN_SIZE));
+
+            // 저장된 값을 로그로 출력합니다.
+            if (promotedCount != null && promotedCount > 0) {
+                log.info("✅ [승격 완료] 콘서트 ID {}: {}개의 토큰이 활성 상태로 전환되었습니다.", openConcert.id(), promotedCount);
+            } else {
+                log.info("❌ [승격 실패] 콘서트 ID {}: 활성 상태로 전환된 토큰이 없습니다.", openConcert.id());
+            }
+        }
+    }
+
+    // 대기 토큰 Redis 저장
     private void saveWaitingToken(QueueToken queueToken, String tokenInfoKey, String tokenIdKey) {
         String waitingTokenKey = QueueTokenUtil.formattingWaitingTokenKey(queueToken.concertId());
         Instant issuedInstant = queueToken.issuedAt()
@@ -120,6 +150,7 @@ public class RedisQueueTokenRepository implements QueueTokenRepository { // Redi
         redisTemplate.expire(tokenIdKey, Duration.ofHours(24));
     }
 
+    // 활성 토큰 Redis 저장
     private void saveActiveToken(QueueToken queueToken, String tokenInfoKey, String tokenIdKey) {
         String activeTokenKey = QueueTokenUtil.formattingActiveTokenKey(queueToken.concertId());
         Instant expiresInstant = queueToken.expiresAt()

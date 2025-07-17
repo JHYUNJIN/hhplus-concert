@@ -1,35 +1,25 @@
 package kr.hhplus.be.server.usecase.payment.output;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.UUID;
-
-import kr.hhplus.be.server.domain.seat.Seat;
 import kr.hhplus.be.server.domain.payment.Payment;
-import kr.hhplus.be.server.domain.payment.PaymentStatus;
+import kr.hhplus.be.server.infrastructure.persistence.payment.PaymentTransactionResult;
+import kr.hhplus.be.server.domain.reservation.Reservation;
+import kr.hhplus.be.server.domain.seat.Seat;
+import kr.hhplus.be.server.domain.user.User;
 import lombok.Builder;
 
 @Builder
 public record PaymentResult(
-        UUID paymentId,
-        UUID userId,
-        UUID reservationId,
-        UUID seatId,
-        Integer seatNo,
-        BigDecimal price,
-        PaymentStatus status,
-        LocalDateTime createdAt
+        Payment payment,
+        Seat seat,
+        Reservation reservation,
+        User user
 ) {
-    public static PaymentResult of(Payment payment, Seat seat, UUID reservationId, UUID userId) {
+    public static PaymentResult from(PaymentTransactionResult paymentTransactionResult) {
         return PaymentResult.builder()
-                .paymentId(payment.id())
-                .userId(userId)
-                .reservationId(reservationId)
-                .seatId(seat.id())
-                .seatNo(seat.seatNo())
-                .price(payment.amount())
-                .status(payment.status())
-                .createdAt(LocalDateTime.now())
+                .payment(paymentTransactionResult.payment())
+                .seat(paymentTransactionResult.seat())
+                .reservation(paymentTransactionResult.reservation())
+                .user(paymentTransactionResult.user())
                 .build();
     }
 }

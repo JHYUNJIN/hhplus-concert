@@ -6,10 +6,10 @@ import kr.hhplus.be.server.domain.reservation.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -36,6 +36,12 @@ public class ReservationJpaGateway implements ReservationRepository {
                 .toList();
     }
 
+    @Override
+    public List<UUID> findExpiredPendingReservationIds(LocalDateTime now) {
+        return jpaReservationRepository.findExpiredPendingReservationIds(now).stream()
+                .map(UUID::fromString)
+                .toList();
+    }
 
     @Override
     public void deleteAll() {
