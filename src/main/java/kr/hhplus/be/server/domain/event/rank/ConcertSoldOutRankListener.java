@@ -46,9 +46,11 @@ public class ConcertSoldOutRankListener {
             boolean isAllSeatsAssigned = allSeats.stream()
                     .allMatch(seatItem -> seatItem.status() == SeatStatus.ASSIGNED);
 
+            if (!isAllSeatsAssigned)
+                return;
+
             // 매진된 경우 랭킹 업데이트
-            if (isAllSeatsAssigned)
-                concertSoldOutManager.processUpdateRanking(event, concertDate.concertId(), allSeats.size());
+            concertSoldOutManager.processUpdateRanking(event, concertDate.concertId(), allSeats.size());
 
         } catch (Exception e) {
             // TODO: 실패한 이벤트 재시도 OR 예외 처리?

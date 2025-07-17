@@ -1,24 +1,14 @@
 package kr.hhplus.be.server.infrastructure.persistence.concert;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
+import jakarta.persistence.*;
+import kr.hhplus.be.server.domain.concert.Concert;
+import kr.hhplus.be.server.infrastructure.persistence.BaseTimeEntity;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import kr.hhplus.be.server.domain.concert.Concert;
-import kr.hhplus.be.server.infrastructure.persistence.BaseTimeEntity;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "CONCERT")
@@ -66,5 +56,9 @@ public class ConcertEntity extends BaseTimeEntity {
 				.createdAt(getCreatedAt())
 				.updatedAt(getUpdatedAt())
 				.build();
+	}
+
+	public void updateSoldOutTime(LocalDateTime soldOutTime) {
+		this.soldOutTime = soldOutTime;
 	}
 }

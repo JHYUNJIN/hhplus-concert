@@ -17,7 +17,11 @@ public class ConcertJpaGateway implements ConcertRepository {
 
     @Override
     public Concert save(Concert concert) {
-        ConcertEntity concertEntity = jpaConcertRepository.save(ConcertEntity.from(concert));
+        if (concert.id() == null) return jpaConcertRepository.save(ConcertEntity.from(concert)).toDomain();
+        // 이미 존재하는 콘서트는 업데이트
+        ConcertEntity concertEntity = jpaConcertRepository.findById(concert.id().toString())
+                .orElseThrow(() -> new IllegalStateException("업데이트할 콘서트를 찾을 수 없습니다: " + concert.id()));
+        concertEntity.updateSoldOutTime(concert.soldOutTime());
         return concertEntity.toDomain();
     }
 
