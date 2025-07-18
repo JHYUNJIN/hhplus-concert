@@ -36,6 +36,14 @@ spring:
     host: localhost
     port: 6379
     database: 0
+  kafka:
+    bootstrap-servers: localhost:9092  # 로컬 카프카 서버 주소
+    consumer:
+      group-id: concert-group
+
+external-api:
+  data-platform:
+    base-url: http://localhost:8080 # 데이터 플랫폼 API 서버 주소
 
 logging:
   level:
