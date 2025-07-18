@@ -1,25 +1,22 @@
 package kr.hhplus.be.server.concert.usecase;
 
+import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.concert.adapter.out.persistence.soldOutRank.ConcertSoldOutRankRepository;
+import kr.hhplus.be.server.concert.domain.Concert;
+import kr.hhplus.be.server.concert.domain.SoldOutRank;
+import kr.hhplus.be.server.concert.port.out.ConcertRepository;
+import kr.hhplus.be.server.concert.port.out.SoldOutRankRepository;
+import kr.hhplus.be.server.payment.domain.PaymentSuccessEvent;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
-
-import kr.hhplus.be.server.concert.adapter.out.persistence.soldOutRank.ConcertSoldOutRankRepository;
-import kr.hhplus.be.server.queue.port.out.QueueTokenRepository;
-import kr.hhplus.be.server.reservation.port.out.SeatHoldRepository;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
-import kr.hhplus.be.server.concert.domain.Concert;
-import kr.hhplus.be.server.concert.port.out.ConcertRepository;
-import kr.hhplus.be.server.concert.domain.SoldOutRank;
-import kr.hhplus.be.server.concert.port.out.SoldOutRankRepository;
-import kr.hhplus.be.server.payment.domain.PaymentSuccessEvent;
-import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.common.exception.ErrorCode;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
@@ -31,28 +28,17 @@ public class ConcertSoldOutManager {
     private final ConcertRepository concertRepository;
     private final ConcertSoldOutRankRepository concertSoldOutRankRepository;
     private final SoldOutRankRepository soldOutRankRepository;
-    private final SeatHoldRepository seatHoldRepository;
-    private final QueueTokenRepository queueTokenRepository;
 
     @Transactional
     public void processUpdateRanking(PaymentSuccessEvent event, UUID concertId, int seatSize) throws CustomException {
         try {
             Concert concert = getConcert(concertId);
-
             long soldOutTime = Duration.between(concert.openTime(), event.occurredAt()).getSeconds();
-
             long score = calcScore(soldOutTime, concert.openTime(), seatSize);
 
             Long rank = concertSoldOutRankRepository.updateRank(concertId, score);
             concertRepository.save(concert.soldOut(event.occurredAt()));
             soldOutRankRepository.save(SoldOutRank.of(concertId, score, soldOutTime));
-
-            // --- Redis 데이터 정리 로직 ---
-            seatHoldRepository.deleteHold(event.seat().id(), event.user().id());
-            log.info("좌석 점유(hold) 해제 완료. SeatId: {}", event.seat().id());
-
-            queueTokenRepository.expiresQueueToken(event.queueToken().tokenId().toString());
-            log.info("대기열 토큰 만료 처리 완료. TokenId: {}", event.queueToken().tokenId());
 
             log.info("콘서트 매진 랭킹 업데이트 - CONCERT_ID: {}, RANKING: {}", concertId, rank);
         } catch (Exception e) {

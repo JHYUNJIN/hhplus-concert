@@ -4,6 +4,7 @@ import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.ErrorCode;
 import kr.hhplus.be.server.concert.port.out.ConcertRepository;
 import kr.hhplus.be.server.queue.domain.QueueToken;
+import kr.hhplus.be.server.queue.port.in.QueueTokenExpirationUseCase;
 import kr.hhplus.be.server.queue.port.out.QueueTokenRepository;
 import kr.hhplus.be.server.user.port.out.UserRepository;
 import kr.hhplus.be.server.queue.adapter.out.persistence.RedisAtomicQueueTokenRepository;
@@ -17,7 +18,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class QueueService {
+public class QueueService implements QueueTokenExpirationUseCase {
 
     private static final int MAX_ACTIVE_TOKEN_SIZE = 50; // 동시 접속자 최대 수
     private static final long QUEUE_EXPIRES_TIME = 60L;
@@ -99,5 +100,11 @@ public class QueueService {
 
         Integer waitingTokenCount = queueTokenRepository.countWaitingTokens(concertId);
         return QueueToken.waitingTokenOf(tokenId, userId, concertId, waitingTokenCount); // 대기 토큰 발급
+    }
+
+
+    @Override
+    public void expiresQueueToken(String tokenId) {
+        queueTokenRepository.expiresQueueToken(tokenId);
     }
 }

@@ -9,6 +9,10 @@ import kr.hhplus.be.server.concert.port.out.ConcertDateRepository;
 import kr.hhplus.be.server.concert.port.out.SeatRepository;
 import kr.hhplus.be.server.concert.usecase.ConcertSoldOutManager;
 import kr.hhplus.be.server.payment.domain.PaymentSuccessEvent;
+import kr.hhplus.be.server.queue.port.out.QueueTokenRepository;
+import kr.hhplus.be.server.queue.usecase.QueueService;
+import kr.hhplus.be.server.reservation.port.out.SeatHoldRepository;
+import kr.hhplus.be.server.reservation.usecase.ReservationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -20,11 +24,15 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ConcertSoldOutRankConsumer {
+public class PaymentSuccessConsumer {
 
     private final ConcertDateRepository concertDateRepository;
     private final SeatRepository seatRepository;
+    private final SeatHoldRepository seatHoldRepository;
+    private final QueueTokenRepository queueTokenRepository;
     private final ConcertSoldOutManager concertSoldOutManager;
+    private final ReservationService reservationService;
+    private final QueueService queueService;
 
     /**
      * 결제 성공시 이벤트 수신
@@ -34,7 +42,7 @@ public class ConcertSoldOutRankConsumer {
      */
     @KafkaListener(topics = "payment.success", groupId = "${spring.kafka.consumer.group-id}")
     public void handleEvent(PaymentSuccessEvent event) {
-        log.info("🚀[로그:정현진] 결제 성공 이벤트 수신 (Kafka). Event: {}", event);
+        log.info("🚀[로그:정현진] ConcertSoldOutRankConsumer, 결제 성공 이벤트 수신 (Kafka). Event: {}", event);
         try {
             ConcertDate concertDate = getConcertDate(event.seat().concertDateId());
 
@@ -42,6 +50,12 @@ public class ConcertSoldOutRankConsumer {
             List<Seat> allSeats = seatRepository.findByConcertDateId(concertDate.id());
             boolean isAllSeatsAssigned = allSeats.stream()
                     .allMatch(seatItem -> seatItem.status() == SeatStatus.ASSIGNED);
+
+            // 레디스 좌석 점유 해제 & 토큰 만료 처리
+            reservationService.releaseHold(event.seat().id(), event.user().id());
+            log.info("좌석 점유(hold) 해제 완료. SeatId: {}", event.seat().id());
+            queueService.expiresQueueToken(event.queueToken().tokenId().toString());
+            log.info("대기열 토큰 만료 처리 완료. TokenId: {}", event.queueToken().tokenId());
 
             if (!isAllSeatsAssigned)
                 return;
