@@ -2,11 +2,11 @@ package kr.hhplus.be.server.api.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.hhplus.be.server.api.TestDataFactory;
-import kr.hhplus.be.server.api.user.dto.request.ChargePointRequest;
+import kr.hhplus.be.server.user.adapter.in.web.request.ChargePointRequest;
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.common.exception.enums.ErrorCode;
-import kr.hhplus.be.server.domain.user.User;
-import kr.hhplus.be.server.domain.user.UserRepository;
+import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.user.domain.User;
+import kr.hhplus.be.server.user.port.out.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -110,14 +110,6 @@ public class UserConcurrencyTest {
 
         assertThat(successfulCharges.get()).isEqualTo(THREAD_SIZE);
         User chargedUser = userRepository.findById(userId).orElseThrow();
-
-        // 최종적으로 모든 요청이 성공했는지 확인
-        System.out.println("🚀[로그:정현진] successfulCharges.get() : " + successfulCharges.get());
-        System.out.println("🚀[로그:정현진]THREAD_SIZE : "+ THREAD_SIZE);
-        System.out.println("🚀[로그:정현진] Point 조회");
-        System.out.println("🚀[로그:정현진] chargedUser.amount() : " + chargedUser.amount());
-        System.out.println("🚀[로그:정현진] initPoint : " + initPoint);
-        System.out.println("🚀[로그:정현진] chargePoint.multiply(BigDecimal.valueOf(THREAD_SIZE)) : " + chargePoint.multiply(BigDecimal.valueOf(THREAD_SIZE)));
 
         assertThat(chargedUser.amount())
                 .isEqualTo(initPoint.add(chargePoint.multiply(BigDecimal.valueOf(THREAD_SIZE))));

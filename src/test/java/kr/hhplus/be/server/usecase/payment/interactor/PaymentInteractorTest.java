@@ -1,21 +1,30 @@
 package kr.hhplus.be.server.usecase.payment.interactor;
 
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.common.exception.enums.ErrorCode;
-import kr.hhplus.be.server.domain.event.payment.PaymentSuccessEvent;
-import kr.hhplus.be.server.domain.payment.*;
-import kr.hhplus.be.server.domain.queue.QueueToken;
-import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
-import kr.hhplus.be.server.domain.reservation.Reservation;
-import kr.hhplus.be.server.domain.reservation.ReservationRepository;
-import kr.hhplus.be.server.domain.reservation.ReservationStatus;
-import kr.hhplus.be.server.domain.seat.*;
-import kr.hhplus.be.server.domain.user.User;
-import kr.hhplus.be.server.domain.user.UserRepository;
-import kr.hhplus.be.server.usecase.event.EventPublisher;
-import kr.hhplus.be.server.usecase.payment.input.PaymentCommand;
-import kr.hhplus.be.server.usecase.payment.output.PaymentOutput;
-import kr.hhplus.be.server.usecase.payment.output.PaymentResult;
+import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.concert.domain.Seat;
+import kr.hhplus.be.server.concert.domain.enums.SeatGrade;
+import kr.hhplus.be.server.concert.domain.enums.SeatStatus;
+import kr.hhplus.be.server.concert.port.out.SeatRepository;
+import kr.hhplus.be.server.payment.domain.enums.PaymentStatus;
+import kr.hhplus.be.server.payment.domain.PaymentSuccessEvent;
+import kr.hhplus.be.server.payment.domain.Payment;
+import kr.hhplus.be.server.payment.port.in.dto.PaymentDomainResult;
+import kr.hhplus.be.server.payment.port.out.PaymentRepository;
+import kr.hhplus.be.server.payment.usecase.PaymentDomainService;
+import kr.hhplus.be.server.payment.usecase.PaymentInteractor;
+import kr.hhplus.be.server.queue.domain.QueueToken;
+import kr.hhplus.be.server.queue.port.out.QueueTokenRepository;
+import kr.hhplus.be.server.reservation.domain.Reservation;
+import kr.hhplus.be.server.reservation.port.out.ReservationRepository;
+import kr.hhplus.be.server.reservation.domain.enums.ReservationStatus;
+import kr.hhplus.be.server.reservation.port.out.SeatHoldRepository;
+import kr.hhplus.be.server.user.domain.User;
+import kr.hhplus.be.server.user.port.out.UserRepository;
+import kr.hhplus.be.server.payment.port.out.EventPublisher;
+import kr.hhplus.be.server.payment.port.in.dto.PaymentCommand;
+import kr.hhplus.be.server.payment.port.in.PaymentOutput;
+import kr.hhplus.be.server.payment.port.in.dto.PaymentResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -96,7 +105,7 @@ class PaymentInteractorTest {
 
     @Test
     @DisplayName("결제_성공")
-    void payment_Success() throws CustomException {
+    void payment_Success() throws Exception {
         Payment successPayment = new Payment(paymentId, userId, reservationId, BigDecimal.valueOf(10000),
                 PaymentStatus.SUCCESS, null, LocalDateTime.now(), LocalDateTime.now()); // 결제 성공 상태로 설정
         Reservation successReservation = new Reservation(reservationId, userId, seatId, ReservationStatus.SUCCESS,
@@ -142,7 +151,7 @@ class PaymentInteractorTest {
 
     @Test
     @DisplayName("결제_실패_대기열토큰유효하지않음")
-    void payment_Failure_InvalidQueueToken() throws CustomException {
+    void payment_Failure_InvalidQueueToken() throws Exception {
         QueueToken waitingToken = QueueToken.waitingTokenOf(queueTokenId, userId, concertId, 10);
 
         when(queueTokenRepository.findQueueTokenByTokenId(paymentCommand.queueTokenId())).thenReturn(waitingToken);
@@ -171,7 +180,7 @@ class PaymentInteractorTest {
 
     @Test
     @DisplayName("결제_실패_예약정보찾지못함")
-    void payment_Failure_ReservationNotFound() throws CustomException {
+    void payment_Failure_ReservationNotFound() throws Exception {
         when(queueTokenRepository.findQueueTokenByTokenId(paymentCommand.queueTokenId())).thenReturn(queueToken);
         when(reservationRepository.findById(paymentCommand.reservationId())).thenReturn(Optional.empty());
 
@@ -191,7 +200,7 @@ class PaymentInteractorTest {
 
     @Test
     @DisplayName("결제_실패_결제정보찾지못함")
-    void payment_Failure_PaymentNotFound() throws CustomException {
+    void payment_Failure_PaymentNotFound() throws Exception {
         when(queueTokenRepository.findQueueTokenByTokenId(paymentCommand.queueTokenId())).thenReturn(queueToken);
         when(reservationRepository.findById(paymentCommand.reservationId())).thenReturn(Optional.of(reservation));
         when(paymentRepository.findByReservationId(reservation.id())).thenReturn(Optional.empty());
@@ -220,7 +229,7 @@ class PaymentInteractorTest {
 
     @Test
     @DisplayName("결제_실패_좌석정보찾지못함")
-    void payment_Failure_SeatNotFound() throws CustomException {
+    void payment_Failure_SeatNotFound() throws Exception {
         when(queueTokenRepository.findQueueTokenByTokenId(paymentCommand.queueTokenId())).thenReturn(queueToken);
         when(reservationRepository.findById(paymentCommand.reservationId())).thenReturn(Optional.of(reservation));
         when(paymentRepository.findByReservationId(reservation.id())).thenReturn(Optional.of(payment));
@@ -251,7 +260,7 @@ class PaymentInteractorTest {
 
     @Test
     @DisplayName("결제_실패_유저정보찾지못함")
-    void payment_Failure_UserNotFound() throws CustomException {
+    void payment_Failure_UserNotFound() throws Exception {
         when(queueTokenRepository.findQueueTokenByTokenId(paymentCommand.queueTokenId())).thenReturn(queueToken);
         when(reservationRepository.findById(paymentCommand.reservationId())).thenReturn(Optional.of(reservation));
         when(paymentRepository.findByReservationId(reservation.id())).thenReturn(Optional.of(payment));
@@ -282,7 +291,7 @@ class PaymentInteractorTest {
 
     @Test
     @DisplayName("결제_실패_임시배정끝남")
-    void payment_Failure_ExpiredSeatHold() throws CustomException {
+    void payment_Failure_ExpiredSeatHold() throws Exception {
         when(queueTokenRepository.findQueueTokenByTokenId(paymentCommand.queueTokenId())).thenReturn(queueToken);
         when(reservationRepository.findById(paymentCommand.reservationId())).thenReturn(Optional.of(reservation));
         when(paymentRepository.findByReservationId(reservation.id())).thenReturn(Optional.of(payment));

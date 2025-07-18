@@ -1,7 +1,6 @@
 // src/main/java/kr/hhplus/be/common/exception/ErrorResponse.java
 package kr.hhplus.be.server.common.exception;
 
-import kr.hhplus.be.server.common.exception.enums.ErrorCode;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

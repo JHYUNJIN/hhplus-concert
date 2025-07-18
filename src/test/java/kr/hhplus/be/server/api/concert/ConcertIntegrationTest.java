@@ -20,14 +20,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.utility.TestcontainersConfiguration;
 
 import kr.hhplus.be.server.api.TestDataFactory;
-import kr.hhplus.be.server.domain.concert.Concert;
-import kr.hhplus.be.server.domain.concert.ConcertRepository;
-import kr.hhplus.be.server.domain.concertDate.ConcertDate;
-import kr.hhplus.be.server.domain.concertDate.ConcertDateRepository;
-import kr.hhplus.be.server.domain.seat.Seat;
-import kr.hhplus.be.server.domain.seat.SeatRepository;
-import kr.hhplus.be.server.domain.seat.SeatStatus;
-import kr.hhplus.be.server.common.exception.enums.ErrorCode;
+import kr.hhplus.be.server.concert.domain.Concert;
+import kr.hhplus.be.server.concert.port.out.ConcertRepository;
+import kr.hhplus.be.server.concert.domain.ConcertDate;
+import kr.hhplus.be.server.concert.port.out.ConcertDateRepository;
+import kr.hhplus.be.server.concert.domain.Seat;
+import kr.hhplus.be.server.concert.port.out.SeatRepository;
+import kr.hhplus.be.server.concert.domain.enums.SeatStatus;
+import kr.hhplus.be.server.common.exception.ErrorCode;
 
 @SpringBootTest(properties = {
         "spring.jpa.hibernate.ddl-auto=create-drop"
@@ -118,17 +118,8 @@ class ConcertIntegrationTest {
     @Test
     @DisplayName("예약가능_날짜조회_성공(좌석없음)")
     void getAvailableConcertDate_Success_NoAvailableSeat() throws Exception {
-
         // 콘서트별 좌석 수 조회
-        List<ConcertDate> result  = concertDateRepository.findAvailableDatesWithAvailableSeatCount(concertId);
-        // result의 길이 로그로 출력
-        System.out.println("🚀[로그:정현진] 콘서트별 좌석 수 조회 결과 길이: " + result.size());
-        // 해당 길이만큼 좌석 수 로그로 출력
-        for(ConcertDate date : result) {
-            System.out.println("🚀[로그:정현진] 콘서트 날짜 ID: " + date.id() + ", 예약 가능한 좌석 수: " + date.remainingSeatCount());
-        }
-
-
+        List<ConcertDate> result  = concertDateRepository.findAvailableDates(concertId);
         Seat reservedSeat = Seat.builder()
                 .id(this.seat.id()) // 기존 Seat의 ID 사용
                 .concertDateId(this.seat.concertDateId()) // 기존 Seat의 concertDateId 사용
@@ -139,23 +130,8 @@ class ConcertIntegrationTest {
                 .createdAt(this.seat.createdAt()) // 기존 Seat의 createdAt 사용
                 .updatedAt(LocalDateTime.now()) // 💡 updatedAt 갱신
                 .build();
-
-        // reservedSeat 전체 로그 출력
-        System.out.println("🚀[로그:정현진] 예약된 좌석 정보: " + reservedSeat);
-
-        Seat seat = seatRepository.save(reservedSeat);
-        // seat 전체 로그 출력
-        System.out.println("🚀[로그:정현진] 예약된 좌석 정보: " + seat);
-
-        // 콘서트별 좌석 수 조회
-        List<ConcertDate> result2  = concertDateRepository.findAvailableDatesWithAvailableSeatCount(concertId);
-        // result의 길이 로그로 출력
-        System.out.println("🚀[로그:정현진] 콘서트별 좌석 수 조회 결과 길이: " + result2.size());
-        // 해당 길이만큼 좌석 수 로그로 출력
-        for(ConcertDate date : result2) {
-            System.out.println("🚀[로그:정현진] 콘서트 날짜 ID: " + date.id() + ", 예약 가능한 좌석 수: " + date.remainingSeatCount());
-        }
-
+        
+        seatRepository.save(reservedSeat);
         mockMvc.perform(get("/api/v1/concerts/{concertId}/dates", concertId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())

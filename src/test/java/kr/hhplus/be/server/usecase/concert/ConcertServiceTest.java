@@ -8,9 +8,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
+import kr.hhplus.be.server.concert.usecase.ConcertService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,16 +19,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import kr.hhplus.be.server.domain.concert.Concert;
-import kr.hhplus.be.server.domain.concert.ConcertRepository;
-import kr.hhplus.be.server.domain.concertDate.ConcertDate;
-import kr.hhplus.be.server.domain.concertDate.ConcertDateRepository;
-import kr.hhplus.be.server.domain.seat.Seat;
-import kr.hhplus.be.server.domain.seat.SeatGrade;
-import kr.hhplus.be.server.domain.seat.SeatRepository;
-import kr.hhplus.be.server.domain.seat.SeatStatus;
+import kr.hhplus.be.server.concert.domain.Concert;
+import kr.hhplus.be.server.concert.port.out.ConcertRepository;
+import kr.hhplus.be.server.concert.domain.ConcertDate;
+import kr.hhplus.be.server.concert.port.out.ConcertDateRepository;
+import kr.hhplus.be.server.concert.domain.Seat;
+import kr.hhplus.be.server.concert.domain.enums.SeatGrade;
+import kr.hhplus.be.server.concert.port.out.SeatRepository;
+import kr.hhplus.be.server.concert.domain.enums.SeatStatus;
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.common.exception.enums.ErrorCode;
+import kr.hhplus.be.server.common.exception.ErrorCode;
 
 @ExtendWith(MockitoExtension.class)
 public class ConcertServiceTest {
@@ -87,12 +87,12 @@ public class ConcertServiceTest {
         List<ConcertDate> concertDateEntities = List.of(concertDate);
 
         when(concertRepository.existsById(concertId)).thenReturn(true);
-        when(concertDateRepository.findAvailableDatesWithAvailableSeatCount(concertId)).thenReturn(concertDateEntities);
+        when(concertDateRepository.findAvailableDates(concertId)).thenReturn(concertDateEntities);
 
         List<ConcertDate> results = concertService.getAvailableConcertDates(concertId);
 
         verify(concertRepository, times(1)).existsById(concertId);
-        verify(concertDateRepository, times(1)).findAvailableDatesWithAvailableSeatCount(concert.id());
+        verify(concertDateRepository, times(1)).findAvailableDates(concert.id());
 
         assertThat(results).hasSize(1); // ID로 조회했으니 결과는 1개가 나와야 함
         assertThat(results.get(0).id()).isEqualTo(concertDateId); // 결과가 1개이므로 리스트의 0번째 인덱스 조회
@@ -107,7 +107,7 @@ public class ConcertServiceTest {
                 () -> concertService.getAvailableConcertDates(concertId));
 
         verify(concertRepository, times(1)).existsById(concertId);
-        verify(concertDateRepository, never()).findAvailableDatesWithAvailableSeatCount(concert.id()); // 콘서트를 조회하지 못했으므로 콘서트 날짜 조회는 호출되지 않아야 함
+        verify(concertDateRepository, never()).findAvailableDates(concert.id()); // 콘서트를 조회하지 못했으므로 콘서트 날짜 조회는 호출되지 않아야 함
 
         assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.CONCERT_NOT_FOUND);
     }
@@ -116,13 +116,13 @@ public class ConcertServiceTest {
     @DisplayName("예약_가능_콘서트_날짜_조회_정상_빈_리스트(예약 가능한 날짜가 없는 경우)")
     void getAvailableConcertDates_Success_CanReservationDateNotFound() throws CustomException {
         when(concertRepository.existsById(concertId)).thenReturn(true);
-        when(concertDateRepository.findAvailableDatesWithAvailableSeatCount(concertId))
+        when(concertDateRepository.findAvailableDates(concertId))
                 .thenReturn(Collections.emptyList()); // 예약 가능한 콘서트 날짜가 없는 경우
 
         List<ConcertDate> results = concertService.getAvailableConcertDates(concertId);
 
         verify(concertRepository, times(1)).existsById(concertId);
-        verify(concertDateRepository, times(1)).findAvailableDatesWithAvailableSeatCount(concertId);
+        verify(concertDateRepository, times(1)).findAvailableDates(concertId);
 
         assertThat(results).isEmpty();
     }

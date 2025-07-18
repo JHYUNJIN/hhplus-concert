@@ -2,22 +2,23 @@ package kr.hhplus.be.server.api.reservation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.hhplus.be.server.api.TestDataFactory;
-import kr.hhplus.be.server.api.reservation.dto.request.ReservationRequest;
-import kr.hhplus.be.server.common.exception.enums.ErrorCode;
-import kr.hhplus.be.server.domain.concert.Concert;
-import kr.hhplus.be.server.domain.concert.ConcertRepository;
-import kr.hhplus.be.server.domain.concertDate.ConcertDate;
-import kr.hhplus.be.server.domain.concertDate.ConcertDateRepository;
-import kr.hhplus.be.server.domain.queue.QueueToken;
-import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
-import kr.hhplus.be.server.domain.reservation.ReservationStatus;
-import kr.hhplus.be.server.domain.seat.Seat;
-import kr.hhplus.be.server.domain.seat.SeatHoldRepository;
-import kr.hhplus.be.server.domain.seat.SeatRepository;
-import kr.hhplus.be.server.domain.seat.SeatStatus;
-import kr.hhplus.be.server.domain.user.User;
-import kr.hhplus.be.server.domain.user.UserRepository;
-import kr.hhplus.be.server.infrastructure.persistence.queue.RedisAtomicQueueTokenRepository;
+import kr.hhplus.be.server.reservation.adapter.in.web.request.ReservationRequest;
+import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.concert.domain.Concert;
+import kr.hhplus.be.server.concert.port.out.ConcertRepository;
+import kr.hhplus.be.server.concert.domain.ConcertDate;
+import kr.hhplus.be.server.concert.port.out.ConcertDateRepository;
+import kr.hhplus.be.server.queue.domain.QueueStatus;
+import kr.hhplus.be.server.queue.domain.QueueToken;
+import kr.hhplus.be.server.queue.port.out.QueueTokenRepository;
+import kr.hhplus.be.server.reservation.domain.enums.ReservationStatus;
+import kr.hhplus.be.server.concert.domain.Seat;
+import kr.hhplus.be.server.reservation.port.out.SeatHoldRepository;
+import kr.hhplus.be.server.concert.port.out.SeatRepository;
+import kr.hhplus.be.server.concert.domain.enums.SeatStatus;
+import kr.hhplus.be.server.user.domain.User;
+import kr.hhplus.be.server.user.port.out.UserRepository;
+import kr.hhplus.be.server.queue.adapter.out.persistence.RedisAtomicQueueTokenRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -91,7 +92,6 @@ class ReservationIntegrationTest {
     void beforeEach() {
         // 매 테스트 시작 전 Redis 데이터 초기화
         redisTemplate.getConnectionFactory().getConnection().flushAll();
-        System.out.println("🚀[로그:정현진] Redis 접속 정보: " + redisTemplate.getConnectionFactory().getConnection().info());
 
         // H2 DB에 테스트 데이터 저장
         Concert concert = TestDataFactory.createConcert();
@@ -104,7 +104,6 @@ class ReservationIntegrationTest {
 
         Seat seat = TestDataFactory.createSeat(concertDateId);
         Seat savedSeat = seatRepository.save(seat);
-        System.out.println("🚀[로그:정현진] savedSeat : " + savedSeat);
         seatId = savedSeat.id(); // 이 seatId가 MockMvc 요청 및 응답 검증에 사용될 실제 좌석 ID
 
         User user = TestDataFactory.createUser();
@@ -240,7 +239,6 @@ class ReservationIntegrationTest {
     @DisplayName("좌석_예약_실패_이미예약된좌석")
     void reserveSeat_Failure_AlreadyReservedSeat() throws Exception {
         Seat seat = seatRepository.findById(seatId).get();
-        System.out.println("🚀[로그:정현진] seat : " + seat);
         seatRepository.save(seat.reserve());
 
         mockMvc.perform(post("/api/v1/reservations/seats/{seatId}", seatId)
@@ -314,7 +312,7 @@ class ReservationIntegrationTest {
                 .tokenId(expiredTokenId)
                 .userId(userId)
                 .concertId(concertId)
-                .status(kr.hhplus.be.server.domain.queue.QueueStatus.ACTIVE)
+                .status(QueueStatus.ACTIVE)
                 .position(0)
                 .issuedAt(LocalDateTime.now().minusHours(2))
                 .enteredAt(LocalDateTime.now().minusHours(2))

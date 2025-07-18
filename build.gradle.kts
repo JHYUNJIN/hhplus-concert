@@ -56,6 +56,11 @@ dependencies {
 	runtimeOnly("com.mysql:mysql-connector-j")
 	implementation("org.flywaydb:flyway-mysql")
 
+	// Kafka
+	implementation("org.springframework.kafka:spring-kafka")
+	testImplementation("org.springframework.kafka:spring-kafka-test")
+	testImplementation("org.testcontainers:kafka")
+
 	// 더미 데이터 생성 라이브러리
 	implementation("net.datafaker:datafaker:2.4.2")
 
