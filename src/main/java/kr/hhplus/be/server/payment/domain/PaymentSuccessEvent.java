@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import kr.hhplus.be.server.common.event.Event;
 import kr.hhplus.be.server.common.event.EventTopic;
+import kr.hhplus.be.server.queue.domain.QueueToken;
 import kr.hhplus.be.server.reservation.domain.Reservation;
 import kr.hhplus.be.server.concert.domain.Seat;
 import kr.hhplus.be.server.user.domain.User;
@@ -16,6 +17,7 @@ public record PaymentSuccessEvent (
         Reservation reservation,
         Seat seat,
         User user,
+        QueueToken queueToken,
         LocalDateTime occurredAt
 ) implements Event {
 
@@ -25,7 +27,8 @@ public record PaymentSuccessEvent (
                 .reservation(paymentTransactionResult.reservation())
                 .seat(paymentTransactionResult.seat())
                 .user(paymentTransactionResult.user())
-                .occurredAt(LocalDateTime.now())
+                .queueToken(paymentTransactionResult.queueToken())
+                .occurredAt(java.time.LocalDateTime.now())
                 .build();
     }
 

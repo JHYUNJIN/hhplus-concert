@@ -3,6 +3,7 @@ package kr.hhplus.be.server.payment.usecase;
 import kr.hhplus.be.server.payment.port.in.dto.PaymentDomainResult;
 import kr.hhplus.be.server.payment.domain.Payment;
 import kr.hhplus.be.server.payment.domain.enums.PaymentStatus;
+import kr.hhplus.be.server.queue.domain.QueueToken;
 import org.springframework.stereotype.Service;
 
 import kr.hhplus.be.server.reservation.domain.Reservation;
@@ -16,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PaymentDomainService {
 
-    public PaymentDomainResult processPayment(Reservation reservation, Payment payment, Seat seat, User user) throws CustomException {
+    public PaymentDomainResult processPayment(Reservation reservation, Payment payment, Seat seat, User user, QueueToken queueToken) throws CustomException {
 
         // 결제 상태가 PROCESSING이 아니면 예외 발생
         if (payment.status() != PaymentStatus.PROCESSING) {
@@ -31,7 +32,7 @@ public class PaymentDomainService {
         Payment paidPayment = payment.success();
         Seat paidSeat = seat.payment();
 
-        return new PaymentDomainResult(paidUser, paidReservation, paidPayment, paidSeat);
+        return new PaymentDomainResult(queueToken,paidUser, paidReservation, paidPayment, paidSeat);
     }
 
     private void validateUserBalance(Payment payment, User user) throws CustomException {

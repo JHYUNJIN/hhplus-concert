@@ -7,7 +7,7 @@ import kr.hhplus.be.server.queue.domain.QueueToken;
 import kr.hhplus.be.server.queue.port.out.QueueTokenRepository;
 import kr.hhplus.be.server.queue.domain.QueueTokenUtil;
 import kr.hhplus.be.server.reservation.port.out.SeatHoldRepository;
-import kr.hhplus.be.server.payment.port.out.EventPublisher;
+import kr.hhplus.be.server.common.event.EventPublisher;
 import kr.hhplus.be.server.reservation.port.in.ReservationCreateInput;
 import kr.hhplus.be.server.reservation.port.in.dto.ReserveSeatCommand;
 import kr.hhplus.be.server.reservation.port.in.dto.CreateReservationResult;

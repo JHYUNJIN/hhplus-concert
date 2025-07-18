@@ -26,7 +26,7 @@ public class ReservationDomainService {
         Reservation reservation 	= 	Reservation.of(userId, seat.id());
         ConcertDate updatedConcertDate = concertDate.decreaseAvailableSeatCount();
 
-        return new ReservationDomainResult(reservedSeat, reservation, null, concertDate);
+        return new ReservationDomainResult(reservedSeat, reservation, null, updatedConcertDate);
     }
 
 //    public ReservationDomainResult processReservationExpired(Reservation reservation, Payment payment, Seat seat)

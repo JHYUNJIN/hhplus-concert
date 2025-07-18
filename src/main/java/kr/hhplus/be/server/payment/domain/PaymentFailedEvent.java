@@ -3,6 +3,7 @@ package kr.hhplus.be.server.payment.domain;
 import kr.hhplus.be.server.common.exception.ErrorCode;
 import kr.hhplus.be.server.common.event.Event;
 import kr.hhplus.be.server.common.event.EventTopic;
+import kr.hhplus.be.server.concert.domain.ConcertDate;
 import kr.hhplus.be.server.queue.domain.QueueToken;
 import kr.hhplus.be.server.reservation.domain.Reservation;
 import kr.hhplus.be.server.concert.domain.Seat;
@@ -20,17 +21,19 @@ public record PaymentFailedEvent(
         UUID reservationId,
         UUID userId,
         UUID seatId,
+        UUID concertDateId,
         BigDecimal amount,
         ErrorCode errorCode,
         LocalDateTime occurredAt
 ) implements Event {
 
-    public static PaymentFailedEvent of(QueueToken queueToken, Payment payment, Reservation reservation, Seat seat, User user, ErrorCode errorCode) {
+    public static PaymentFailedEvent of(QueueToken queueToken, Payment payment, Reservation reservation, Seat seat, ConcertDate concertDate, User user, ErrorCode errorCode) {
         return PaymentFailedEvent.builder()
                 .tokenId(queueToken.tokenId())
                 .paymentId(payment.id())
                 .reservationId(reservation.id())
                 .seatId(seat.id())
+                .concertDateId(concertDate.id())
                 .userId(user.id())
                 .amount(payment.amount())
                 .errorCode(errorCode)

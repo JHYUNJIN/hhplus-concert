@@ -7,7 +7,7 @@ import kr.hhplus.be.server.queue.domain.QueueTokenUtil;
 import kr.hhplus.be.server.reservation.usecase.DistributedLockManager;
 import kr.hhplus.be.server.payment.port.in.dto.PaymentTransactionResult;
 import kr.hhplus.be.server.queue.adapter.out.persistence.QueueTokenManager;
-import kr.hhplus.be.server.payment.port.out.EventPublisher;
+import kr.hhplus.be.server.common.event.EventPublisher;
 import kr.hhplus.be.server.payment.port.in.dto.PaymentCommand;
 import kr.hhplus.be.server.payment.port.in.PaymentInput;
 import kr.hhplus.be.server.payment.port.in.PaymentOutput;

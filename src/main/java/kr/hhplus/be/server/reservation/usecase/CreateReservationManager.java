@@ -44,6 +44,7 @@ public class CreateReservationManager {
         Seat seat = getSeat(command.seatId(), command.concertDateId());
 
         ReservationDomainResult result = reservationDomainService.processReservation(concert, concertDate, seat, queueToken.userId());
+        // 예약 생성 성공 시, 좌석 보유 상태를 업데이트
 //        seatHoldRepository.hold(result.seat().id(), queueToken.userId()); 예약생성 성공 이벤트에서 처리
         return processReservation(result, queueToken.userId());
     }
@@ -52,8 +53,9 @@ public class CreateReservationManager {
         Seat savedSeat = seatRepository.save(result.seat());
         Reservation savedReservation = reservationRepository.save(result.reservation());
         Payment savedPayment = paymentRepository.save(Payment.of(userId, savedReservation.id(), savedSeat.price()));
+        ConcertDate savedConcertDate = concertDateRepository.save(result.concertDate());
 
-        return new CreateReservationResult(savedReservation, savedPayment, savedSeat, result.concertDate(), userId);
+        return new CreateReservationResult(savedReservation, savedPayment, savedSeat, savedConcertDate, userId);
     }
 
     private Seat getSeat(UUID seatId, UUID concertDateId) throws CustomException {

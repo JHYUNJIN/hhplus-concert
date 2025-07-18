@@ -2,6 +2,8 @@ package kr.hhplus.be.server.payment.usecase;
 
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.concert.domain.ConcertDate;
+import kr.hhplus.be.server.concert.port.out.ConcertDateRepository;
 import kr.hhplus.be.server.payment.port.in.dto.PaymentDomainResult;
 import kr.hhplus.be.server.payment.port.in.dto.PaymentTransactionResult;
 import kr.hhplus.be.server.payment.domain.PaymentFailedEvent;
@@ -17,7 +19,7 @@ import kr.hhplus.be.server.reservation.port.out.SeatHoldRepository;
 import kr.hhplus.be.server.concert.port.out.SeatRepository;
 import kr.hhplus.be.server.user.domain.User;
 import kr.hhplus.be.server.user.port.out.UserRepository;
-import kr.hhplus.be.server.payment.port.out.EventPublisher;
+import kr.hhplus.be.server.common.event.EventPublisher;
 import kr.hhplus.be.server.payment.port.in.dto.PaymentCommand;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -34,6 +36,7 @@ public class PaymentManager {
     private final UserRepository userRepository;
     private final SeatRepository seatRepository;
     private final PaymentRepository paymentRepository;
+    private final ConcertDateRepository concertDateRepository;
     private final SeatHoldRepository seatHoldRepository;
     private final PaymentDomainService paymentDomainService;
     private final EventPublisher eventPublisher;
@@ -56,6 +59,7 @@ public class PaymentManager {
         Reservation reservation = getReservation(command.reservationId());
         Seat seat = getSeat(reservation.seatId());
         Payment payment = getPayment(reservation.id());
+        ConcertDate concertDate = getConcertDate(seat.concertDateId());
         validateSeatHold(seat.id(), user.id());
         try{
             // 🔐 낙관적 락: 상태 선점 (PENDING → PROCESSING)
@@ -70,7 +74,7 @@ public class PaymentManager {
 
             // 결제 객체 상태 변경 후 결제 진행
             payment = payment.toProcessing();
-            PaymentDomainResult result = paymentDomainService.processPayment(reservation, payment, seat, user);
+            PaymentDomainResult result = paymentDomainService.processPayment(reservation, payment, seat, user, queueToken);
             PaymentTransactionResult paymentTransactionResult = processPayment(result);
 
             // 결제 상태 SUCCESS 업데이트
@@ -86,7 +90,7 @@ public class PaymentManager {
 
             return paymentTransactionResult;
         } catch (CustomException e) {
-            eventPublisher.publish(PaymentFailedEvent.of(queueToken, payment, reservation, seat, user, e.getErrorCode()));
+            eventPublisher.publish(PaymentFailedEvent.of(queueToken, payment, reservation, seat, concertDate, user, e.getErrorCode()));
             throw e;
         }
     }
@@ -97,13 +101,19 @@ public class PaymentManager {
         Reservation savedReservation = reservationRepository.save(result.reservation());
         Seat savedSeat        = seatRepository.save(result.seat());
 
-        return new PaymentTransactionResult(savedPayment, savedReservation, savedSeat, savedUser);
+        return new PaymentTransactionResult(savedPayment, savedReservation, savedSeat, savedUser, result.queueToken());
     }
 
     private User getUser(UUID userId) throws CustomException {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
+
+    private ConcertDate getConcertDate(UUID concertDateId) throws CustomException {
+        return concertDateRepository.findById(concertDateId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CONCERT_DATE_NOT_FOUND));
+    }
+
 
     private Seat getSeat(UUID seatId) throws CustomException {
         return seatRepository.findById(seatId)

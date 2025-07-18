@@ -75,7 +75,7 @@ public record Payment(
                 .userId(userId)
                 .reservationId(reservationId)
                 .amount(amount)
-                .status(PaymentStatus.FAILED)
+                .status(PaymentStatus.EXPIRED)
                 .failureReason("임시 배정이 만료되었습니다.")
                 .createdAt(createdAt)
                 .updatedAt(LocalDateTime.now())
