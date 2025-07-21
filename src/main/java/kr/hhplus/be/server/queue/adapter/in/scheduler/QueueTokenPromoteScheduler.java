@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.queue.adapter.in.scheduler;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.scheduling.annotation.Scheduled;
@@ -26,7 +27,8 @@ public class QueueTokenPromoteScheduler {
     @Scheduled(fixedRate = 10000)
     public void promoteWaitingTokens() {
         log.info("🚀[로그:정현진] 스케줄러 실행: 대기열 토큰 승급 시작 promoteWaitingTokens");
-        List<Concert> openConcerts = concertRepository.findByOpenConcerts();
+        LocalDateTime now = LocalDateTime.now(); // 현재 시간 가져오기, 다양한 시간대 문제를 피하기 위해 애플리케이션에서 직접 처리
+        List<Concert> openConcerts = concertRepository.findByOpenConcerts(now);
         queueTokenRepository.promoteQueueToken(openConcerts);
     }
 }
