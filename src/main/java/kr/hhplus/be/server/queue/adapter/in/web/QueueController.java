@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import kr.hhplus.be.server.queue.usecase.QueueService;
+import kr.hhplus.be.server.queue.usecase.QueueInteractor;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.queue.domain.QueueToken;
 import kr.hhplus.be.server.queue.adapter.in.web.response.QueueTokenResponse;
@@ -23,7 +23,7 @@ import java.util.UUID;
 @Tag(name = "Queue API", description = "대기열 관련 API")
 public class QueueController {
 
-    private final QueueService queueService;
+    private final QueueInteractor queueService;
 
     @Operation(
             summary = "콘서트 대기열 토큰 발급",

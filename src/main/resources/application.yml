@@ -41,12 +41,17 @@ spring:
     consumer:
       group-id:
         # --- 결제 성공 이벤트 구독 그룹 ---
-        concert-rank: ranking-update-group
-        data-platform: data-platform-group
-        # --- 예약 생성 이벤트 구독 그룹 ---
-        reservation-created: reservation-created-group
+        concert-rank: ranking-update-group # ⭐️ 랭킹 업데이트 그룹
+        data-platform: data-platform-group # ⭐️ 데이터 플랫폼 연동 그룹
+
         # --- 결제 실패 이벤트 구독 그룹 ---
-        payment-failed: payment-failed-group
+        payment-compensator: payment-compensator-group   # ⭐️ DB 보상 처리 그룹
+
+        # --- 결제 후 정리 이벤트 구독 그룹 ---
+        post-payment-cleanup: post-payment-cleanup-group # ⭐️ Redis 정리 그룹
+
+        # --- 예약 관련 이벤트 구독 그룹 ---
+        reservation-created: reservation-created-group # ⭐️ 예약 생성 그룹
 
 external-api:
   data-platform:
