@@ -22,7 +22,7 @@ public class DataPlatformConsumer {
      * @param event 카프카로부터 수신한 결제 성공 이벤트
      */
     // ⭐️ groupId를 별도로 지정하여, 다른 컨슈머와 독립적으로 메시지를 수신하도록 합니다.
-    @KafkaListener(topics = "payment.success", groupId = "data-platform-group")
+    @KafkaListener(topics = "payment.success", groupId = "${spring.kafka.consumer.group-id.data-platform}")
     public void handlePaymentSuccess(PaymentSuccessEvent event) {
         log.info("DataPlatformConsumer, 결제 성공 이벤트 수신 (Kafka). 데이터 플랫폼 전송을 시작합니다. Event: {}", event);
         try {

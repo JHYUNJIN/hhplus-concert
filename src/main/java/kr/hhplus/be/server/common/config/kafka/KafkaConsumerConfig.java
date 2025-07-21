@@ -20,19 +20,20 @@ public class KafkaConsumerConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    @Value("${spring.kafka.consumer.group-id}")
-    private String groupId;
-
     @Bean
     public ConsumerFactory<String, Object> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         // ⭐️ JSON 형태의 메시지를 다시 객체로 변환하기 위해 JsonDeserializer를 사용
         JsonDeserializer<Object> deserializer = new JsonDeserializer<>();
-        // 모든 패키지의 클래스를 신뢰하도록 설정하여, 어떤 이벤트 객체든 변환할 수 있음
-        deserializer.addTrustedPackages("*");
+        // ⭐️ 보안 강화를 위해, 신뢰할 수 있는 이벤트 클래스가 위치한 패키지만 명시적으로 지정 함
+        // 이를 통해 알 수 없는 클래스의 역직렬화를 방지하여 보안 취약점 예뱡 가능
+        deserializer.addTrustedPackages(
+                "kr.hhplus.be.server.payment.domain",     // PaymentSuccessEvent, PaymentFailedEvent
+                "kr.hhplus.be.server.reservation.domain", // ReservationCreatedEvent
+                "kr.hhplus.be.server.dummy"               // DummyDataGeneratedEvent
+                // 새로운 이벤트가 다른 패키지에 추가될 경우, 여기에 해당 패키지 경로를 추가해야 함
+        );
         return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);
     }
 

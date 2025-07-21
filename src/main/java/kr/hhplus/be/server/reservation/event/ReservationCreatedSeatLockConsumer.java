@@ -20,7 +20,7 @@ public class ReservationCreatedSeatLockConsumer { // ⭐️ 클래스 이름을 
      * Redis에 좌석 잠금(hold) 정보를 등록합니다.
      * @param event 카프카로부터 수신한 예약 생성 이벤트
      */
-    @KafkaListener(topics = "reservation.created", groupId = "${spring.kafka.consumer.group-id}")
+    @KafkaListener(topics = "reservation.created", groupId = "${spring.kafka.consumer.group-id.reservation-created}")
     public void handleReservationCreated(ReservationCreatedEvent event) {
         try {
             log.info("예약 생성 이벤트 수신 (Kafka): {}", event);

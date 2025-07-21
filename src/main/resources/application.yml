@@ -39,7 +39,14 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092  # 로컬 카프카 서버 주소
     consumer:
-      group-id: concert-group
+      group-id:
+        # --- 결제 성공 이벤트 구독 그룹 ---
+        concert-rank: ranking-update-group
+        data-platform: data-platform-group
+        # --- 예약 생성 이벤트 구독 그룹 ---
+        reservation-created: reservation-created-group
+        # --- 결제 실패 이벤트 구독 그룹 ---
+        payment-failed: payment-failed-group
 
 external-api:
   data-platform:

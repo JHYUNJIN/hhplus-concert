@@ -40,7 +40,7 @@ public class PaymentSuccessConsumer {
      * 2. 매진시 랭킹 업데이트
      * @param event 결제 성공 이벤트 정보
      */
-    @KafkaListener(topics = "payment.success", groupId = "${spring.kafka.consumer.group-id}")
+    @KafkaListener(topics = "payment.success", groupId = "${spring.kafka.consumer.group-id.concert-rank}")
     public void handleEvent(PaymentSuccessEvent event) {
         log.info("🚀[로그:정현진] ConcertSoldOutRankConsumer, 결제 성공 이벤트 수신 (Kafka). Event: {}", event);
         try {

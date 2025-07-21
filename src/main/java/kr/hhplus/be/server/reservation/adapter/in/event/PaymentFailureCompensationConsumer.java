@@ -49,8 +49,8 @@ public class PaymentFailureCompensationConsumer {
      * DB와 Redis 데이터의 정합성을 맞추는 모든 보상 트랜잭션을 실행합니다.
      * @param event 카프카로부터 수신한 결제 실패 이벤트
      */
-    @KafkaListener(topics = "payment.failed", groupId = "${spring.kafka.consumer.group-id}")
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @KafkaListener(topics = "payment.failed", groupId = "${spring.kafka.consumer.group-id.payment-failed}")
+    @Transactional(propagation = Propagation.REQUIRES_NEW) // 보상 트랜잭션을 별도의 트랜잭션으로 실행
     public void handlePaymentFailedEvent(PaymentFailedEvent event) {
         log.info("🚀[로그:정현진] PaymentFailedEvent 수신 (Kafka). 보상 트랜잭션을 시작합니다. Event: {}", event);
         try {
