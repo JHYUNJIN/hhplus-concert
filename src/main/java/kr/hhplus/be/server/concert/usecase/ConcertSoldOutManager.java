@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -25,8 +27,8 @@ public class ConcertSoldOutManager {
     private static final int MAX_SEAT_COUNT = 50;
 
     private final ConcertRepository concertRepository;
-    private final ConcertSoldOutRankRepository concertSoldOutRankRepository;
     private final SoldOutRankRepository soldOutRankRepository;
+    private final RedisRankUpdateService redisRankUpdateService;
 
     /**
      * MSA 전환을 위해 PaymentSuccessEvent에 대한 의존성을 제거하고,
@@ -50,12 +52,19 @@ public class ConcertSoldOutManager {
             long soldOutDuration = Duration.between(concert.openTime(), soldOutTime).getSeconds();
             long score = calcScore(soldOutDuration, concert.openTime(), seatSize);
 
-            Long rank = concertSoldOutRankRepository.updateRank(concertId, score);
-
+            // 1. 데이터베이스 관련 작업을 먼저 수행
             concertRepository.save(concert.soldOut(soldOutTime));
             soldOutRankRepository.save(SoldOutRank.of(concertId, score, soldOutDuration));
 
-            log.info("콘서트 매진 랭킹 업데이트 - CONCERT_ID: {}, RANKING: {}", concertId, rank);
+            // 2. ⭐️ DB 트랜잭션이 성공적으로 커밋된 '이후' 실행될 작업
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    log.info("DB 트랜잭션 커밋 성공. Redis 랭킹 업데이트를 시작합니다. ConcertId: {}", concertId);
+                    // 재시도 로직이 포함된 서비스를 호출
+                    redisRankUpdateService.updateRankWithRetry(concertId, score);
+                }
+            });
         } catch (Exception e) {
             log.error("랭킹 정보 갱신 실패 - CONCERT_ID: {}, ERROR: {}", concertId, e.getMessage(), e);
             throw new CustomException(ErrorCode.RANKING_UPDATE_FAILED, "랭킹 정보 갱신에 실패했습니다.");
@@ -77,9 +86,7 @@ public class ConcertSoldOutManager {
     private long calcScore(long soldOutTime, LocalDateTime openTime, int seatSize) {
         int concertDateScore = 100 - (seatSize / MAX_SEAT_COUNT);
         long openTimeStamp = openTime.toEpochSecond(ZoneOffset.UTC);
-
         String score = String.format("%d%d%d", soldOutTime, concertDateScore, openTimeStamp);
-
         return Long.parseLong(score);
     }
 }
