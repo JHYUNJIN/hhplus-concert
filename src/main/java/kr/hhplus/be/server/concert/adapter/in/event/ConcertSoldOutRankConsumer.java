@@ -18,8 +18,8 @@ public class ConcertSoldOutRankConsumer {
     public void handleEvent(PaymentSuccessEvent event) {
         log.info("결제 성공 이벤트 수신 (Kafka). 랭킹 업데이트 프로세스를 시작합니다. Event: {}", event);
         try {
-            // Consumer는 외부 이벤트 객체에서 내부 시스템에 필요한 데이터만 추출하여
-            // 유즈케이스(서비스)에 전달하는 책임을 가집니다. (Anti-Corruption Layer)
+            // ⭐️ Consumer는 외부 이벤트 객체에서 내부 시스템에 필요한 데이터를 추출하여
+            //    유즈케이스에 전달하는 책임만을 가집니다. (Anti-Corruption Layer)
             rankingUpdateUseCase.updateRankingIfNeeded(
                     event.seat().concertDateId(),
                     event.occurredAt()
