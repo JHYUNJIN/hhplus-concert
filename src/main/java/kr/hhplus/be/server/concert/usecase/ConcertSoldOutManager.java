@@ -7,7 +7,6 @@ import kr.hhplus.be.server.concert.domain.Concert;
 import kr.hhplus.be.server.concert.domain.SoldOutRank;
 import kr.hhplus.be.server.concert.port.out.ConcertRepository;
 import kr.hhplus.be.server.concert.port.out.SoldOutRankRepository;
-import kr.hhplus.be.server.payment.domain.PaymentSuccessEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -29,16 +28,32 @@ public class ConcertSoldOutManager {
     private final ConcertSoldOutRankRepository concertSoldOutRankRepository;
     private final SoldOutRankRepository soldOutRankRepository;
 
+    /**
+     * MSA 전환을 위해 PaymentSuccessEvent에 대한 의존성을 제거하고,
+     * 콘서트 도메인에 필요한 데이터만 파라미터로 받도록 수정했습니다.
+     * @param concertId     콘서트 ID
+     * @param seatSize      전체 좌석 수
+     * @param soldOutTime   최종 매진 시간
+     */
     @Transactional
-    public void processUpdateRanking(PaymentSuccessEvent event, UUID concertId, int seatSize) throws CustomException {
+    public void processUpdateRanking(UUID concertId, int seatSize, LocalDateTime soldOutTime) throws CustomException {
         try {
-            Concert concert = getConcert(concertId);
-            long soldOutTime = Duration.between(concert.openTime(), event.occurredAt()).getSeconds();
-            long score = calcScore(soldOutTime, concert.openTime(), seatSize);
+            Concert concert = getConcert(concertId); // 콘서트 정보 조회
+
+            // ⭐️ 방어 코드 추가: 매진 시간이 티켓 오픈 시간보다 빠를 수 없는 논리적 오류 방지
+            if (soldOutTime.isBefore(concert.openTime())) {
+                log.warn("매진 시간({})이 콘서트 오픈 시간({})보다 빠릅니다. 랭킹을 업데이트하지 않습니다. ConcertId: {}",
+                        soldOutTime, concert.openTime(), concertId);
+                return; // 랭킹 업데이트 중단
+            }
+
+            long soldOutDuration = Duration.between(concert.openTime(), soldOutTime).getSeconds();
+            long score = calcScore(soldOutDuration, concert.openTime(), seatSize);
 
             Long rank = concertSoldOutRankRepository.updateRank(concertId, score);
-            concertRepository.save(concert.soldOut(event.occurredAt()));
-            soldOutRankRepository.save(SoldOutRank.of(concertId, score, soldOutTime));
+
+            concertRepository.save(concert.soldOut(soldOutTime));
+            soldOutRankRepository.save(SoldOutRank.of(concertId, score, soldOutDuration));
 
             log.info("콘서트 매진 랭킹 업데이트 - CONCERT_ID: {}, RANKING: {}", concertId, rank);
         } catch (Exception e) {
