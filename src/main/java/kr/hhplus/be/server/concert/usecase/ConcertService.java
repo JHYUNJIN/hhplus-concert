@@ -6,6 +6,7 @@ import kr.hhplus.be.server.concert.domain.*;
 import kr.hhplus.be.server.concert.domain.enums.SeatGrade;
 import kr.hhplus.be.server.concert.domain.enums.SeatPrice;
 import kr.hhplus.be.server.concert.domain.enums.SeatStatus;
+import kr.hhplus.be.server.concert.port.in.GetConcertDateUseCase;
 import kr.hhplus.be.server.concert.port.out.ConcertRepository;
 import kr.hhplus.be.server.concert.port.out.ConcertDateRepository;
 import kr.hhplus.be.server.concert.port.out.SeatRepository;
@@ -26,11 +27,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional(readOnly = false)
 @Slf4j
-public class ConcertService {
+public class ConcertService implements GetConcertDateUseCase {
 
     private final ConcertRepository concertRepository;
     private final ConcertDateRepository concertDateRepository;
     private final SeatRepository seatRepository;
+
+    @Override
+    public ConcertDate findById(UUID concertDateId) {
+        return concertDateRepository.findById(concertDateId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CONCERT_DATE_NOT_FOUND));
+    }
 
     // 콘서트 생성
     public Concert createConcert(String title, String artist) {
@@ -166,4 +173,5 @@ public class ConcertService {
 
         log.info("콘서트 날짜에 대한 좌석 생성 완료: CONCERT_DATE_ID - {}", concertDateId);
     }
+
 }

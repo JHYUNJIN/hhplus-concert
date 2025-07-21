@@ -1,24 +1,23 @@
 package kr.hhplus.be.server.external.dataplatform.adapter.out.dataplatform.request;
 
-import java.util.UUID;
-
 import kr.hhplus.be.server.concert.domain.Concert;
-import kr.hhplus.be.server.payment.domain.PaymentSuccessEvent;
 import lombok.Builder;
 
+import java.util.UUID;
+
 @Builder
-public record ReservationDataRequest (
-	UUID reservationId,
-	UUID paymentId,
-	UUID concertId,
-	UUID seatId
+public record ReservationDataRequest(
+		UUID reservationId,
+		UUID paymentId,
+		UUID concertId,
+		UUID seatId
 ) {
-	public static ReservationDataRequest of(PaymentSuccessEvent event, Concert concert) {
+	public static ReservationDataRequest of(UUID reservationId, UUID paymentId, UUID seatId, Concert concert) {
 		return ReservationDataRequest.builder()
-			.reservationId(event.reservation().id())
-			.paymentId(event.payment().id())
+			.reservationId(reservationId)
+			.paymentId(paymentId)
 			.concertId(concert.id())
-			.seatId(event.seat().id())
+			.seatId(seatId)
 			.build();
 	}
 }
