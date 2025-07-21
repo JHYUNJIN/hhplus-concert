@@ -18,8 +18,8 @@ public class PaymentFailureCompensationConsumer {
     public void handlePaymentFailed(PaymentFailedEvent event) {
         log.info("결제 실패 이벤트 수신 (Kafka). 전체 보상 트랜잭션을 시작합니다. Event: {}", event);
         try {
-            // Consumer는 외부 이벤트 객체에서 내부 시스템에 필요한 데이터를 추출하여
-            // 유즈케이스(서비스)에 전달하는 책임만 가집니다. (Anti-Corruption Layer)
+            // ⭐️ Consumer는 외부 이벤트 객체에서 내부 시스템에 필요한 데이터를 추출하여
+            //    유즈케이스에 전달하는 책임만을 가집니다. (Anti-Corruption Layer)
             paymentFailureCompensationUseCase.compensate(
                     event.paymentId(),
                     event.userId(),
