@@ -2,6 +2,7 @@ package kr.hhplus.be.server.reservation.usecase;
 
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.common.util.DistributedLockKeyGenerator;
 import kr.hhplus.be.server.reservation.domain.ReservationCreatedEvent;
 import kr.hhplus.be.server.queue.domain.QueueToken;
 import kr.hhplus.be.server.queue.port.out.QueueTokenRepository;
@@ -24,8 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class ReservationInteractor implements ReservationCreateInput {
 
-    private final static String LOCK_KEY_PREFIX = "reserve:seat:";
-
     private final QueueTokenRepository queueTokenRepository;
     private final SeatHoldRepository seatHoldRepository;
     private final EventPublisher eventPublisher;
@@ -42,7 +41,8 @@ public class ReservationInteractor implements ReservationCreateInput {
             throw new CustomException(ErrorCode.ALREADY_RESERVED_SEAT, "이미 예약된 좌석입니다.");
         }
 
-        String lockKey = LOCK_KEY_PREFIX + command.seatId();
+        String lockKey = DistributedLockKeyGenerator.getReserveSeatLockKey(command.seatId());
+        System.out.println("🚀[로그:정현진] lockKey : " + lockKey);
         try {
             // 2. 검증을 통과한 요청만 분산 락을 획득하고 핵심 로직을 실행
             CreateReservationResult result = distributedLockManager.executeWithLockHasReturn(

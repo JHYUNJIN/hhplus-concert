@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.payment.usecase;
 
 import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.common.util.DistributedLockKeyGenerator;
 import kr.hhplus.be.server.payment.domain.PaymentSuccessEvent;
 import kr.hhplus.be.server.queue.domain.QueueToken;
 import kr.hhplus.be.server.queue.domain.QueueTokenUtil;
@@ -20,9 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PaymentInteractor implements PaymentInput {
 
-    private static final String RESERVATION_LOCK_KEY = "reservation:";
-    private static final String USER_LOCK_KEY = "user:";
-
     private final PaymentOutput paymentOutput;
     private final EventPublisher eventPublisher;
     private final PaymentManager paymentManager;
@@ -32,9 +30,11 @@ public class PaymentInteractor implements PaymentInput {
     @Override
     @Transactional
     public void payment(PaymentCommand command) throws Exception {
+        // 토큰 검증 및 조회
         QueueToken queueToken = getQueueTokenAndValid(command.queueTokenId());
-        String reservationLockKey = RESERVATION_LOCK_KEY + command.reservationId();
-        String userLockKey = USER_LOCK_KEY + queueToken.userId();
+        // 락 키 생성
+        String reservationLockKey = DistributedLockKeyGenerator.getReservationLockKey(command.reservationId());
+        String userLockKey = DistributedLockKeyGenerator.getUserLockKey(queueToken.userId());
 
         /* 분산락 획득 후 결제 트랜잭션 수행
          * 1. user:{userId} 락 획득

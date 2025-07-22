@@ -1,9 +1,10 @@
 package kr.hhplus.be.server.reservation.adapter.in.scheduler;
 
 import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.common.util.DistributedLockKeyGenerator;
+import kr.hhplus.be.server.reservation.port.in.ReservationCancellationUseCase;
 import kr.hhplus.be.server.reservation.port.out.ReservationRepository;
 import kr.hhplus.be.server.reservation.usecase.DistributedLockManager;
-import kr.hhplus.be.server.reservation.port.in.ReservationCancellationUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,15 +23,13 @@ public class ReservationBatchScheduler {
     private final ReservationCancellationUseCase reservationCancellationUseCase;
     private final DistributedLockManager distributedLockManager;
 
-    private static final String EXPIRE_LOCK_KEY = "reservation:expire-batch";
-
     // 매 1분마다 실행 (cron 표현식: "초 분 시 일 월 요일")
     @Scheduled(cron = "0 * * * * *")
     public void expirePendingReservations() {
         log.info("예약 만료 배치 작업 시작...");
         try {
-            // 분산 락을 사용하여 여러 서버 인스턴스에서 동시에 실행되는 것을 방지
-            distributedLockManager.executeWithLock(EXPIRE_LOCK_KEY, () -> {
+            // 분산 락을 사용하여 여러 서버 인스턴스에서 동시에 실행되는 것을 방지, 단일 서버 환경이라면 필요 없지만, 다중 서버 환경에서는 필수임
+            distributedLockManager.executeWithLock(DistributedLockKeyGenerator.getReservationExpireBatchLockKey(), () -> {
                 List<UUID> expiredIds = reservationRepository.findExpiredPendingReservationIds(LocalDateTime.now());
                 if (expiredIds.isEmpty()) {
                     log.info("만료된 예약이 없습니다.");
