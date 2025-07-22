@@ -19,6 +19,8 @@ import java.util.UUID;
 @Slf4j
 public class ReservationBatchScheduler {
 
+    private static final int BATCH_SIZE = 1000; // ⭐️ 한 번에 처리할 최대 만료 예약 수
+
     private final ReservationRepository reservationRepository;
     private final ReservationCancellationUseCase reservationCancellationUseCase;
     private final DistributedLockManager distributedLockManager;
@@ -30,7 +32,7 @@ public class ReservationBatchScheduler {
         try {
             // 분산 락을 사용하여 여러 서버 인스턴스에서 동시에 실행되는 것을 방지, 단일 서버 환경이라면 필요 없지만, 다중 서버 환경에서는 필수임
             distributedLockManager.executeWithLock(DistributedLockKeyGenerator.getReservationExpireBatchLockKey(), () -> {
-                List<UUID> expiredIds = reservationRepository.findExpiredPendingReservationIds(LocalDateTime.now());
+                List<UUID> expiredIds = reservationRepository.findExpiredPendingReservationIds(LocalDateTime.now(), BATCH_SIZE);
                 if (expiredIds.isEmpty()) {
                     log.info("만료된 예약이 없습니다.");
                     return;
