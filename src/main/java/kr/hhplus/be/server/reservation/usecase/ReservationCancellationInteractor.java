@@ -60,6 +60,5 @@ public class ReservationCancellationInteractor implements ReservationCancellatio
         ConcertDate updatedConcertDate = concertDate.increaseAvailableSeatCount();
         concertDateRepository.save(updatedConcertDate);
 
-        log.info("예약 ID {}가 만료 처리되어 좌석이 복구되었습니다.", reservationId);
     }
 }
