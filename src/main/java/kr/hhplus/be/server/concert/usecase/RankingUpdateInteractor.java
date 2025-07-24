@@ -33,7 +33,6 @@ public class RankingUpdateInteractor implements RankingUpdateUseCase {
     @Override
     @Async
     public void updateRankingIfNeeded(UUID concertDateId, LocalDateTime occurredAt) {
-        log.info("비동기 랭킹 업데이트 프로세스 시작. ConcertDateId: {}", concertDateId);
         try {
             // 좌석이 모두 매진되었는지 확인
             ConcertDate concertDate = getConcertDateUseCase.findById(concertDateId);

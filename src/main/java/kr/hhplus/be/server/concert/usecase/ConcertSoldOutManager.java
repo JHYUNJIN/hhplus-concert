@@ -2,7 +2,6 @@ package kr.hhplus.be.server.concert.usecase;
 
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.ErrorCode;
-import kr.hhplus.be.server.concert.adapter.out.persistence.soldOutRank.ConcertSoldOutRankRepository;
 import kr.hhplus.be.server.concert.domain.Concert;
 import kr.hhplus.be.server.concert.domain.SoldOutRank;
 import kr.hhplus.be.server.concert.port.out.ConcertRepository;
@@ -60,7 +59,6 @@ public class ConcertSoldOutManager {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    log.info("DB 트랜잭션 커밋 성공. Redis 랭킹 업데이트를 시작합니다. ConcertId: {}", concertId);
                     // 재시도 로직이 포함된 서비스를 호출
                     redisRankUpdateService.updateRankWithRetry(concertId, score);
                 }

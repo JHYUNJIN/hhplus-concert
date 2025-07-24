@@ -40,7 +40,6 @@ public class ReservationInteractor implements ReservationCreateInput {
         }
 
         String lockKey = DistributedLockKeyGenerator.getReserveSeatLockKey(command.seatId());
-        System.out.println("🚀[로그:정현진] lockKey : " + lockKey);
         try {
             // 2. 검증을 통과한 요청만 분산 락을 획득하고 핵심 로직을 실행
             CreateReservationResult result = distributedLockManager.executeWithLockHasReturn(

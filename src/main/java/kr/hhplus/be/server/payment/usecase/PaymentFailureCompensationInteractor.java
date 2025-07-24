@@ -65,7 +65,6 @@ public class PaymentFailureCompensationInteractor implements PaymentFailureCompe
             ConcertDate concertDate = concertDateRepository.findById(concertDateId)
                     .orElseThrow(() -> new CustomException(ErrorCode.CONCERT_DATE_NOT_FOUND));
             concertDateRepository.save(concertDate.increaseAvailableSeatCount());
-
             log.info("DB 보상 처리 완료. PaymentId: {}", paymentId);
         } catch (Exception e) {
             log.error("DB 보상 처리 중 예외 발생. PaymentId: {}", paymentId, e);

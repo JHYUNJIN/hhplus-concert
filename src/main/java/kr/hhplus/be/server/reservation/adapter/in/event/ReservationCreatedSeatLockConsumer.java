@@ -24,7 +24,6 @@ public class ReservationCreatedSeatLockConsumer {
         try {
             log.info("예약 생성 이벤트 수신 (Kafka): {}", event);
             seatHoldUseCase.hold(event.seatId(), event.userId());
-            log.info("Redis 좌석 잠금(hold) 성공. SeatId: {}", event.seatId());
         } catch (Exception e) {
             log.error("Redis 좌석 잠금(hold) 처리 중 오류 발생. Event: {}", event, e);
             // TODO: 실패한 메시지 재처리(Retry) 또는 Dead Letter Queue(DLQ)로 전송

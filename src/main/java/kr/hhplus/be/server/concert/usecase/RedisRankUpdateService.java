@@ -29,9 +29,7 @@ public class RedisRankUpdateService {
             backoff = @Backoff(delay = 1000)
     )
     public void updateRankWithRetry(UUID concertId, long score) {
-        log.info("Redis 랭킹 업데이트 시도. ConcertId: {}", concertId);
         Long rank = concertSoldOutRankRepository.updateRank(concertId, score);
-        log.info("Redis 랭킹 업데이트 성공 - CONCERT_ID: {}, RANKING: {}", concertId, rank);
     }
 
     /**

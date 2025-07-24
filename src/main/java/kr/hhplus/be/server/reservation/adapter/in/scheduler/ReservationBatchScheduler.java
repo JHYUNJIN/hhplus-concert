@@ -28,20 +28,12 @@ public class ReservationBatchScheduler {
     // 매 1분마다 실행 (cron 표현식: "초 분 시 일 월 요일")
     @Scheduled(cron = "0 * * * * *")
     public void expirePendingReservations() {
-        long startTime = System.currentTimeMillis();
-
-        log.info("예약 만료 배치 작업 시작...");
         try {
             // 분산 락을 사용하여 여러 서버 인스턴스에서 동시에 실행되는 것을 방지, 단일 서버 환경이라면 필요 없지만, 다중 서버 환경에서는 필수임
             distributedLockManager.executeWithLock(DistributedLockKeyGenerator.getReservationExpireBatchLockKey(), () -> {
                 List<UUID> expiredIds = reservationRepository.findExpiredPendingReservationIds(LocalDateTime.now(), BATCH_SIZE);
-                log.info("한 번에 처리할 최대 만료 예약 수 : {}", BATCH_SIZE);
-                log.info("만료할 예약 ID 수: {}", expiredIds.size());
-                if (expiredIds.isEmpty()) {
-                    log.info("만료된 예약이 없습니다.");
-                    return;
-                }
-//                log.info("만료된 예약 ID 목록: {}", expiredIds);
+                if (expiredIds.isEmpty()) return;
+                
                 for (UUID reservationId : expiredIds) {
                     try {
                         // 예약 만료 처리
@@ -51,9 +43,6 @@ public class ReservationBatchScheduler {
                         log.error("예약 만료 처리 중 오류 발생. 예약 ID: {}", reservationId, e);
                     }
                 }
-                log.info("만료된 예약 일괄 처리 작업 완료.");
-                long endTime = System.currentTimeMillis();
-                log.info("예약 만료 배치 작업 완료. 처리 시간: {} ms", (endTime - startTime));
             });
         } catch (Exception e) {
             log.error("예약 만료 배치 작업 실행 중 락 획득 실패 또는 예외 발생", e);
