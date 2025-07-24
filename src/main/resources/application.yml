@@ -37,7 +37,8 @@ spring:
     port: 6379
     database: 0
   kafka:
-    bootstrap-servers: localhost:9092  # 로컬 카프카 서버 주소
+    # 클러스터를 구성하는 모든 브로커의 주소를 쉼표(,)로 구분하여 작성
+    bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
     consumer:
       group-id:
         # --- 결제 성공 이벤트 구독 그룹 ---
