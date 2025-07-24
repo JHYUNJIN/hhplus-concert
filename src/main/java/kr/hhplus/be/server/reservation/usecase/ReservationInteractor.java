@@ -1,19 +1,18 @@
 package kr.hhplus.be.server.reservation.usecase;
 
+import kr.hhplus.be.server.common.event.EventPublisher;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.ErrorCode;
 import kr.hhplus.be.server.common.util.DistributedLockKeyGenerator;
-import kr.hhplus.be.server.reservation.domain.ReservationCreatedEvent;
 import kr.hhplus.be.server.queue.domain.QueueToken;
-import kr.hhplus.be.server.queue.port.out.QueueTokenRepository;
 import kr.hhplus.be.server.queue.domain.QueueTokenUtil;
-import kr.hhplus.be.server.reservation.port.out.SeatHoldRepository;
-import kr.hhplus.be.server.common.event.EventPublisher;
+import kr.hhplus.be.server.queue.port.out.QueueTokenRepository;
+import kr.hhplus.be.server.reservation.domain.ReservationCreatedEvent;
 import kr.hhplus.be.server.reservation.port.in.ReservationCreateInput;
-import kr.hhplus.be.server.reservation.port.in.dto.ReserveSeatCommand;
-import kr.hhplus.be.server.reservation.port.in.dto.CreateReservationResult;
-import kr.hhplus.be.server.reservation.port.in.ReservationOutput;
 import kr.hhplus.be.server.reservation.port.in.ReserveSeatResult;
+import kr.hhplus.be.server.reservation.port.in.dto.CreateReservationResult;
+import kr.hhplus.be.server.reservation.port.in.dto.ReserveSeatCommand;
+import kr.hhplus.be.server.reservation.port.out.SeatHoldRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,13 +27,12 @@ public class ReservationInteractor implements ReservationCreateInput {
     private final QueueTokenRepository queueTokenRepository;
     private final SeatHoldRepository seatHoldRepository;
     private final EventPublisher eventPublisher;
-    private final ReservationOutput reservationOutput;
     private final DistributedLockManager distributedLockManager;
     private final CreateReservationManager createReservationManager;
 
     @Override
     @Transactional
-    public void reserveSeat(ReserveSeatCommand command) {
+    public ReserveSeatResult reserveSeat(ReserveSeatCommand command) {
         // 1. 분산 락 획득 전 Redis 에서 좌석 잠금 상태 확인
         QueueToken queueToken = getQueueTokenAndValid(command);
         if(seatHoldRepository.isHoldSeat(command.seatId(),queueToken.userId())){
@@ -52,7 +50,7 @@ public class ReservationInteractor implements ReservationCreateInput {
 
             // 3. 예약생성 이벤트 발행
             eventPublisher.publish(ReservationCreatedEvent.from(result));
-            reservationOutput.ok(ReserveSeatResult.from(result));
+            return ReserveSeatResult.from(result);
         } catch (Exception e) {
             log.error("좌석 예약 처리 중 예외 발생. command: {}", command, e);
             if (e instanceof CustomException) {

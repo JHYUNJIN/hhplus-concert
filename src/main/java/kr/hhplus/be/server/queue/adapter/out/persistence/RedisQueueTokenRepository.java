@@ -132,7 +132,7 @@ public class RedisQueueTokenRepository implements QueueTokenRepository { // Redi
             if (promotedCount != null && promotedCount > 0) {
                 log.info("✅ [승격 완료] 콘서트 ID {}: {}개의 토큰이 활성 상태로 전환되었습니다.", openConcert.id(), promotedCount);
             } else {
-                log.info("❌ [승격 실패] 콘서트 ID {}: 활성 상태로 전환된 토큰이 없습니다.", openConcert.id());
+//                log.info("❌ [승격 실패] 콘서트 ID {}: 활성 상태로 전환된 토큰이 없습니다.", openConcert.id());
             }
         }
     }

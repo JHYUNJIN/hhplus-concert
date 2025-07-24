@@ -1,18 +1,17 @@
 package kr.hhplus.be.server.payment.usecase;
 
+import kr.hhplus.be.server.common.event.EventPublisher;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.util.DistributedLockKeyGenerator;
 import kr.hhplus.be.server.payment.domain.PaymentSuccessEvent;
+import kr.hhplus.be.server.payment.port.in.PaymentInput;
+import kr.hhplus.be.server.payment.port.in.dto.PaymentCommand;
+import kr.hhplus.be.server.payment.port.in.dto.PaymentResult;
+import kr.hhplus.be.server.payment.port.in.dto.PaymentTransactionResult;
+import kr.hhplus.be.server.queue.adapter.out.persistence.QueueTokenManager;
 import kr.hhplus.be.server.queue.domain.QueueToken;
 import kr.hhplus.be.server.queue.domain.QueueTokenUtil;
 import kr.hhplus.be.server.reservation.usecase.DistributedLockManager;
-import kr.hhplus.be.server.payment.port.in.dto.PaymentTransactionResult;
-import kr.hhplus.be.server.queue.adapter.out.persistence.QueueTokenManager;
-import kr.hhplus.be.server.common.event.EventPublisher;
-import kr.hhplus.be.server.payment.port.in.dto.PaymentCommand;
-import kr.hhplus.be.server.payment.port.in.PaymentInput;
-import kr.hhplus.be.server.payment.port.in.PaymentOutput;
-import kr.hhplus.be.server.payment.port.in.dto.PaymentResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PaymentInteractor implements PaymentInput {
 
-    private final PaymentOutput paymentOutput;
     private final EventPublisher eventPublisher;
     private final PaymentManager paymentManager;
     private final QueueTokenManager queueTokenManager;
@@ -29,7 +27,7 @@ public class PaymentInteractor implements PaymentInput {
 
     @Override
     @Transactional
-    public void payment(PaymentCommand command) throws Exception {
+    public PaymentResult payment(PaymentCommand command) throws Exception {
         // 토큰 검증 및 조회
         QueueToken queueToken = getQueueTokenAndValid(command.queueTokenId());
         // 락 키 생성
@@ -47,9 +45,9 @@ public class PaymentInteractor implements PaymentInput {
                         reservationLockKey,
                         () -> paymentManager.processPayment(command, queueToken)));
 
-        // 결제 성공 이벤트 발행 및 결과 반환
         eventPublisher.publish(PaymentSuccessEvent.from(paymentTransactionResult));
-        paymentOutput.ok(PaymentResult.from(paymentTransactionResult));
+        return PaymentResult.from(paymentTransactionResult);
+
     }
 
     private QueueToken getQueueTokenAndValid(String tokenId) throws CustomException {
