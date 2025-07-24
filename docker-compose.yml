@@ -1,17 +1,43 @@
-version: '3'
+version: '3.8'
+
 services:
   mysql:
     image: mysql:8.0
+    container_name: hhplus-concert-mysql-1
     ports:
       - "3306:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_USER=application
-      - MYSQL_PASSWORD=application
-      - MYSQL_DATABASE=hhplus
-    volumes:
-      - ./data/mysql/:/var/lib/mysql
+      MYSQL_DATABASE: hhplus
+      MYSQL_USER: application
+      MYSQL_PASSWORD: application
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - concert-network
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENERS: 'CONTROLLER://kafka:9093,INTERNAL://kafka:29092,EXTERNAL://0.0.0.0:9092'
+      KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://kafka:29092,EXTERNAL://localhost:9092'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'INTERNAL'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:9093'
+      # ⭐️ 중요: CLUSTER_ID 생성
+      # 터미널에서 `docker run --rm confluentinc/cp-kafka:latest kafka-storage random-uuid` 명령어 실행 후 CLUSTER_ID에 값 입력
+      CLUSTER_ID: 'SQHCtkXlSVS_Gtxhvx3dsg'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    networks:
+      - concert-network
 
 networks:
-  default:
+  concert-network:
     driver: bridge
