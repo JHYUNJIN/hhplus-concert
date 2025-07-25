@@ -4,6 +4,8 @@ import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.reservation.domain.Reservation;
 import kr.hhplus.be.server.reservation.port.out.ReservationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -37,8 +39,9 @@ public class ReservationJpaGateway implements ReservationRepository {
     }
 
     @Override
-    public List<UUID> findExpiredPendingReservationIds(LocalDateTime now) {
-        return jpaReservationRepository.findExpiredPendingReservationIds(now).stream()
+    public List<UUID> findExpiredPendingReservationIds(LocalDateTime now, int limit) {
+        Pageable pageable = PageRequest.of(0, limit);
+        return jpaReservationRepository.findExpiredPendingReservationIds(now, pageable).stream()
                 .map(UUID::fromString)
                 .toList();
     }

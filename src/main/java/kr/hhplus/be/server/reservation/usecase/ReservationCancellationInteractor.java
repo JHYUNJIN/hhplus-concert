@@ -1,16 +1,16 @@
 package kr.hhplus.be.server.reservation.usecase;
 
 import kr.hhplus.be.server.concert.domain.ConcertDate;
-import kr.hhplus.be.server.concert.port.out.ConcertDateRepository;
-import kr.hhplus.be.server.payment.domain.Payment;
-import kr.hhplus.be.server.payment.port.out.PaymentRepository;
-import kr.hhplus.be.server.payment.domain.enums.PaymentStatus;
-import kr.hhplus.be.server.reservation.domain.Reservation;
-import kr.hhplus.be.server.reservation.port.out.ReservationRepository;
-import kr.hhplus.be.server.reservation.domain.enums.ReservationStatus;
 import kr.hhplus.be.server.concert.domain.Seat;
+import kr.hhplus.be.server.concert.port.out.ConcertDateRepository;
 import kr.hhplus.be.server.concert.port.out.SeatRepository;
+import kr.hhplus.be.server.payment.domain.Payment;
+import kr.hhplus.be.server.payment.domain.enums.PaymentStatus;
+import kr.hhplus.be.server.payment.port.out.PaymentRepository;
+import kr.hhplus.be.server.reservation.domain.Reservation;
+import kr.hhplus.be.server.reservation.domain.enums.ReservationStatus;
 import kr.hhplus.be.server.reservation.port.in.ReservationCancellationUseCase;
+import kr.hhplus.be.server.reservation.port.out.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,7 +36,7 @@ public class ReservationCancellationInteractor implements ReservationCancellatio
 
         // 예약이 없거나, 이미 처리된 상태(결제 완료, 취소 등)이면 아무것도 하지 않고 종료합니다.
         if (reservation == null || reservation.status() != ReservationStatus.PENDING) {
-            log.info("예약 ID {}는 이미 처리되었거나 존재하지 않아 만료 로직을 건너뜁니다.", reservationId);
+            log.warn("예약 ID {}는 이미 처리되었거나 존재하지 않아 만료 로직을 건너뜁니다.", reservationId);
             return;
         }
 
@@ -60,6 +60,5 @@ public class ReservationCancellationInteractor implements ReservationCancellatio
         ConcertDate updatedConcertDate = concertDate.increaseAvailableSeatCount();
         concertDateRepository.save(updatedConcertDate);
 
-        log.info("예약 ID {}가 만료 처리되어 좌석이 복구되었습니다.", reservationId);
     }
 }

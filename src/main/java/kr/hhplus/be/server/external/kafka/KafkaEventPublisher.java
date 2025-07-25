@@ -18,11 +18,9 @@ public class KafkaEventPublisher implements EventPublisher {
     public <T extends Event> void publish(T event) {
         String topic = event.getTopic().getTopicName();
         String key = event.getKey();
-        log.info("카프카 이벤트 발행 시작. Topic: {}, Key: {}", topic, key);
         try {
             // ⭐️ KafkaTemplate을 사용하여 지정된 토픽으로 이벤트 전송
             kafkaTemplate.send(topic, key, event);
-            log.info("카프카 이벤트 발행 성공. Topic: {}, Key: {}", topic, key);
         } catch (Exception e) {
             log.error("카프카 이벤트 발행 실패. Topic: {}, Key: {}", topic, key, e);
             // TODO: 발행 실패 시 재시도 또는 실패 로깅/알림 처리

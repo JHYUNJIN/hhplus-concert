@@ -26,8 +26,6 @@ public class DataPlatformClient {
 	 * @param reservationDataRequest 전송할 예약 데이터
 	 */
 	public void sendReservationData(ReservationDataRequest reservationDataRequest) {
-		log.info("데이터 플랫폼 예약 정보 전송 시도 - 예약 정보: {}", reservationDataRequest);
-
 		webClient.post()
 				.uri("/v1/reservations") // 외부 플랫폼의 구체적인 API 엔드포인트
 				.bodyValue(reservationDataRequest) // 전송할 데이터를 body에 담음

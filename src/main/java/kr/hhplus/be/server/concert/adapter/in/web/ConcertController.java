@@ -6,18 +6,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import kr.hhplus.be.server.concert.usecase.ConcertService;
 import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.concert.domain.Concert;
-import kr.hhplus.be.server.concert.domain.ConcertDate;
-import kr.hhplus.be.server.concert.domain.Seat;
 import kr.hhplus.be.server.concert.adapter.in.web.request.ConcertDateRequest;
 import kr.hhplus.be.server.concert.adapter.in.web.request.ConcertRequest;
 import kr.hhplus.be.server.concert.adapter.in.web.response.ConcertDateResponse;
 import kr.hhplus.be.server.concert.adapter.in.web.response.ConcertResponse;
 import kr.hhplus.be.server.concert.adapter.in.web.response.SeatResponse;
+import kr.hhplus.be.server.concert.domain.Concert;
+import kr.hhplus.be.server.concert.domain.ConcertDate;
+import kr.hhplus.be.server.concert.domain.Seat;
+import kr.hhplus.be.server.concert.usecase.ConcertService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,14 +25,12 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@Slf4j // 로깅 활성화
 @RequestMapping("/api/v1/concerts")
 @RequiredArgsConstructor
 @Tag(name = "Concert API", description = "콘서트 관련 API")
 public class ConcertController {
 
     private final ConcertService concertService;
-
 
     // 콘서트 생성
     @PostMapping
@@ -46,11 +43,6 @@ public class ConcertController {
     public ResponseEntity<ConcertResponse> createConcert(
             @RequestBody ConcertRequest concertRequest
     ) {
-
-        // concertRequest에 대한 로그 추가
-        log.info("Creating concert with request: {}", concertRequest);
-
-
         Concert concert = concertService.createConcert(
                 concertRequest.title(),
                 concertRequest.artist()
@@ -73,16 +65,11 @@ public class ConcertController {
             @PathVariable UUID concertId,
             @RequestBody ConcertDateRequest concertDateRequest
     ) throws CustomException {
-        // 콘서트 날짜 생성 로깅
-        log.info("콘서트 날짜 생성 요청 - concertId: {}, request: {}", concertId, concertDateRequest);
-
         ConcertDate concertDate = concertService.createConcertDateWithSeat(
             concertId,
             LocalDateTime.parse(concertDateRequest.date()),
             LocalDateTime.parse(concertDateRequest.deadline())
         );
-
-        log.info("콘서트 날짜 생성 성공 - concertDateId: {}", concertDate.id());
         return ResponseEntity
                 .status(201) // 201 Created
                 .body(ConcertDateResponse.from(concertDate));

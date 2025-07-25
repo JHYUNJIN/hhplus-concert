@@ -9,25 +9,21 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.hhplus.be.server.reservation.adapter.in.web.request.ReservationRequest;
 import kr.hhplus.be.server.reservation.adapter.in.web.response.ReservationResponse;
 import kr.hhplus.be.server.reservation.port.in.ReservationCreateInput;
-import kr.hhplus.be.server.reservation.port.in.dto.ReserveSeatCommand;
-import kr.hhplus.be.server.reservation.port.in.ReservationOutput;
 import kr.hhplus.be.server.reservation.port.in.ReserveSeatResult;
+import kr.hhplus.be.server.reservation.port.in.dto.ReserveSeatCommand;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.annotation.RequestScope;
 
 import java.util.UUID;
 
 @RestController
-@RequestScope
 @RequestMapping("/api/v1/reservations")
 @RequiredArgsConstructor
 @Tag(name = "Reservation API", description = "예약 관련 API")
-public class ReservationController implements ReservationOutput {
+public class ReservationController {
 
     private final ReservationCreateInput reservationCreateInput;
-    private ReservationResponse reservationResponse;
 
     @Operation(
             summary = "콘서트 좌석 예약 API",
@@ -73,13 +69,8 @@ public class ReservationController implements ReservationOutput {
         final String parsedQueueToken = queueToken.startsWith("Bearer ")
                 ? queueToken.substring("Bearer ".length())
                 : queueToken;
-        reservationCreateInput.reserveSeat(ReserveSeatCommand.of(request, seatId, parsedQueueToken));
 
-        return ResponseEntity.ok(reservationResponse);
-    }
-
-    @Override
-    public void ok(ReserveSeatResult result) {
-        reservationResponse = ReservationResponse.from(result);
+        ReserveSeatResult result = reservationCreateInput.reserveSeat(ReserveSeatCommand.of(request, seatId, parsedQueueToken));
+        return ResponseEntity.ok(ReservationResponse.from(result));
     }
 }

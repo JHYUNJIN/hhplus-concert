@@ -7,7 +7,7 @@ spring:
     name: HangHaePlusDataSource
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
-      maximum-pool-size: 3
+      maximum-pool-size: 20
       connection-timeout: 10000
       max-lifetime: 60000
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -31,15 +31,25 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/hhplus?characterEncoding=UTF-8&serverTimezone=UTC
     username: application
-    password: applicationlogging:
+    password: application
   redis:
     host: localhost
     port: 6379
     database: 0
   kafka:
-    bootstrap-servers: localhost:9092  # 로컬 카프카 서버 주소
+    # 클러스터를 구성하는 모든 브로커의 주소를 쉼표(,)로 구분하여 작성
+    bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
     consumer:
-      group-id: concert-group
+      group-id:
+        # --- 결제 성공 이벤트 구독 그룹 ---
+        concert-rank: ranking-update-group # ⭐️ 랭킹 업데이트 그룹
+        data-platform: data-platform-group # ⭐️ 데이터 플랫폼 연동 그룹
+        # --- 결제 실패 이벤트 구독 그룹 ---
+        payment-compensator: payment-compensator-group   # ⭐️ DB 보상 처리 그룹
+        # --- 결제 후 정리 이벤트 구독 그룹 ---
+        post-payment-cleanup: post-payment-cleanup-group # ⭐️ Redis 정리 그룹
+        # --- 예약 관련 이벤트 구독 그룹 ---
+        reservation-created: reservation-created-group # ⭐️ 예약 생성 그룹
 
 external-api:
   data-platform:

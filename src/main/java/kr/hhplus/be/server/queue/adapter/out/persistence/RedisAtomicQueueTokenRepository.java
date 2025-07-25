@@ -80,7 +80,7 @@ public class RedisAtomicQueueTokenRepository {
         } else {
             // expiresAt이 null인 경우 (예: WAITING 토큰), WAITING_TOKEN_DEFAULT_TTL_SECONDS 설정
             expirationSeconds = WAITING_TOKEN_DEFAULT_TTL_SECONDS;
-            log.info("QueueToken의 expiresAt 필드가 null입니다. 기본 TTL({})초로 설정합니다. 토큰 ID: {}", WAITING_TOKEN_DEFAULT_TTL_SECONDS, newQueueToken.tokenId());
+//            log.info("QueueToken의 expiresAt 필드가 null입니다. 기본 TTL({})초로 설정합니다. 토큰 ID: {}", WAITING_TOKEN_DEFAULT_TTL_SECONDS, newQueueToken.tokenId());
         }
 
         // KEYS 인자: Redis 키 목록
@@ -93,10 +93,7 @@ public class RedisAtomicQueueTokenRepository {
                 String.valueOf(expirationSeconds),  // ARGV[3]
                 String.valueOf(expirationSeconds)   // ARGV[4]
         );
-
-        // Lua 스크립트 실행
-        String resultTokenId = redisTemplate.execute(issueQueueTokenAtomicScript, keys, args.toArray());
-        log.debug("Lua script executed for userId={}, concertId={}, resultTokenId={}", userId, concertId, resultTokenId);
-        return resultTokenId;
+        // Redis Lua 스크립트 실행
+        return redisTemplate.execute(issueQueueTokenAtomicScript, keys, args.toArray());
     }
 }

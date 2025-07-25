@@ -86,7 +86,6 @@ public class UserConcurrencyTest {
                         } catch (Exception e) {
                             // 락 충돌 예외인 경우 재시도
                             if (e.getCause() instanceof CustomException && ((CustomException) e.getCause()).getErrorCode() == ErrorCode.LOCK_CONFLICT) {
-                                System.out.println("LOCK CONFLICT 발생, 재시도 중... (Retry: " + (retry + 1) + ")");
                                 Thread.sleep(100); // 잠시 대기 후 재시도 (백오프 전략)
                                 if (retry == maxRetries -1) { // 마지막 재시도도 실패하면 예외 던지기
                                     throw e;

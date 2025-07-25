@@ -29,8 +29,9 @@ public class ConcertDateJpaGateway implements ConcertDateRepository {
 
     @Override
     public List<ConcertDate> findAvailableDates(UUID concertId) {
-        return jpaConcertDateRepository
-                .findAvailableDates(concertId.toString());
+        return jpaConcertDateRepository.findAvailableDates(concertId.toString()).stream()
+                .map(ConcertDateEntity::toDomain)
+                .toList();
     }
 
     @Override

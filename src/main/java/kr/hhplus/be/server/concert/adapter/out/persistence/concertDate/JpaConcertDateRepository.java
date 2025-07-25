@@ -21,7 +21,7 @@ public interface JpaConcertDateRepository extends JpaRepository<ConcertDateEntit
           AND cd.deadline > CURRENT_TIMESTAMP()
           AND cd.availableSeatCount > 0
     """)
-	List<ConcertDate> findAvailableDates(String concertId);
+	List<ConcertDateEntity> findAvailableDates(String concertId);
 
 
 	@Modifying(clearAutomatically = true)

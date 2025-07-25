@@ -2,15 +2,18 @@ package kr.hhplus.be.server.concert.usecase;
 
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.ErrorCode;
-import kr.hhplus.be.server.concert.domain.*;
+import kr.hhplus.be.server.concert.adapter.out.persistence.concert.ConcertEntity;
+import kr.hhplus.be.server.concert.adapter.out.persistence.concertDate.ConcertDateEntity;
+import kr.hhplus.be.server.concert.domain.Concert;
+import kr.hhplus.be.server.concert.domain.ConcertDate;
+import kr.hhplus.be.server.concert.domain.Seat;
 import kr.hhplus.be.server.concert.domain.enums.SeatGrade;
 import kr.hhplus.be.server.concert.domain.enums.SeatPrice;
 import kr.hhplus.be.server.concert.domain.enums.SeatStatus;
-import kr.hhplus.be.server.concert.port.out.ConcertRepository;
+import kr.hhplus.be.server.concert.port.in.GetConcertDateUseCase;
 import kr.hhplus.be.server.concert.port.out.ConcertDateRepository;
+import kr.hhplus.be.server.concert.port.out.ConcertRepository;
 import kr.hhplus.be.server.concert.port.out.SeatRepository;
-import kr.hhplus.be.server.concert.adapter.out.persistence.concert.ConcertEntity;
-import kr.hhplus.be.server.concert.adapter.out.persistence.concertDate.ConcertDateEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,11 +29,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional(readOnly = false)
 @Slf4j
-public class ConcertService {
+public class ConcertService implements GetConcertDateUseCase {
 
     private final ConcertRepository concertRepository;
     private final ConcertDateRepository concertDateRepository;
     private final SeatRepository seatRepository;
+
+    @Override
+    public ConcertDate findById(UUID concertDateId) {
+        return concertDateRepository.findById(concertDateId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CONCERT_DATE_NOT_FOUND));
+    }
 
     // 콘서트 생성
     public Concert createConcert(String title, String artist) {
@@ -159,11 +168,8 @@ public class ConcertService {
                     .price(price)
                     .status(seatStatus)
                     .build();
-
-            log.debug("좌석 저장 시도: concertDateId={}, seatNo={}, seatId={}", concertDateId, i, seat.id());
             seatRepository.save(seat);
         }
-
-        log.info("콘서트 날짜에 대한 좌석 생성 완료: CONCERT_DATE_ID - {}", concertDateId);
     }
+
 }

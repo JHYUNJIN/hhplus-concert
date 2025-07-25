@@ -2,6 +2,7 @@ package kr.hhplus.be.server.concert.port.out;
 
 import kr.hhplus.be.server.concert.domain.Concert;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -13,7 +14,7 @@ public interface ConcertRepository {
 
     Optional<Concert> findById(UUID concertId);
 
-    List<Concert> findByOpenConcerts();
+    List<Concert> findByOpenConcerts(LocalDateTime now);
 
     void deleteAll();
 }

@@ -1,17 +1,16 @@
 package kr.hhplus.be.server.user.usecase;
 
-import java.math.BigDecimal;
-import java.util.UUID;
-
+import kr.hhplus.be.server.common.exception.CustomException;
+import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.user.domain.User;
+import kr.hhplus.be.server.user.port.out.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import kr.hhplus.be.server.user.domain.User;
-import kr.hhplus.be.server.user.port.out.UserRepository;
-import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.common.exception.ErrorCode;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.math.BigDecimal;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -31,9 +30,7 @@ public class UserService {
             throw new CustomException(ErrorCode.INVALID_USER_DATA);
         }
 
-        User savedUser = userRepository.save(user);
-        log.info("유저 생성: USER_ID - {}, INITIAL_POINT - {}", savedUser.id(), savedUser.amount());
-        return savedUser;
+        return userRepository.save(user);
     }
 
     public User getUser(UUID userId) throws CustomException {
@@ -60,11 +57,8 @@ public class UserService {
 
     private User findUser(UUID userId) throws CustomException {
         try {
-            User user = userRepository.findById(userId)
+            return userRepository.findById(userId)
                     .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-            log.debug("유저 조회: USER_ID - {}", userId);
-            return user;
         } catch (CustomException e) {
             log.warn("유저 조회 실패: USER_ID - {}", userId);
             throw e;

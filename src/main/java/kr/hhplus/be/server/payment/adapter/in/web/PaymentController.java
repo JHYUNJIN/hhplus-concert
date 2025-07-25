@@ -7,26 +7,22 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.hhplus.be.server.payment.adapter.in.web.response.PaymentResponse;
-import kr.hhplus.be.server.payment.port.in.dto.PaymentCommand;
 import kr.hhplus.be.server.payment.port.in.PaymentInput;
-import kr.hhplus.be.server.payment.port.in.PaymentOutput;
+import kr.hhplus.be.server.payment.port.in.dto.PaymentCommand;
 import kr.hhplus.be.server.payment.port.in.dto.PaymentResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.annotation.RequestScope;
 
 import java.util.UUID;
 
 @RestController
-@RequestScope
 @RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
 @Tag(name = "Payment API", description = "결제 관련 API")
-public class PaymentController implements PaymentOutput {
+public class PaymentController {
 
     private final PaymentInput paymentInput;
-    private PaymentResponse paymentResponse;
 
     @Operation(
             summary = "예약 결제 API",
@@ -63,13 +59,8 @@ public class PaymentController implements PaymentOutput {
         final String parsedQueueToken = queueToken.startsWith("Bearer ")
                 ? queueToken.substring("Bearer ".length())
                 : queueToken;
-        paymentInput.payment(PaymentCommand.of(reservationId, parsedQueueToken));
 
-        return ResponseEntity.ok(paymentResponse);
-    }
-
-    @Override
-    public void ok(PaymentResult paymentResult) {
-        paymentResponse = PaymentResponse.from(paymentResult);
+        PaymentResult result = paymentInput.payment(PaymentCommand.of(reservationId, parsedQueueToken));
+        return ResponseEntity.ok(PaymentResponse.from(result));
     }
 }

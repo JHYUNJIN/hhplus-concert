@@ -57,7 +57,6 @@ public class RedisConfig {
         // scripts/issueQueueTokenAtomic.lua 파일 경로 지정
         issueQueueTokenAtomicScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/issueQueueTokenAtomic.lua")));
         issueQueueTokenAtomicScript.setResultType(String.class); // 스크립트의 최종 반환 타입 (토큰 ID가 String이므로)
-//        log.info("Redis Lua Script 'issueQueueTokenAtomic.lua' loaded successfully in RedisConfig.");
     }
 
     /**

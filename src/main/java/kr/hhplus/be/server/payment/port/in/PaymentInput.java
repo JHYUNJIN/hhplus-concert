@@ -1,7 +1,8 @@
 package kr.hhplus.be.server.payment.port.in;
 
 import kr.hhplus.be.server.payment.port.in.dto.PaymentCommand;
+import kr.hhplus.be.server.payment.port.in.dto.PaymentResult;
 
 public interface PaymentInput {
-    void payment(PaymentCommand commend) throws Exception;
+    PaymentResult payment(PaymentCommand commend) throws Exception;
 }
