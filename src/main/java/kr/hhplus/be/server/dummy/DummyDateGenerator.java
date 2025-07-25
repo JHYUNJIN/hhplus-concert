@@ -68,8 +68,7 @@ public class DummyDateGenerator {
     private void generateUsers() {
         log.info("유저 더미 데이터 삽입중....");
         for (int i = 0; i < 10000; i++) {
-            BigDecimal amount = BigDecimal.valueOf(faker.number().numberBetween(0, 999999999));
-
+            BigDecimal amount = (i > 1000) ? BigDecimal.valueOf(999999999) : BigDecimal.ZERO;
             User user = User.builder()
                     .amount(amount)
                     .build();
@@ -84,8 +83,8 @@ public class DummyDateGenerator {
         List<Concert> concerts = new ArrayList<>();
 
         // 랜덤 날짜 범위 설정 (현재로부터 1년 전 ~ 1년 후)
-        LocalDateTime start = LocalDateTime.now().minusYears(1);
-        LocalDateTime end = LocalDateTime.now().plusYears(1);
+        LocalDateTime start = LocalDateTime.now().plusDays(1);
+        LocalDateTime end = LocalDateTime.now().plusDays(5);
 
         for (int i = 0; i < 1000; i++) {
             String artist = faker.music().genre() + " " + faker.name().firstName();
@@ -95,14 +94,14 @@ public class DummyDateGenerator {
             long randomDayEpoch = ThreadLocalRandom.current().nextLong(start.toLocalDate().toEpochDay(), end.toLocalDate().toEpochDay());
             LocalDateTime openTime = LocalDateTime.ofEpochSecond(randomDayEpoch * 24 * 60 * 60, 0, java.time.ZoneOffset.UTC)
                     .withHour(10).withMinute(0).withSecond(0);
-            LocalDateTime soldOutTime = openTime.plusDays(3)
-                .withHour(faker.number().numberBetween(18, 22)).withMinute(0).withSecond(0);
+//            LocalDateTime soldOutTime = openTime.plusDays(3)
+//                .withHour(faker.number().numberBetween(18, 22)).withMinute(0).withSecond(0);
 
             Concert concert = Concert.builder()
                     .title(title)
                     .artist(artist)
                     .openTime(openTime)
-                    .soldOutTime(soldOutTime)
+                    .soldOutTime(null)
                     .build();
 
             concerts.add(concertRepository.save(concert));
@@ -186,9 +185,11 @@ public class DummyDateGenerator {
 
         if (random <= 80) {
             return SeatStatus.AVAILABLE;
-        } else if (random <= 95) {
-            return SeatStatus.RESERVED;
-        } else {
+        }
+//        else if (random <= 95) {
+//            return SeatStatus.RESERVED;
+//        }
+        else {
             return SeatStatus.ASSIGNED;
         }
     }
@@ -199,7 +200,6 @@ public class DummyDateGenerator {
                 .filter(Seat::isAvailable)
                 .limit(count)
                 .toList();
-        System.out.println("🚀[로그:정현진] availableSeats count : " + availableSeats.size());
         if (availableSeats.size() < count) {
             log.warn("생성 실패: 예약 가능한 좌석이 요청한 개수({})보다 적습니다. (현재 {}개)", count, availableSeats.size());
             return;
