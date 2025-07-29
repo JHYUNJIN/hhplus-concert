@@ -1,7 +1,8 @@
 package kr.hhplus.be.server.dummy;
 
-import kr.hhplus.be.server.concert.port.out.ConcertDateRepository;
+import kr.hhplus.be.server.common.util.DistributedLockKeyGenerator;
 import kr.hhplus.be.server.concert.domain.Seat;
+import kr.hhplus.be.server.concert.port.out.ConcertDateRepository;
 import kr.hhplus.be.server.concert.port.out.SeatRepository;
 import kr.hhplus.be.server.reservation.usecase.DistributedLockManager;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +23,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AsyncSeatCountUpdater {
 
-    private static final String UPDATE_SEATS_LOCK_KEY = "dummy-data:update-seat-counts";
-
     private final ConcertDateRepository concertDateRepository;
     private final SeatRepository seatRepository;
     private final DistributedLockManager distributedLockManager;
@@ -37,9 +36,7 @@ public class AsyncSeatCountUpdater {
     @Transactional
     public void updateAvailableSeatCounts(List<UUID> concertDateIds) {
         try {
-            distributedLockManager.executeWithLock(UPDATE_SEATS_LOCK_KEY, () -> {
-                log.info("분산락 획득, 생성된 좌석 수에 맞춰 availableSeatCount 업데이트 시작...");
-
+            distributedLockManager.executeWithLock(DistributedLockKeyGenerator.getDummyUpdateSeatsLockKey(), () -> {
                 List<Seat> allSeats = seatRepository.findByConcertDateIds(concertDateIds);
                 Map<UUID, Long> seatCountMap = allSeats.stream()
                         .filter(Seat::isAvailable)
@@ -49,8 +46,6 @@ public class AsyncSeatCountUpdater {
                     Long count = seatCountMap.getOrDefault(dateId, 0L);
                     concertDateRepository.updateAvailableSeatCount(dateId, count);
                 });
-
-                log.info("availableSeatCount 업데이트 완료.");
             });
         } catch (Exception e) {
             log.error("좌석 수 업데이트 중 오류 발생", e);

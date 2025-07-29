@@ -38,11 +38,12 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-aop")
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 	implementation("org.redisson:redisson-spring-boot-starter:3.24.3") // 분산락 제어를 위해 사용
+	implementation ("org.springframework.boot:spring-boot-starter-webflux") // WebFlux를 사용하여 비동기 처리를 지원
 //	implementation("org.springframework.boot:spring-boot-starter-security")
+//	developmentOnly("org.springframework.boot:spring-boot-devtools")
 
 
 
-	developmentOnly("org.springframework.boot:spring-boot-devtools")
 
 
 	// swagger
