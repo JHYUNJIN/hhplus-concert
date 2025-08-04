@@ -107,6 +107,12 @@
 - **결제 실패 후처리 시퀀스**  
   ![결제 실패](./docs/kafka/img/payment_failed_sequence_diagram.png)
 
+- **큐 토큰 발급 로직 프로세스**  
+  ![결제 실패](./docs/redis/img/queue_logic_process.png)
+
+- **Kafka 이벤트 아키텍처 설계 프로세스**  
+  ![결제 실패](./docs/kafka/img/kafka_cluster.png)
+
 
 ## 🎯 기술적 도전 / 트러블슈팅
 
