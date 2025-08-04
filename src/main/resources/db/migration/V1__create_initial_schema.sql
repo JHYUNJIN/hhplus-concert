@@ -44,8 +44,6 @@ CREATE TABLE CONCERT_DATE (
     FOREIGN KEY (concert_id) REFERENCES CONCERT(id) ON DELETE CASCADE
 ) COMMENT '콘서트 날짜 정보 테이블';
 
-CREATE INDEX idx_concertdate_concert_id ON CONCERT_DATE (concert_id);
-
 
 -- ====================================================================================
 -- SEAT 테이블: 좌석 정보
@@ -64,8 +62,6 @@ CREATE TABLE SEAT (
     FOREIGN KEY (concert_date_id) REFERENCES CONCERT_DATE(id) ON DELETE CASCADE
 ) COMMENT '좌석 정보 테이블';
 
-CREATE INDEX idx_seat_concert_date_id ON SEAT (concert_date_id);
-
 
 -- ====================================================================================
 -- RESERVATION 테이블: 예약 정보
@@ -83,8 +79,6 @@ CREATE TABLE RESERVATION (
     FOREIGN KEY (seat_id) REFERENCES SEAT(id)
 ) COMMENT '예약 정보 테이블';
 
-CREATE INDEX idx_reservation_user_id ON RESERVATION (user_id);
-CREATE INDEX idx_reservation_seat_id ON RESERVATION (seat_id);
 -- 배치 스케줄러의 만료된 예약 조회 성능 최적화를 위한 복합 인덱스
 CREATE INDEX idx_reservation_status_expires ON RESERVATION (status, expires_at);
 
@@ -105,9 +99,6 @@ CREATE TABLE PAYMENT (
     FOREIGN KEY (user_id) REFERENCES USERS(id),
     FOREIGN KEY (reservation_id) REFERENCES RESERVATION(id)
 ) COMMENT '결제 정보 테이블';
-
-CREATE INDEX idx_payment_user_id ON PAYMENT (user_id);
-CREATE INDEX idx_payment_reservation_id ON PAYMENT (reservation_id);
 
 
 -- ====================================================================================
