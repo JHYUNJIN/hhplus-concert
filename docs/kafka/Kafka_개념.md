@@ -85,3 +85,6 @@
 - **운영 및 설정의 복잡성**: Zookeeper(또는 KRaft 모드)를 포함한 분산 시스템이므로 초기 설정과 운영에 대한 이해가 필요합니다.
 - **높은 학습 곡선**: Broker, Topic, Partition, Consumer Group 등 Kafka 고유의 개념에 대한 학습이 필요합니다.
 - **리밸런싱 시 일시적 중단**: Consumer Group 에 변화가 생겨 리밸런싱이 발생하면 해당 그룹은 잠시 동안 메시지를 처리할 수 없습니다.
+
+# **Kafka 이벤트 아키텍처 설계**
+![Kafka 이벤트 아키텍처 상세 설계](./img/kafka_cluster.png)
