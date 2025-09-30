@@ -14,7 +14,26 @@ services:
     networks:
       - concert-network
 
-  # ⭐️ Zookeeper 서비스를 추가
+  redis:
+    image: redis:7
+    container_name: concert-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - concert-network
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis-commander
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:concert-redis:6379
+    depends_on:
+      - redis
+    networks:
+      - concert-network
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.0
     hostname: zookeeper
@@ -82,6 +101,23 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    networks:
+      - concert-network
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8082:8080"  # 웹 UI 접속 포트
+    environment:
+      KAFKA_CLUSTERS_0_NAME: hhplus-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker1:29092,broker2:29093,broker3:29094
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    depends_on:
+      - broker1
+      - broker2
+      - broker3
+      - zookeeper
     networks:
       - concert-network
 
