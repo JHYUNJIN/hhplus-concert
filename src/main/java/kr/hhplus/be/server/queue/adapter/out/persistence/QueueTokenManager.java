@@ -20,7 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 public class QueueTokenManager {
 
     private static final int MAX_ACTIVE_TOKEN_SIZE = 50;
-    private static final long QUEUE_EXPIRES_TIME = 30L;
+    private static final long QUEUE_EXPIRES_TIME = 10L * 60; // 10분
+    private static final long WAITING_TOKEN_EXPIRES_TIME = 10L * 60; // 10분
 
     private final QueueTokenRepository queueTokenRepository;
     private final ConcertRepository concertRepository;
@@ -73,12 +74,13 @@ public class QueueTokenManager {
     }
 
     private QueueToken createQueueToken(Integer activeTokens, UUID userId, UUID concertId) {
+
         UUID tokenId = UUID.randomUUID();
 
         if (activeTokens < MAX_ACTIVE_TOKEN_SIZE)
             return QueueToken.activeTokenOf(tokenId, userId, concertId, QUEUE_EXPIRES_TIME);
 
         Integer waitingTokens = queueTokenRepository.countWaitingTokens(concertId);
-        return QueueToken.waitingTokenOf(tokenId, userId, concertId, waitingTokens);
+        return QueueToken.waitingTokenOf(tokenId, userId, concertId, waitingTokens, WAITING_TOKEN_EXPIRES_TIME);
     }
 }

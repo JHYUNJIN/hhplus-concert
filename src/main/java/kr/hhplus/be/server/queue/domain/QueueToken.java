@@ -34,16 +34,17 @@ public record QueueToken(
     }
 
     // 대기 중인 토큰을 생성하는 메서드
-    public static QueueToken waitingTokenOf(UUID tokenId, UUID userId, UUID concertId, int waitingTokens) {
+    public static QueueToken waitingTokenOf(UUID tokenId, UUID userId, UUID concertId, int waitingTokens, long expiresIn) {
+        LocalDateTime now = LocalDateTime.now();
         return QueueToken.builder()
                 .tokenId(tokenId)
                 .userId(userId)
                 .concertId(concertId)
                 .status(QueueStatus.WAITING)
                 .position(waitingTokens + 1)
-                .issuedAt(LocalDateTime.now())
+                .issuedAt(now)
                 .enteredAt(null)
-                .expiresAt(null)
+                .expiresAt(now.plusSeconds(expiresIn))
                 .build();
     }
 
@@ -55,9 +56,9 @@ public record QueueToken(
                 .concertId(concertId)
                 .status(status)
                 .position(waitingPosition)
-                .issuedAt(LocalDateTime.now())
-                .enteredAt(null)
-                .expiresAt(null)
+                .issuedAt(issuedAt) // Keep original issuedAt
+                .enteredAt(enteredAt) // Keep original enteredAt
+                .expiresAt(expiresAt) // Keep original expiresAt
                 .build();
     }
 

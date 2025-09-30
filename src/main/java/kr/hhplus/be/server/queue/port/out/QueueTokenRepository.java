@@ -56,4 +56,8 @@ public interface QueueTokenRepository {
     void expiresQueueToken(String tokenId);
 
     void promoteQueueToken(List<Concert> openConcerts);
+
+    long removeExpiredWaitingTokens(UUID concertId);
+
+    long removeStaleActiveTokens(UUID concertId);
 }

@@ -137,6 +137,18 @@ public class RedisQueueTokenRepository implements QueueTokenRepository { // Redi
         }
     }
 
+    @Override
+    public long removeExpiredWaitingTokens(UUID concertId) {
+        String waitingTokenKey = QueueTokenUtil.formattingWaitingTokenKey(concertId);
+        // 10분전 전 타임스탬프를 계산
+        long tenMinuteAgo = Instant.now().minus(Duration.ofMinutes(10)).getEpochSecond();
+
+        // score(발급 타임스탬프)가 10분 이전인 모든 토큰을 대기열(Sorted Set)에서 삭제
+        Long removedCount = redisTemplate.opsForZSet().removeRangeByScore(waitingTokenKey, 0, tenMinuteAgo);
+
+        return removedCount != null ? removedCount : 0L;
+    }
+
     // 대기 토큰 Redis 저장
     private void saveWaitingToken(QueueToken queueToken, String tokenInfoKey, String tokenIdKey) {
         String waitingTokenKey = QueueTokenUtil.formattingWaitingTokenKey(queueToken.concertId());
@@ -146,8 +158,8 @@ public class RedisQueueTokenRepository implements QueueTokenRepository { // Redi
         double score = issuedInstant.getEpochSecond();
         redisTemplate.opsForZSet().add(waitingTokenKey, tokenIdKey, score);
 
-        redisTemplate.expire(tokenInfoKey, Duration.ofHours(24));
-        redisTemplate.expire(tokenIdKey, Duration.ofHours(24));
+        redisTemplate.expire(tokenInfoKey, Duration.ofMinutes(10));
+        redisTemplate.expire(tokenIdKey, Duration.ofMinutes(10));
     }
 
     // 활성 토큰 Redis 저장
@@ -161,5 +173,21 @@ public class RedisQueueTokenRepository implements QueueTokenRepository { // Redi
 
         redisTemplate.expireAt(tokenInfoKey, expiresInstant);
         redisTemplate.expireAt(tokenIdKey, expiresInstant);
+    }
+
+    @Override
+    public long removeStaleActiveTokens(UUID concertId) {
+        String activeTokenKey = QueueTokenUtil.formattingActiveTokenKey(concertId);
+        String tokenInfoKeyPrefix = "token:info:"; // token:info:{tokenId} 형태이므로 접두사만 전달
+
+        List<String> keys = List.of(activeTokenKey);
+        Long removedCount = redisTemplate.execute(QueueTokenUtil.removeStaleActiveTokenScript(), keys, tokenInfoKeyPrefix);
+
+        if (removedCount != null && removedCount > 0) {
+            log.info("✅ 콘서트 ID {}: 만료된 활성 토큰 {}개 삭제 완료", concertId, removedCount);
+        } else {
+//            log.info("❌ 콘서트 ID {}: 삭제된 만료 활성 토큰 없음", concertId);
+        }
+        return removedCount != null ? removedCount : 0L;
     }
 }

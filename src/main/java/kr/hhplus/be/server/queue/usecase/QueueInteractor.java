@@ -88,11 +88,13 @@ public class QueueInteractor implements IssueTokenUseCase, GetQueueInfoUseCase, 
     }
 
     private QueueToken createQueueToken(Integer activeTokenCount, UUID userId, UUID concertId) {
+        final long WAITING_QUEUE_EXPIRES_TIME = 10 * 60L; // 10분(초 단위)
+
         UUID tokenId = UUID.randomUUID();
         if (activeTokenCount < MAX_ACTIVE_TOKEN_SIZE) {
             return QueueToken.activeTokenOf(tokenId, userId, concertId, QUEUE_EXPIRES_TIME);
         }
         Integer waitingTokenCount = queueTokenRepository.countWaitingTokens(concertId);
-        return QueueToken.waitingTokenOf(tokenId, userId, concertId, waitingTokenCount);
+        return QueueToken.waitingTokenOf(tokenId, userId, concertId, waitingTokenCount, WAITING_QUEUE_EXPIRES_TIME);
     }
 }

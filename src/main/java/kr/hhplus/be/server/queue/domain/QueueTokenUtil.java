@@ -51,6 +51,13 @@ public final class QueueTokenUtil {
         return script;
     }
 
+    public static DefaultRedisScript<Long> removeStaleActiveTokenScript() {
+        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
+        script.setScriptText(REMOVE_STALE_ACTIVE_TOKEN_SCRIPT);
+        script.setResultType(Long.class);
+        return script;
+    }
+
     public static final String PROMOTE_WAITING_TOKEN_SCRIPT = """
           local activeTokenKey = KEYS[1]
           local waitingTokenKey = KEYS[2]
@@ -81,5 +88,21 @@ public final class QueueTokenUtil {
               redis.call('ZREM', waitingTokenKey, tokenId)
           end
           return #waitingTokens
+          """;
+
+    public static final String REMOVE_STALE_ACTIVE_TOKEN_SCRIPT = """
+          local activeTokenKey = KEYS[1]
+          local tokenInfoKeyPrefix = ARGV[1]
+          local removedCount = 0
+
+          local activeTokens = redis.call('ZRANGE', activeTokenKey, 0, -1)
+          for i, tokenIdKey in ipairs(activeTokens) do
+              local tokenInfoKey = tokenInfoKeyPrefix .. string.sub(tokenIdKey, string.len('token:id:') + 1)
+              if redis.call('EXISTS', tokenInfoKey) == 0 then
+                  redis.call('ZREM', activeTokenKey, tokenIdKey)
+                  removedCount = removedCount + 1
+              end
+          end
+          return removedCount
           """;
 }
