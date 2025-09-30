@@ -31,7 +31,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/hhplus?characterEncoding=UTF-8&serverTimezone=UTC
     username: application
-    password: application
+    password: Application123!
   redis:
     host: localhost
     port: 6379
@@ -50,6 +50,17 @@ spring:
         post-payment-cleanup: post-payment-cleanup-group # ⭐️ Redis 정리 그룹
         # --- 예약 관련 이벤트 구독 그룹 ---
         reservation-created: reservation-created-group # ⭐️ 예약 생성 그룹
+
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: health, metrics, prometheus
+    metrics:
+      enable:
+        all: true
+      tags:
+        application: hhplus-concert
 
 external-api:
   data-platform:

@@ -62,6 +62,10 @@ dependencies {
 	testImplementation("org.springframework.kafka:spring-kafka-test")
 	testImplementation("org.testcontainers:kafka")
 
+	// QueryDSL
+	implementation ("io.micrometer:micrometer-registry-prometheus")
+	implementation ("org.springframework.boot:spring-boot-starter-actuator")
+
 	// 더미 데이터 생성 라이브러리
 	implementation("net.datafaker:datafaker:2.4.2")
 
