@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.user.port.out;
+package kr.hhplus.be.user.port.out;
 
 import kr.hhplus.be.server.user.domain.User;
 

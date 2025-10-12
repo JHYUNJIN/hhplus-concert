@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.user.adapter.out.persistence;
+package kr.hhplus.be.user.adapter.out.persistence;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

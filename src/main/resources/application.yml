@@ -66,6 +66,9 @@ external-api:
   data-platform:
     base-url: http://localhost:8080 # 데이터 플랫폼 API 서버 주소
 
+user-service: # user-service URL 추가
+  url: http://localhost:8081
+
 logging:
   level:
     root: INFO

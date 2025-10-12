@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.common.exception;
+package kr.hhplus.be.user.common.exception;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,6 @@ public enum ErrorCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "C007", "인증 정보가 유효하지 않습니다.", Level.WARN), // 인증 오류는 WARN으로 분류 가능
     TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "C008", "요청 횟수가 너무 많습니다. 잠시 후 다시 시도해주세요.", Level.WARN), // 비즈니스 흐름 중 발생
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "C009", "잘못된 요청입니다.", Level.ERROR), // 일반적인 잘못된 요청, ERROR로 분류
-    EXTERNAL_API_ERROR(HttpStatus.BAD_REQUEST, "L004", "외부 API 오류가 발생했습니다.", Level.ERROR),
 
     // User Service Errors (사용자 관련 오류) - 대부분 WARN 레벨
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다.", Level.WARN), // 예상 가능한 비즈니스 예외
@@ -81,7 +80,6 @@ public enum ErrorCode {
     LOCK_CONFLICT(HttpStatus.CONFLICT, "L001", "락 충돌이 발생했습니다.", Level.WARN),
     INVALID_SEAT_COUNT(HttpStatus.BAD_REQUEST, "L002", "좌석 수가 유효하지 않습니다.", Level.WARN),
     UNEXPECTED_RACE_CONDITION(HttpStatus.CONFLICT, "L003", "예상치 못한 경합 상태가 발생했습니다.", Level.ERROR);
-
 
 
 

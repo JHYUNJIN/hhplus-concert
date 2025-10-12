@@ -2,13 +2,13 @@ package kr.hhplus.be.server.queue.adapter.out.persistence;
 
 import java.util.UUID;
 
+import kr.hhplus.be.server.external.UserApiClient;
 import kr.hhplus.be.server.queue.port.out.QueueTokenRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import kr.hhplus.be.server.concert.port.out.ConcertRepository;
 import kr.hhplus.be.server.queue.domain.QueueToken;
-import kr.hhplus.be.server.user.port.out.UserRepository;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class QueueTokenManager {
 
     private final QueueTokenRepository queueTokenRepository;
     private final ConcertRepository concertRepository;
-    private final UserRepository userRepository;
+    private final UserApiClient userApiClient;
 
     @Transactional
     public QueueToken processIssueQueueToken(UUID userId, UUID concertId) throws CustomException {
@@ -64,7 +64,7 @@ public class QueueTokenManager {
     }
 
     private void validateUserId(UUID userId) throws CustomException {
-        if (!userRepository.existsById(userId))
+        if (Boolean.FALSE.equals(userApiClient.checkUserExists(userId).block()))
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
     }
 

@@ -13,6 +13,29 @@ services:
       MYSQL_ROOT_PASSWORD: root
     networks:
       - concert-network
+    healthcheck: # healthcheck 추가
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  user-db: # user-service를 위한 새로운 DB
+    image: mysql:8.0
+    container_name: hhplus-user-mysql-1
+    ports:
+      - "3307:3306" # 기존 mysql과 포트 충돌 방지
+    environment:
+      MYSQL_DATABASE: user_db
+      MYSQL_USER: application
+      MYSQL_PASSWORD: application
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - concert-network
+    healthcheck: # healthcheck 추가
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7
@@ -24,9 +47,10 @@ services:
 
   redis-commander:
     image: rediscommander/redis-commander:latest
+    platform: linux/amd64   # ✅ 추가
     container_name: redis-commander
     ports:
-      - "8081:8081"
+      - "8079:8081"
     environment:
       - REDIS_HOSTS=local:concert-redis:6379
     depends_on:
@@ -108,7 +132,7 @@ services:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
     ports:
-      - "8082:8080"  # 웹 UI 접속 포트
+      - "8078:8080"  # 웹 UI 접속 포트
     environment:
       KAFKA_CLUSTERS_0_NAME: hhplus-cluster
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker1:29092,broker2:29093,broker3:29094
@@ -120,6 +144,64 @@ services:
       - zookeeper
     networks:
       - concert-network
+
+  # 기존 server 애플리케이션
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hhplus-concert-server
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/hhplus?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+      SPRING_DATASOURCE_USERNAME: application
+      SPRING_DATASOURCE_PASSWORD: application
+      SPRING_REDIS_HOST: concert-redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: broker1:29092,broker2:29093,broker3:29094
+    depends_on:
+      mysql:
+        condition: service_healthy # mysql이 healthy 상태가 될 때까지 기다림
+      redis:
+        condition: service_started
+      broker1:
+        condition: service_started
+      broker2:
+        condition: service_started
+      broker3:
+        condition: service_started
+    networks:
+      - concert-network
+
+#  user-service: # 새로 추가된 user-service 애플리케이션
+#    build:
+#      context: .
+#      dockerfile: user-service/Dockerfile
+#    container_name: hhplus-user-service
+#    ports:
+#      - "8081:8081"
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:mysql://user-db:3306/user_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+#      SPRING_DATASOURCE_USERNAME: application
+#      SPRING_DATASOURCE_PASSWORD: application
+#      # user-service에서 Kafka/Redis를 사용한다면 여기에 설정 추가
+#      # SPRING_REDIS_HOST: concert-redis
+#      # SPRING_REDIS_PORT: 6379
+#      # SPRING_KAFKA_BOOTSTRAP_SERVERS: broker1:29092,broker2:29093,broker3:29094
+#    depends_on:
+#      user-db:
+#        condition: service_healthy # user-db가 healthy 상태가 될 때까지 기다림
+#      redis:
+#        condition: service_started
+#      broker1:
+#        condition: service_started
+#      broker2:
+#        condition: service_started
+#      broker3:
+#        condition: service_started
+#    networks:
+#      - concert-network
 
 networks:
   concert-network:

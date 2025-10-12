@@ -1,16 +1,12 @@
-package kr.hhplus.be.server.user.adapter.in.web;
+package kr.hhplus.be.user.adapter.in.web;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,14 +16,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.hhplus.be.server.user.adapter.in.web.response.UserPointResponse;
 import kr.hhplus.be.server.user.domain.User;
-import kr.hhplus.be.server.user.adapter.in.web.request.ChargePointRequest;
-import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.user.usecase.UserService;
+import kr.hhplus.be.user.adapter.in.web.request.ChargePointRequest;
+import kr.hhplus.be.user.common.exception.CustomException;
+import kr.hhplus.be.user.usecase.UserService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "User API", description = "유저 관련 API")
 public class UserController {
 
@@ -50,12 +47,35 @@ public class UserController {
     })
     @PostMapping
     public ResponseEntity<UserPointResponse> createUser(
-
     ) throws CustomException {
+        log.debug("@#createUser");
         User newUser = new User(new BigDecimal(20000), LocalDateTime.now(), LocalDateTime.now());
         User createdUser = userService.createUser(newUser);
 
         return ResponseEntity.status(201).body(UserPointResponse.from(createdUser));
+    }
+
+    @Operation(
+            summary = "유저 포인트 조회",
+            description = "{userId}에 해당하는 유저의 포인트 잔액 조회"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "유저 찾을 수 없음"
+            )
+    })
+    @RequestMapping(method = {RequestMethod.GET, RequestMethod.HEAD}, path = "/{userId}")
+    public ResponseEntity<Void> checkUser(
+            @PathVariable UUID userId
+    ) {
+        log.debug("@#checkUser userId: {}", userId);
+        userService.getUser(userId);
+        return ResponseEntity.ok().build();
     }
 
     @Operation(
@@ -73,10 +93,11 @@ public class UserController {
                     description = "유저 찾을 수 없음"
             )
     })
-    @GetMapping("/{userId}/points")
+    @GetMapping("/{userId}/balance")
     public ResponseEntity<UserPointResponse> getPoint(
             @PathVariable UUID userId
     ) throws CustomException {
+        log.debug("@#getPoint userId: {}", userId);
         User user = userService.getUser(userId);
 
         return ResponseEntity.ok(UserPointResponse.from(user));
@@ -106,6 +127,7 @@ public class UserController {
             @PathVariable UUID userId,
             @RequestBody ChargePointRequest request
     ) throws CustomException {
+        log.debug("@#chargePoint userId: {}, point: {}", userId, request.point());
         User user = userService.chargePoint(userId, request.point());
 
         return ResponseEntity.ok(UserPointResponse.from(user));

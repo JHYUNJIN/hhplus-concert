@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.user.adapter.in.web.request;
+package kr.hhplus.be.user.adapter.in.web.request;
 
 import java.math.BigDecimal;
 

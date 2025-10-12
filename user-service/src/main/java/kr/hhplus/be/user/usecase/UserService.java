@@ -1,9 +1,9 @@
-package kr.hhplus.be.server.user.usecase;
+package kr.hhplus.be.user.usecase;
 
-import kr.hhplus.be.server.common.exception.CustomException;
-import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.user.common.exception.CustomException;
+import kr.hhplus.be.user.common.exception.ErrorCode;
 import kr.hhplus.be.server.user.domain.User;
-import kr.hhplus.be.server.user.port.out.UserRepository;
+import kr.hhplus.be.user.port.out.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -6,13 +6,14 @@ import kr.hhplus.be.server.concert.domain.ConcertDate;
 import kr.hhplus.be.server.concert.domain.Seat;
 import kr.hhplus.be.server.concert.port.out.ConcertDateRepository;
 import kr.hhplus.be.server.concert.port.out.SeatRepository;
+import kr.hhplus.be.server.external.UserApiClient; // UserApiClient 임포트
 import kr.hhplus.be.server.payment.domain.Payment;
 import kr.hhplus.be.server.payment.port.in.PaymentFailureCompensationUseCase;
 import kr.hhplus.be.server.payment.port.out.PaymentRepository;
 import kr.hhplus.be.server.reservation.domain.Reservation;
 import kr.hhplus.be.server.reservation.port.out.ReservationRepository;
-import kr.hhplus.be.server.user.domain.User;
-import kr.hhplus.be.server.user.port.out.UserRepository;
+// import kr.hhplus.be.server.user.domain.User; // 삭제
+// import kr.hhplus.be.server.user.port.out.UserRepository; // 삭제
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,7 +28,8 @@ import java.util.UUID;
 @Slf4j
 public class PaymentFailureCompensationInteractor implements PaymentFailureCompensationUseCase {
 
-    private final UserRepository userRepository;
+    // private final UserRepository userRepository; // 삭제
+    private final UserApiClient userApiClient; // 추가
     private final ReservationRepository reservationRepository;
     private final PaymentRepository paymentRepository;
     private final SeatRepository seatRepository;
@@ -49,9 +51,10 @@ public class PaymentFailureCompensationInteractor implements PaymentFailureCompe
             paymentRepository.save(payment.fail());
 
             if (!PRE_CHARGE_ERRORS.contains(errorCode)) {
-                User user = userRepository.findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-                userRepository.save(user.refund(amount));
+                // User user = userRepository.findById(userId) // 기존 코드
+                //         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                // userRepository.save(user.refund(amount)); // 기존 코드
+                userApiClient.refundUserBalance(userId, amount).block(); // UserApiClient 사용
             }
 
             Reservation reservation = reservationRepository.findById(reservationId)

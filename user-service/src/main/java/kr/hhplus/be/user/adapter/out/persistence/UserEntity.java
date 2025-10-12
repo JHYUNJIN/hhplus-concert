@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.user.adapter.out.persistence;
+package kr.hhplus.be.user.adapter.out.persistence;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -14,7 +14,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import kr.hhplus.be.server.user.domain.User;
-import kr.hhplus.be.server.common.persistence.BaseTimeEntity;
+import kr.hhplus.be.user.common.persistence.BaseTimeEntity;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

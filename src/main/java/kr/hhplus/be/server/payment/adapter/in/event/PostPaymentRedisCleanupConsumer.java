@@ -25,7 +25,7 @@ public class PostPaymentRedisCleanupConsumer {
     public void handlePaymentSuccess(PaymentSuccessEvent event) {
         try {
             // 1. Redis 좌석 임시 점유(hold) 해제
-            seatHoldReleaseUseCase.releaseHold(event.seat().id(), event.user().id());
+            seatHoldReleaseUseCase.releaseHold(event.seat().id(), event.userId()); // event.user().id() -> event.userId()로 변경
             // 2. 대기열 토큰 만료 처리
             queueTokenExpirationUseCase.expiresQueueToken(event.queueToken().tokenId().toString());
         } catch (Exception e) {

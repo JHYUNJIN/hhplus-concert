@@ -1,7 +1,7 @@
-package kr.hhplus.be.server.user.adapter.out.persistence;
+package kr.hhplus.be.user.adapter.out.persistence;
 
 import kr.hhplus.be.server.user.domain.User;
-import kr.hhplus.be.server.user.port.out.UserRepository;
+import kr.hhplus.be.user.port.out.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -13,18 +13,18 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserJpaGateway implements UserRepository {
 
-    private final JpaUserRepository jpaUserRepository;
+    private final kr.hhplus.be.user.adapter.out.persistence.JpaUserRepository jpaUserRepository;
 
     @Override
     public User save(User user) {
-        UserEntity userEntity = UserEntity.from(user);
+        kr.hhplus.be.user.adapter.out.persistence.UserEntity userEntity = kr.hhplus.be.user.adapter.out.persistence.UserEntity.from(user);
         return jpaUserRepository.save(userEntity).toDomain();
     }
 
     @Override
     public Optional<User> findById(UUID userId) {
         return jpaUserRepository.findById(userId.toString())
-                .map(UserEntity::toDomain);
+                .map(kr.hhplus.be.user.adapter.out.persistence.UserEntity::toDomain);
     }
 
     @Override

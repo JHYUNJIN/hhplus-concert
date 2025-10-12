@@ -7,7 +7,7 @@ import kr.hhplus.be.server.concert.domain.ConcertDate;
 import kr.hhplus.be.server.queue.domain.QueueToken;
 import kr.hhplus.be.server.reservation.domain.Reservation;
 import kr.hhplus.be.server.concert.domain.Seat;
-import kr.hhplus.be.server.user.domain.User;
+// import kr.hhplus.be.server.user.domain.User; // 삭제
 import lombok.Builder;
 
 import java.math.BigDecimal;
@@ -27,14 +27,15 @@ public record PaymentFailedEvent(
         LocalDateTime occurredAt
 ) implements Event {
 
-    public static PaymentFailedEvent of(QueueToken queueToken, Payment payment, Reservation reservation, Seat seat, ConcertDate concertDate, User user, ErrorCode errorCode) {
+    // User 객체 대신 userId를 받도록 시그니처 변경
+    public static PaymentFailedEvent of(QueueToken queueToken, Payment payment, Reservation reservation, Seat seat, ConcertDate concertDate, UUID userId, ErrorCode errorCode) {
         return PaymentFailedEvent.builder()
                 .tokenId(queueToken.tokenId())
                 .paymentId(payment.id())
                 .reservationId(reservation.id())
                 .seatId(seat.id())
                 .concertDateId(concertDate.id())
-                .userId(user.id())
+                .userId(userId) // user.id() 대신 userId 직접 사용
                 .amount(payment.amount())
                 .errorCode(errorCode)
                 .occurredAt(LocalDateTime.now())

@@ -3,12 +3,12 @@ package kr.hhplus.be.server.queue.usecase;
 import kr.hhplus.be.server.common.exception.CustomException;
 import kr.hhplus.be.server.common.exception.ErrorCode;
 import kr.hhplus.be.server.concert.port.out.ConcertRepository;
+import kr.hhplus.be.server.external.UserApiClient;
 import kr.hhplus.be.server.queue.domain.QueueToken;
 import kr.hhplus.be.server.queue.port.in.GetQueueInfoUseCase;
 import kr.hhplus.be.server.queue.port.in.IssueTokenUseCase;
 import kr.hhplus.be.server.queue.port.in.QueueTokenExpirationUseCase;
 import kr.hhplus.be.server.queue.port.out.QueueTokenRepository;
-import kr.hhplus.be.server.user.port.out.UserRepository;
 import kr.hhplus.be.server.queue.adapter.out.persistence.RedisAtomicQueueTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ public class QueueInteractor implements IssueTokenUseCase, GetQueueInfoUseCase, 
 
     private final QueueTokenRepository queueTokenRepository;
     private final ConcertRepository concertRepository;
-    private final UserRepository userRepository;
+    private final UserApiClient userApiClient;
     private final RedisAtomicQueueTokenRepository redisAtomicQueueTokenRepository;
 
     @Override
@@ -76,7 +76,7 @@ public class QueueInteractor implements IssueTokenUseCase, GetQueueInfoUseCase, 
     }
 
     private void validateUserId(UUID userId) {
-        if (!userRepository.existsById(userId)) {
+        if (Boolean.FALSE.equals(userApiClient.checkUserExists(userId).block())) {
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }
     }

@@ -1,0 +1,32 @@
+server:
+  port: 8081 # user-service는 8081 포트를 사용하도록 설정 (기존 server는 8080)
+
+spring:
+  test:
+    testcontainers:
+      enabled: false # 일반 실행 시 Testcontainers 비활성화
+  application:
+    name: user-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/hhplus?characterEncoding=UTF-8&serverTimezone=UTC
+    username: application
+    password: Application123!
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update # 서버 실행 시 테이블 초기화(create, update, validate, none)
+    properties:
+      hibernate:
+        format_sql: true
+        default_batch_fetch_size: 100
+        dialect: org.hibernate.dialect.MySQLDialect # MySQL Dialect 명시적으로 추가
+    open-in-view: false
+    show-sql: true
+  flyway:
+    enabled: false # Flyway 비활성화
+    locations: classpath:db/migration/user
+
+logging:
+  level:
+    org.springframework: INFO
+    kr.hhplus.be.user: DEBUG

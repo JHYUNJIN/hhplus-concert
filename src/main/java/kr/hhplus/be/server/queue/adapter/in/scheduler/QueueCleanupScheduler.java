@@ -40,9 +40,9 @@ public class QueueCleanupScheduler {
     }
 
     /**
-     * 매 30초마다 실행되어 만료된 활성 토큰을 정리합니다.
+     * 매 300초마다 실행되어 만료된 활성 토큰을 정리합니다.
      */
-    @Scheduled(cron = "*/30 * * * * *")
+    @Scheduled(cron = "*/300 * * * * *")
     public void cleanupStaleActiveTokens() {
         List<Concert> allConcerts = concertRepository.findAll();
         for (Concert concert : allConcerts) {
