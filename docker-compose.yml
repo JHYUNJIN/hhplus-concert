@@ -9,7 +9,7 @@ services:
     environment:
       MYSQL_DATABASE: hhplus
       MYSQL_USER: application
-      MYSQL_PASSWORD: application
+      MYSQL_PASSWORD: Application123!
       MYSQL_ROOT_PASSWORD: root
     networks:
       - concert-network
@@ -58,6 +58,33 @@ services:
     networks:
       - concert-network
 
+  discovery-service:
+    build:
+      context: .
+      dockerfile: discovery-service/Dockerfile
+    container_name: discovery-service
+    ports:
+      - "8761:8761"
+    networks:
+      - concert-network
+
+  config-service:
+    build:
+      context: .
+      dockerfile: config-service/Dockerfile
+    container_name: config-service
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./config-repo:/config-repo
+    environment:
+      SPRING_APPLICATION_NAME: config-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    depends_on:
+      - discovery-service
+    networks:
+      - concert-network
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.0
     hostname: zookeeper
@@ -82,8 +109,10 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker1:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://broker1:29092,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://broker1:29092,EXTERNAL://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -101,8 +130,10 @@ services:
     environment:
       KAFKA_BROKER_ID: 2
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker2:29093,PLAINTEXT_HOST://localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://broker2:29093,EXTERNAL://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://broker2:29093,EXTERNAL://localhost:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -120,8 +151,10 @@ services:
     environment:
       KAFKA_BROKER_ID: 3
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker3:29094,PLAINTEXT_HOST://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://broker3:29094,EXTERNAL://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://broker3:29094,EXTERNAL://localhost:9094
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -146,62 +179,66 @@ services:
       - concert-network
 
   # 기존 server 애플리케이션
-#  server:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#    container_name: hhplus-concert-server
-#    ports:
-#      - "8080:8080"
-#    environment:
-#      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/hhplus?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
-#      SPRING_DATASOURCE_USERNAME: application
-#      SPRING_DATASOURCE_PASSWORD: application
-#      SPRING_REDIS_HOST: concert-redis
-#      SPRING_REDIS_PORT: 6379
-#      SPRING_KAFKA_BOOTSTRAP_SERVERS: broker1:29092,broker2:29093,broker3:29094
-#    depends_on:
-#      mysql:
-#        condition: service_healthy # mysql이 healthy 상태가 될 때까지 기다림
-#      redis:
-#        condition: service_started
-#      broker1:
-#        condition: service_started
-#      broker2:
-#        condition: service_started
-#      broker3:
-#        condition: service_started
-#    networks:
-#      - concert-network
-#
-#  user-service: # 새로 추가된 user-service 애플리케이션
-#    build:
-#      context: .
-#      dockerfile: user-service/Dockerfile
-#    container_name: hhplus-user-service
-#    ports:
-#      - "8081:8081"
-#    environment:
-#      SPRING_DATASOURCE_URL: jdbc:mysql://user-db:3306/user_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
-#      SPRING_DATASOURCE_USERNAME: application
-#      SPRING_DATASOURCE_PASSWORD: application
-#      # user-service에서 Kafka/Redis를 사용한다면 여기에 설정 추가
-#      # SPRING_REDIS_HOST: concert-redis
-#      # SPRING_REDIS_PORT: 6379
-#      # SPRING_KAFKA_BOOTSTRAP_SERVERS: broker1:29092,broker2:29093,broker3:29094
-#    depends_on:
-#      user-db:
-#        condition: service_healthy # user-db가 healthy 상태가 될 때까지 기다림
-#      redis:
-#        condition: service_started
-#      broker1:
-#        condition: service_started
-#      broker2:
-#        condition: service_started
-#      broker3:
-#        condition: service_started
-#    networks:
-#      - concert-network
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hhplus-concert-server
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_APPLICATION_NAME: main-server
+    depends_on:
+      mysql:
+        condition: service_healthy # mysql이 healthy 상태가 될 때까지 기다림
+      redis:
+        condition: service_started
+      broker1:
+        condition: service_started
+      broker2:
+        condition: service_started
+      broker3:
+        condition: service_started
+      discovery-service:
+        condition: service_started
+      config-service:
+        condition: service_started
+    networks:
+      - concert-network
+
+  gateway-service:
+    build:
+      context: .
+      dockerfile: gateway-service/Dockerfile
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_APPLICATION_NAME: gateway-service
+    depends_on:
+      - discovery-service
+      - config-service
+    networks:
+      - concert-network
+
+  user-service: # 새로 추가된 user-service 애플리케이션
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
+    container_name: hhplus-user-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_APPLICATION_NAME: user-service
+    depends_on:
+      user-db:
+        condition: service_healthy
+      discovery-service:
+        condition: service_started
+      config-service:
+        condition: service_started
+    networks:
+      - concert-network
 
 networks:
   concert-network:

@@ -1,0 +1,17 @@
+server:
+  port: 8081
+
+spring:
+  test:
+    testcontainers:
+      enabled: false
+  datasource:
+    url: jdbc:mysql://localhost:3307/user_db?characterEncoding=UTF-8&serverTimezone=UTC
+    username: application
+    password: Application123!
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: update

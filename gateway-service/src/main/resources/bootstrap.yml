@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: gateway-service
+  config:
+    import: configserver:http://config-service:8888
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-service:8761/eureka/

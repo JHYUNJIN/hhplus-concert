@@ -1,0 +1,18 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-service
+  profiles:
+    active: native # 로컬 파일 시스템을 사용
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: file:///config-repo # Docker 컨테이너 내부에 마운트된 경로
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-service:8761/eureka/
