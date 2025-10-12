@@ -159,11 +159,38 @@
 
   이를 통해 서비스 간 결합도를 줄이고, **유연하고 확장 가능한 구조**를 확보했습니다.
 
-# Docker 컨테이너 실행 (MySQL, Redis, Kafka Cluster)
-docker-compose up -d
+## 실행 방법 (MSA)
 
-# Spring Boot 애플리케이션 실행
-./gradlew bootRun
+MSA 환경으로 전환됨에 따라, 각 서비스를 개별적으로 실행해야 합니다.
+
+### 1. 애플리케이션 빌드
+
+가장 먼저, Gradle을 사용하여 모든 마이크로서비스 애플리케이션을 빌드합니다. 이 과정에서 각 서비스의 JAR 파일이 생성됩니다.
+
+```bash
+./gradlew clean build -x test
+```
+
+### 2. 필수 인프라 및 지원 서비스 실행
+
+그 다음, `docker-compose`를 사용하여 데이터베이스, Redis, Kafka 및 핵심 지원 서비스(Eureka, Config, Gateway)를 시작합니다. `docker-compose`는 빌드된 JAR 파일을 사용하여 각 서비스의 Docker 이미지를 생성하고 컨테이너를 실행합니다.
+
+```bash
+docker-compose up -d --build
+```
+*(최초 실행 시 또는 Dockerfile 변경 시 `--build` 옵션을 사용해주세요.)*
+
+### 3. 마이크로서비스 애플리케이션 실행 (IDE)
+
+핵심 인프라가 실행된 후, IDE(예: IntelliJ)를 사용하여 아래의 두 메인 애플리케이션을 각각 실행합니다.
+
+-   **메인 애플리케이션 (hhplus)**:
+    -   `kr.hhplus.be.server.ServerApplication`
+
+-   **사용자 서비스 (user-service)**:
+    -   `kr.hhplus.be.user.UserServiceApplication`
+
+각 애플리케이션은 실행 시 Config 서버로부터 설정을 동적으로 받아오고 Eureka 서버에 등록됩니다. 모든 요청은 API 게이트웨이(Port 8080)를 통해 각 서비스로 라우팅됩니다.
 
 
 ## 🔄 회고
