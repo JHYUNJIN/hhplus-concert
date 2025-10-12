@@ -27,7 +27,7 @@ services:
     environment:
       MYSQL_DATABASE: user_db
       MYSQL_USER: application
-      MYSQL_PASSWORD: application
+      MYSQL_PASSWORD: Application123!
       MYSQL_ROOT_PASSWORD: root
     networks:
       - concert-network
@@ -146,34 +146,34 @@ services:
       - concert-network
 
   # 기존 server 애플리케이션
-  server:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: hhplus-concert-server
-    ports:
-      - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/hhplus?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
-      SPRING_DATASOURCE_USERNAME: application
-      SPRING_DATASOURCE_PASSWORD: application
-      SPRING_REDIS_HOST: concert-redis
-      SPRING_REDIS_PORT: 6379
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: broker1:29092,broker2:29093,broker3:29094
-    depends_on:
-      mysql:
-        condition: service_healthy # mysql이 healthy 상태가 될 때까지 기다림
-      redis:
-        condition: service_started
-      broker1:
-        condition: service_started
-      broker2:
-        condition: service_started
-      broker3:
-        condition: service_started
-    networks:
-      - concert-network
-
+#  server:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    container_name: hhplus-concert-server
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/hhplus?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+#      SPRING_DATASOURCE_USERNAME: application
+#      SPRING_DATASOURCE_PASSWORD: application
+#      SPRING_REDIS_HOST: concert-redis
+#      SPRING_REDIS_PORT: 6379
+#      SPRING_KAFKA_BOOTSTRAP_SERVERS: broker1:29092,broker2:29093,broker3:29094
+#    depends_on:
+#      mysql:
+#        condition: service_healthy # mysql이 healthy 상태가 될 때까지 기다림
+#      redis:
+#        condition: service_started
+#      broker1:
+#        condition: service_started
+#      broker2:
+#        condition: service_started
+#      broker3:
+#        condition: service_started
+#    networks:
+#      - concert-network
+#
 #  user-service: # 새로 추가된 user-service 애플리케이션
 #    build:
 #      context: .
